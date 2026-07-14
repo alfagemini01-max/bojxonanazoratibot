@@ -8,11 +8,7 @@ services:
       - key: BOT_TOKEN
         sync: false
       - key: BOT_MODE
-        value: webhook
-      - key: WEBHOOK_URL
-        value: https://bojxonanazoratibot.onrender.com
-      - key: WEBHOOK_PATH
-        value: /webhook
+        value: polling
       - key: DATA_SOURCE
         value: demo
       - key: TZ
