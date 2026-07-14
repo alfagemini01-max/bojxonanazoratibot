@@ -1,49 +1,126 @@
 from __future__ import annotations
 
-import os
-from dataclasses import dataclass
-from pathlib import Path
+import asyncio
+import logging
 
-from dotenv import load_dotenv
+from aiogram import Bot, Dispatcher
+from aiogram.client.default import DefaultBotProperties
+from aiogram.enums import ParseMode
+from aiogram.fsm.storage.memory import MemoryStorage
 
+from app.config import Settings, get_settings
+from app.handlers import build_router
+from app.repositories.factory import create_vehicle_repository
+from app.storage import UserStorage, create_user_storage
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(BASE_DIR / ".env")
-
-
-@dataclass(frozen=True)
-class Settings:
-    bot_token: str
-    bot_mode: str
-    webhook_url: str
-    webhook_path: str
-    web_host: str
-    web_port: int
-    data_source: str
-    database_path: Path
-    user_database_url: str
-    terms_pdf_path: Path
-    sql_connection_string: str
-    sql_query_path: Path
-    timezone: str = "Asia/Tashkent"
+logger = logging.getLogger(__name__)
 
 
-def get_settings() -> Settings:
-    return Settings(
-        bot_token=os.getenv("BOT_TOKEN", "").strip(),
-        bot_mode=os.getenv("BOT_MODE", "polling").strip().lower(),
-        webhook_url=os.getenv("WEBHOOK_URL", "").strip(),
-        webhook_path=os.getenv("WEBHOOK_PATH", "/webhook").strip(),
-        web_host=os.getenv("WEB_SERVER_HOST", "0.0.0.0").strip(),
-        web_port=int(os.getenv("PORT", "8080")),
-        data_source=os.getenv("DATA_SOURCE", "demo").strip().lower(),
-        database_path=BASE_DIR / os.getenv("DATABASE_PATH", "data/bot_data.sqlite3"),
-        user_database_url=(os.getenv("USER_DATABASE_URL") or os.getenv("DATABASE_URL") or "").strip(),
-        terms_pdf_path=BASE_DIR / os.getenv("TERMS_PDF_PATH", "assets/foydalanish_shartlari.pdf"),
-        sql_connection_string=os.getenv("SQL_CONNECTION_STRING", "").strip(),
-        sql_query_path=BASE_DIR / os.getenv(
-            "SQL_QUERY_PATH",
-            "sql/vehicle_check.sql",
-        ),
-        timezone=os.getenv("TZ", "Asia/Tashkent").strip(),
+def create_bot(settings: Settings) -> Bot:
+    if not settings.bot_token:
+        raise RuntimeError("BOT_TOKEN topilmadi. .env yoki Render Environment Variables ichiga BOT_TOKEN kiriting.")
+    return Bot(
+        token=settings.bot_token,
+        default=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
+
+
+def create_dispatcher(settings: Settings) -> tuple[Dispatcher, UserStorage]:
+    user_database_url = getattr(settings, "user_database_url", "")
+    user_storage = create_user_storage(settings.database_path, settings.timezone, user_database_url)
+    vehicle_repository = create_vehicle_repository(settings)
+    dispatcher = Dispatcher(storage=MemoryStorage())
+    dispatcher.include_router(build_router(user_storage, vehicle_repository, settings))
+    return dispatcher, user_storage
+
+
+async def start_health_server(settings: Settings) -> None:
+    from aiohttp import web
+
+    async def index(_: web.Request) -> web.Response:
+        return web.Response(
+            text="NazoratBot Telegram xizmati ishlayapti.\nHealth: /health\n",
+            content_type="text/plain",
+        )
+
+    async def health(_: web.Request) -> web.Response:
+        return web.json_response({"ok": True, "service": "nazoratbot-telegram"})
+
+    app = web.Application()
+    app.router.add_get("/", index)
+    app.router.add_get("/health", health)
+
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, settings.web_host, settings.web_port)
+    await site.start()
+    logger.info("Health server started on http://%s:%s", settings.web_host, settings.web_port)
+
+
+async def run_polling() -> None:
+    settings = get_settings()
+    bot = create_bot(settings)
+    dispatcher, user_storage = create_dispatcher(settings)
+
+    await user_storage.init()
+    await start_health_server(settings)
+    await bot.delete_webhook(drop_pending_updates=True)
+    try:
+        await dispatcher.start_polling(bot)
+    finally:
+        await user_storage.close()
+        await bot.session.close()
+
+
+def run_webhook() -> None:
+    from aiohttp import web
+    from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
+
+    settings = get_settings()
+    if not settings.webhook_url:
+        raise RuntimeError("BOT_MODE=webhook uchun WEBHOOK_URL kiritilishi kerak.")
+
+    bot = create_bot(settings)
+    dispatcher, user_storage = create_dispatcher(settings)
+    webhook_url = settings.webhook_url.rstrip("/") + settings.webhook_path
+
+    async def index(_: web.Request) -> web.Response:
+        return web.Response(
+            text="NazoratBot Telegram xizmati ishlayapti.\nHealth: /health\nWebhook: /webhook\n",
+            content_type="text/plain",
+        )
+
+    async def health(_: web.Request) -> web.Response:
+        return web.json_response({"ok": True, "service": "nazoratbot-telegram", "mode": "webhook"})
+
+    async def on_startup(bot: Bot) -> None:
+        await user_storage.init()
+        await bot.set_webhook(webhook_url, drop_pending_updates=True)
+
+    async def on_shutdown(bot: Bot) -> None:
+        await bot.delete_webhook()
+        await user_storage.close()
+        await bot.session.close()
+
+    dispatcher.startup.register(on_startup)
+    dispatcher.shutdown.register(on_shutdown)
+
+    app = web.Application()
+    app.router.add_get("/", index)
+    app.router.add_get("/health", health)
+    SimpleRequestHandler(dispatcher=dispatcher, bot=bot).register(app, path=settings.webhook_path)
+    setup_application(app, dispatcher, bot=bot)
+    web.run_app(app, host=settings.web_host, port=settings.web_port)
+
+
+def main() -> None:
+    logging.basicConfig(level=logging.INFO)
+    settings = get_settings()
+    if settings.bot_mode == "webhook":
+        run_webhook()
+    else:
+        asyncio.run(run_polling())
+
+
+if __name__ == "__main__":
+    main()
