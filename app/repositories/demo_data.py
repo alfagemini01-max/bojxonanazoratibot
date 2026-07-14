@@ -25,8 +25,8 @@ def _doc(
     }
 
 
-def _check(level: str = "ok", text: str = "yo'q") -> dict[str, str]:
-    return {"level": level, "text": text}
+def _check(level: str = "ok", text: str = "yo'q", **extra: object) -> dict[str, object]:
+    return {"level": level, "text": text, **extra}
 
 
 DEMO_VEHICLES: dict[str, VehicleRecord] = {
@@ -104,7 +104,7 @@ DEMO_VEHICLES: dict[str, VehicleRecord] = {
         ],
         "debt": _check("warn", "yig'im hisoblanishi mumkin"),
         "fine": _check(),
-        "ban": _check("warn", "tranzit deklaratsiya nazoratdan yechilishi kerak"),
+        "ban": _check(),
     },
     "999KZ777": {
         "plate": "999KZ777",
@@ -144,7 +144,7 @@ DEMO_VEHICLES: dict[str, VehicleRecord] = {
         ],
         "debt": _check("warn", "amaldagi BHM asosida hisoblanadi"),
         "fine": _check(),
-        "ban": _check("warn", "bojxona postida tekshirish talab etiladi"),
+        "ban": _check(),
     },
     "270KZ777": {
         "plate": "270KZ777",
@@ -170,17 +170,23 @@ DEMO_VEHICLES: dict[str, VehicleRecord] = {
         ],
         "debt": _check("warn", "yig'im hisoblanishi mumkin"),
         "fine": _check(),
-        "ban": _check("warn", "YUBNK nazoratdan yechilishi kerak"),
+        "ban": _check(),
     },
     "01C888EE": {
         "plate": "01C888EE",
         "origin": "Milliy",
         "vehicle_type": "Yengil avtomobil",
         "status": "warn",
-        "conclusion": "Yuk bo'yicha nazoratdagi hujjat aniqlanmadi. Yo'l harakati xavfsizligi bo'yicha jarima mavjud.",
+        "conclusion": "Yuk bo'yicha nazoratdagi hujjat aniqlanmadi. IIB jarimasi mavjud.",
         "docs": [],
         "debt": _check(),
-        "fine": _check("warn", "2 ta, jami 825 000 so'm"),
+        "fine": _check(
+            "warn",
+            "2 ta, jami 825 000 so'm",
+            count=2,
+            amount="825 000 so'm",
+            decisions=["RA26095677238", "RA26095675493"],
+        ),
         "ban": _check(),
     },
     "01D444FF": {
@@ -188,11 +194,11 @@ DEMO_VEHICLES: dict[str, VehicleRecord] = {
         "origin": "Milliy",
         "vehicle_type": "Yengil avtomobil",
         "status": "danger",
-        "conclusion": "Majburiy ijro byurosi tomonidan ushbu avtotransport vositasini O'zbekiston Respublikasidan tashqariga olib chiqishga taqiq qo'yilgan.",
+        "conclusion": "Ushbu avtotransport vositasiga IIB tomonidan qidiruv e'lon qilingan.",
         "docs": [],
         "debt": _check(),
         "fine": _check(),
-        "ban": _check("danger", "Majburiy ijro byurosi qarori asosida taqiq mavjud"),
+        "ban": _check("danger", "iib_search"),
     },
     "T1234AB": {
         "plate": "T1234AB",
@@ -258,7 +264,7 @@ DEMO_VEHICLES: dict[str, VehicleRecord] = {
         ],
         "debt": _check("warn", "hisoblanishi mumkin"),
         "fine": _check(),
-        "ban": _check("warn", "hujjat nazoratdan yechilishi kerak"),
+        "ban": _check(),
     },
     "04Q444QQ": {
         "plate": "04Q444QQ",
@@ -352,11 +358,17 @@ DEMO_VEHICLES: dict[str, VehicleRecord] = {
         "origin": "Milliy",
         "vehicle_type": "Yuk mashinasi",
         "status": "danger",
-        "conclusion": "Sud tomonidan ushbu avtotransport vositasini chet elga olib chiqishga cheklov qo'yilgan.",
+        "conclusion": "Ushbu avtotransport vositasiga IIB tomonidan qidiruv e'lon qilingan va IIB jarimasi mavjud.",
         "docs": [],
         "debt": _check(),
-        "fine": _check("warn", "1 ta, jami 375 000 so'm"),
-        "ban": _check("danger", "Sud qarori asosida boshqa taqiq mavjud"),
+        "fine": _check(
+            "warn",
+            "1 ta, jami 375 000 so'm",
+            count=1,
+            amount="375 000 so'm",
+            decisions=["RA26095677238"],
+        ),
+        "ban": _check("danger", "iib_search"),
     },
     "30BUS01": {
         "plate": "30BUS01",
@@ -388,12 +400,18 @@ DEMO_VEHICLES: dict[str, VehicleRecord] = {
         "origin": "Xorijiy",
         "vehicle_type": "Yengil avtomobil",
         "status": "warn",
-        "conclusion": "Majburiyatnoma muddati o'tmagan, lekin yo'l harakati xavfsizligi bo'yicha jarima mavjud.",
+        "conclusion": "Majburiyatnoma muddati o'tmagan, lekin IIB jarimasi mavjud.",
         "docs": [
             _doc("Majburiyatnoma", "MB20262179090", "\"G'isht ko'prik\" ChBP", "01.07.2026", "29.09.2026 gacha", "Muddati o'tmagan")
         ],
         "debt": _check(),
-        "fine": _check("warn", "3 ta, jami 1 125 000 so'm"),
+        "fine": _check(
+            "warn",
+            "3 ta, jami 1 125 000 so'm",
+            count=3,
+            amount="1 125 000 so'm",
+            decisions=["RA26095677238", "RA26095675493", "RA26095678144"],
+        ),
         "ban": _check(),
     },
     "TJ7777T": {
@@ -421,7 +439,7 @@ DEMO_VEHICLES: dict[str, VehicleRecord] = {
         ],
         "debt": _check("warn", "hisoblanishi mumkin"),
         "fine": _check(),
-        "ban": _check("warn", "bojxona postida tekshirish talab etiladi"),
+        "ban": _check(),
     },
     "99A999AA": {
         "plate": "99A999AA",
@@ -435,7 +453,7 @@ DEMO_VEHICLES: dict[str, VehicleRecord] = {
         ],
         "debt": _check("warn", "bor - 3 450 000 so'm"),
         "fine": _check(),
-        "ban": _check("warn", "YUBNK nazoratdan yechilishi kerak"),
+        "ban": _check(),
     },
     "NETERROR": {
         "plate": "NETERROR",
@@ -462,8 +480,8 @@ SAMPLE_PLATES = [
     ("B777DD09", "Xorijiy yengil avtomobil, MB muddati o'tgan"),
     ("270KZ777", "Xorijiy yuk mashinasi, YUBNK muddati o'tmagan"),
     ("888KZ777", "Xorijiy yuk mashinasi, YUBNK muddati o'tgan"),
-    ("01C888EE", "Milliy yengil avtomobil, YHXB jarimasi bor"),
-    ("01D444FF", "Milliy yengil avtomobil, MIB taqiqi bor"),
+    ("01C888EE", "Milliy yengil avtomobil, IIB jarimasi bor"),
+    ("01D444FF", "Milliy yengil avtomobil, IIB qidiruvi bor"),
     ("T1234AB", "Xorijiy tirkama, MB muddati o'tmagan"),
     ("70ABC01", "Xorijiy yengil avtomobil, MB tugashiga 3 kun qolgan"),
     ("TR9999KZ", "Xorijiy tirkama, MB tugashiga 3 kun qolgan"),
@@ -476,10 +494,10 @@ SAMPLE_PLATES = [
     ("77L777LL", "Xorijiy yuk mashinasi, tranzit deklaratsiya nazoratda"),
     ("A000AA01", "Xorijiy transport, MB topilmagan"),
     ("22X222XX", "Milliy yuk mashinasi, Eksport 3 qadam nazoratda"),
-    ("06M606MM", "Milliy yuk mashinasi, sud taqiqi va jarima bor"),
+    ("06M606MM", "Milliy yuk mashinasi, IIB qidiruvi va jarima bor"),
     ("30BUS01", "Milliy avtobus, nazorat hujjati yo'q"),
     ("KZ12345", "Xorijiy yuk mashinasi, TD va MB tugashiga 3 kun qolgan"),
-    ("RU9090A", "Xorijiy yengil avtomobil, MB va YHXB jarimasi bor"),
+    ("RU9090A", "Xorijiy yengil avtomobil, MB va IIB jarimasi bor"),
     ("TJ7777T", "Xorijiy yuk mashinasi, yuk nazorati yo'q, MB bor"),
     ("TRK111RU", "Xorijiy tirkama, MB muddati o'tgan"),
     ("99A999AA", "Xorijiy yuk mashinasi, YUBNK muddati o'tgan va qarzdorlik bor"),
