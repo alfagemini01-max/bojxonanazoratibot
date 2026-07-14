@@ -83,6 +83,7 @@ def cancel_keyboard(lang: str = "uz") -> ReplyKeyboardMarkup:
 
 def build_router(user_storage: UserStorage, vehicle_repository: VehicleRepository, settings: Settings) -> Router:
     router = Router(name="nazoratbot")
+    terms_photo_file_id = settings.terms_photo_file_id
 
     async def profile_lang(user_id: int | None) -> str:
         if user_id is None:
@@ -93,17 +94,16 @@ def build_router(user_storage: UserStorage, vehicle_repository: VehicleRepositor
     async def ask_language(message: Message) -> None:
         await message.answer(t("uz", "choose_language"), reply_markup=language_keyboard())
 
-    async def send_safely(send_action, *, retries: int = 2) -> bool:
+    async def send_safely(send_action, *, retries: int = 2):
         for attempt in range(retries + 1):
             try:
-                await send_action()
-                return True
+                return await send_action()
             except TelegramNetworkError as exc:
                 if attempt >= retries:
                     logger.warning("Telegram message was not sent after retries: %s", exc)
-                    return False
+                    return None
                 await asyncio.sleep(1 + attempt)
-        return False
+        return None
 
     async def save_telegram_user(message: Message) -> None:
         if not message.from_user:
@@ -115,9 +115,24 @@ def build_router(user_storage: UserStorage, vehicle_repository: VehicleRepositor
         )
 
     async def send_terms(message: Message, show_accept_button: bool = True, lang: str | None = None) -> None:
+        nonlocal terms_photo_file_id
         lang = normalize_lang(lang) if lang else await profile_lang(message.from_user.id if message.from_user else None)
         reply_markup = terms_keyboard(lang) if show_accept_button else None
         caption = t(lang, "terms_caption")
+
+        if terms_photo_file_id or settings.terms_image_path.exists():
+            photo = terms_photo_file_id or FSInputFile(settings.terms_image_path)
+            sent_message = await send_safely(
+                lambda: message.answer_photo(
+                    photo,
+                    caption=caption,
+                    reply_markup=reply_markup,
+                )
+            )
+            if not terms_photo_file_id and sent_message and sent_message.photo:
+                terms_photo_file_id = sent_message.photo[-1].file_id
+                logger.info("Terms photo file_id cached: %s", terms_photo_file_id)
+            return
 
         if settings.terms_pdf_path.exists():
             await send_safely(
@@ -133,7 +148,7 @@ def build_router(user_storage: UserStorage, vehicle_repository: VehicleRepositor
             lambda: message.answer(
                 caption
                 + "\n\n"
-                + t(lang, "terms_missing", path=settings.terms_pdf_path.as_posix()),
+                + t(lang, "terms_missing", path=settings.terms_image_path.as_posix()),
                 reply_markup=reply_markup,
             )
         )

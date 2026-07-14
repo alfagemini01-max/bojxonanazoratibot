@@ -14,7 +14,7 @@ from app.repositories.factory import create_vehicle_repository
 from app.storage import UserStorage, create_user_storage
 
 logger = logging.getLogger(__name__)
-APP_VERSION = "2026-07-14-i18n-iib-v2"
+APP_VERSION = "2026-07-14-terms-photo-v3"
 
 
 def create_bot(settings: Settings) -> Bot:
