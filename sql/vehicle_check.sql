@@ -119,6 +119,22 @@ docs AS (
     UNION ALL
     SELECT * FROM commitment
 ),
+iib_fines AS (
+    /*
+      IIB jarimalari bo'yicha real jadval/view nomini moslang.
+      fine_decisions ustuni botda <code>RA26095677238</code> ko'rinishida alohida ro'yxat qilib chiqadi.
+    */
+    SELECT
+        UPPER(REPLACE(REPLACE(f.plate, ' ', ''), '-', '')) AS plate,
+        COUNT(*) AS fine_count,
+        SUM(ISNULL(f.amount, 0)) AS fine_amount_value,
+        FORMAT(SUM(ISNULL(f.amount, 0)), 'N0', 'uz-Latn-UZ') + ' so''m' AS fine_amount,
+        STRING_AGG(CAST(f.decision_no AS varchar(50)), ',') AS fine_decisions
+    FROM dbo.iib_fines f
+    WHERE UPPER(REPLACE(REPLACE(f.plate, ' ', ''), '-', '')) = @plate
+      AND ISNULL(f.is_paid, 0) = 0
+    GROUP BY UPPER(REPLACE(REPLACE(f.plate, ' ', ''), '-', ''))
+),
 checks AS (
     SELECT
         @plate AS plate,
@@ -129,18 +145,21 @@ checks AS (
         END AS debt_text,
         CASE WHEN ISNULL(f.fine_count, 0) > 0 THEN 'warn' ELSE 'ok' END AS fine_level,
         CASE WHEN ISNULL(f.fine_count, 0) > 0
-             THEN CAST(f.fine_count AS varchar(10)) + ' ta, jami ' + FORMAT(f.fine_amount, 'N0', 'uz-Latn-UZ') + ' so''m'
+             THEN CAST(f.fine_count AS varchar(10)) + ' ta, jami ' + f.fine_amount
              ELSE 'yo''q'
         END AS fine_text,
-        CASE WHEN b.ban_source IS NOT NULL THEN 'danger' ELSE 'ok' END AS ban_level,
-        CASE WHEN b.ban_source IS NOT NULL
-             THEN b.ban_source + ' qarori asosida boshqa taqiq mavjud'
+        f.fine_count,
+        f.fine_amount,
+        f.fine_decisions,
+        CASE WHEN b.plate IS NOT NULL THEN 'danger' ELSE 'ok' END AS ban_level,
+        CASE WHEN b.plate IS NOT NULL
+             THEN 'iib_search'
              ELSE 'yo''q'
         END AS ban_text
     FROM (SELECT @plate AS plate) p
     LEFT JOIN dbo.customs_debt d ON UPPER(REPLACE(REPLACE(d.plate, ' ', ''), '-', '')) = p.plate
-    LEFT JOIN dbo.yhxb_fines f ON UPPER(REPLACE(REPLACE(f.plate, ' ', ''), '-', '')) = p.plate
-    LEFT JOIN dbo.exit_bans b ON UPPER(REPLACE(REPLACE(b.plate, ' ', ''), '-', '')) = p.plate
+    LEFT JOIN iib_fines f ON f.plate = p.plate
+    LEFT JOIN dbo.iib_vehicle_search b ON UPPER(REPLACE(REPLACE(b.plate, ' ', ''), '-', '')) = p.plate
 )
 SELECT
     v.plate,
@@ -173,6 +192,9 @@ SELECT
     c.debt_text,
     c.fine_level,
     c.fine_text,
+    c.fine_count,
+    c.fine_amount,
+    c.fine_decisions,
     c.ban_level,
     c.ban_text,
     CASE WHEN v.vehicle_type = 'Yuk mashinasi' AND NOT EXISTS (SELECT 1 FROM cargo_docs) THEN 1 ELSE 0 END AS cargo_control_missing_warning,
