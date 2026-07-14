@@ -21,6 +21,7 @@ class Settings:
     web_port: int
     data_source: str
     database_path: Path
+    user_database_url: str
     terms_pdf_path: Path
     sql_connection_string: str
     sql_query_path: Path
@@ -37,6 +38,7 @@ def get_settings() -> Settings:
         web_port=int(os.getenv("PORT", "8080")),
         data_source=os.getenv("DATA_SOURCE", "demo").strip().lower(),
         database_path=BASE_DIR / os.getenv("DATABASE_PATH", "data/bot_data.sqlite3"),
+        user_database_url=(os.getenv("USER_DATABASE_URL") or os.getenv("DATABASE_URL") or "").strip(),
         terms_pdf_path=BASE_DIR / os.getenv("TERMS_PDF_PATH", "assets/foydalanish_shartlari.pdf"),
         sql_connection_string=os.getenv("SQL_CONNECTION_STRING", "").strip(),
         sql_query_path=BASE_DIR / os.getenv(
