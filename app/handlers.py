@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import asyncio
+
 from aiogram import F, Router
+from aiogram.exceptions import TelegramNetworkError
 from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, FSInputFile, Message, ReplyKeyboardRemove
@@ -25,6 +28,13 @@ from app.storage import UserStorage
 def build_router(user_storage: UserStorage, vehicle_repository: VehicleRepository, settings: Settings) -> Router:
     router = Router(name="nazoratbot")
 
+    async def retry_once(send_action) -> None:
+        try:
+            await send_action()
+        except TelegramNetworkError:
+            await asyncio.sleep(1)
+            await send_action()
+
     async def save_telegram_user(message: Message) -> None:
         if not message.from_user:
             return
@@ -42,19 +52,23 @@ def build_router(user_storage: UserStorage, vehicle_repository: VehicleRepositor
         )
 
         if settings.terms_pdf_path.exists():
-            await message.answer_document(
-                FSInputFile(settings.terms_pdf_path),
-                caption=caption,
-                reply_markup=reply_markup,
+            await retry_once(
+                lambda: message.answer_document(
+                    FSInputFile(settings.terms_pdf_path),
+                    caption=caption,
+                    reply_markup=reply_markup,
+                )
             )
             return
 
-        await message.answer(
-            caption
-            + "\n\n"
-            + "Hozircha PDF fayl joylanmagan. Keyinchalik foydalanish shartlari "
-            + f"<code>{settings.terms_pdf_path.as_posix()}</code> manziliga qo'yiladi.",
-            reply_markup=reply_markup,
+        await retry_once(
+            lambda: message.answer(
+                caption
+                + "\n\n"
+                + "Hozircha PDF fayl joylanmagan. Keyinchalik foydalanish shartlari "
+                + f"<code>{settings.terms_pdf_path.as_posix()}</code> manziliga qo'yiladi.",
+                reply_markup=reply_markup,
+            )
         )
 
     async def continue_registration(message: Message, state: FSMContext) -> None:
