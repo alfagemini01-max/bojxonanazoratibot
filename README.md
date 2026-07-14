@@ -37,7 +37,22 @@ DATA_SOURCE=demo
 TZ=Asia/Tashkent
 ```
 
-Polling bot uchun Render’da `Worker` servis tanlash maqsadga muvofiq. Webhook ishlatmoqchi bo'lsangiz `BOT_MODE=webhook` va `WEBHOOK_URL` qiymatlarini kiriting.
+Tavsiya qilingan servis turi: `Web Service`.
+
+Bot `polling` rejimida Telegramdan xabarlarni olib turadi va bir vaqtning o'zida Render uchun kichik HTTP tekshiruv serverini ham ochadi:
+
+```text
+/
+/health
+```
+
+Render Free Web Service 15 daqiqa kiruvchi trafik bo'lmasa uxlab qoladi. Botni uyg'oq saqlash uchun UptimeRobot orqali quyidagi URLga 5 daqiqada bir marta HTTP GET so'rov yuborish mumkin:
+
+```text
+https://SIZNING-RENDER-NOMINGIZ.onrender.com/health
+```
+
+Webhook ishlatmoqchi bo'lsangiz `BOT_MODE=webhook` va `WEBHOOK_URL` qiymatlarini kiriting.
 
 ## Foydalanish shartlari PDF
 
