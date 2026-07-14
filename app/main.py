@@ -13,6 +13,8 @@ from app.handlers import build_router
 from app.repositories.factory import create_vehicle_repository
 from app.storage import UserStorage
 
+logger = logging.getLogger(__name__)
+
 
 def create_bot(settings: Settings) -> Bot:
     if not settings.bot_token:
@@ -31,12 +33,36 @@ def create_dispatcher(settings: Settings) -> tuple[Dispatcher, UserStorage]:
     return dispatcher, user_storage
 
 
+async def start_health_server(settings: Settings) -> None:
+    from aiohttp import web
+
+    async def index(_: web.Request) -> web.Response:
+        return web.Response(
+            text="NazoratBot Telegram xizmati ishlayapti.\nHealth: /health\n",
+            content_type="text/plain",
+        )
+
+    async def health(_: web.Request) -> web.Response:
+        return web.json_response({"ok": True, "service": "nazoratbot-telegram"})
+
+    app = web.Application()
+    app.router.add_get("/", index)
+    app.router.add_get("/health", health)
+
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, settings.web_host, settings.web_port)
+    await site.start()
+    logger.info("Health server started on http://%s:%s", settings.web_host, settings.web_port)
+
+
 async def run_polling() -> None:
     settings = get_settings()
     bot = create_bot(settings)
     dispatcher, user_storage = create_dispatcher(settings)
 
     await user_storage.init()
+    await start_health_server(settings)
     await bot.delete_webhook(drop_pending_updates=True)
     await dispatcher.start_polling(bot)
 
