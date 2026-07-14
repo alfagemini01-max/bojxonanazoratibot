@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta, timezone as datetime_timezone
 from pathlib import Path
 from typing import Protocol
-from zoneinfo import ZoneInfo
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import aiosqlite
 
@@ -15,10 +15,11 @@ class UserProfile:
     full_name: str | None
     phone: str | None
     terms_accepted_at: str | None
+    language_code: str | None = None
 
     @property
     def is_registered(self) -> bool:
-        return bool(self.full_name and self.phone and self.terms_accepted_at)
+        return bool(self.language_code and self.full_name and self.phone and self.terms_accepted_at)
 
 
 class UserStorage(Protocol):
@@ -32,6 +33,8 @@ class UserStorage(Protocol):
 
     async def set_phone(self, user_id: int, phone: str) -> None: ...
 
+    async def set_language(self, user_id: int, language_code: str) -> None: ...
+
     async def accept_terms(self, user_id: int) -> str: ...
 
     async def get_profile(self, user_id: int) -> UserProfile | None: ...
@@ -39,10 +42,17 @@ class UserStorage(Protocol):
 
 class TimezoneMixin:
     def __init__(self, timezone: str = "Asia/Tashkent") -> None:
-        self.timezone = ZoneInfo(timezone)
+        self.timezone = self._load_timezone(timezone)
 
     def now_text(self) -> str:
         return datetime.now(self.timezone).isoformat(timespec="seconds")
+
+    @staticmethod
+    def _load_timezone(timezone: str):
+        try:
+            return ZoneInfo(timezone)
+        except ZoneInfoNotFoundError:
+            return datetime_timezone(timedelta(hours=5))
 
 
 class SQLiteUserStorage(TimezoneMixin):
@@ -62,12 +72,20 @@ class SQLiteUserStorage(TimezoneMixin):
                     full_name TEXT,
                     phone TEXT,
                     terms_accepted_at TEXT,
+                    language_code TEXT,
                     created_at TEXT NOT NULL,
                     updated_at TEXT NOT NULL
                 )
                 """
             )
+            await self._ensure_column(db, "language_code")
             await db.commit()
+
+    async def _ensure_column(self, db: aiosqlite.Connection, column_name: str) -> None:
+        cursor = await db.execute("PRAGMA table_info(users)")
+        columns = [row[1] for row in await cursor.fetchall()]
+        if column_name not in columns:
+            await db.execute(f"ALTER TABLE users ADD COLUMN {column_name} TEXT")
 
     async def close(self) -> None:
         return None
@@ -118,6 +136,21 @@ class SQLiteUserStorage(TimezoneMixin):
             )
             await db.commit()
 
+    async def set_language(self, user_id: int, language_code: str) -> None:
+        now = self.now_text()
+        async with aiosqlite.connect(self.database_path) as db:
+            await db.execute(
+                """
+                INSERT INTO users (user_id, language_code, created_at, updated_at)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(user_id) DO UPDATE SET
+                    language_code = excluded.language_code,
+                    updated_at = excluded.updated_at
+                """,
+                (user_id, language_code, now, now),
+            )
+            await db.commit()
+
     async def accept_terms(self, user_id: int) -> str:
         accepted_at = self.now_text()
         async with aiosqlite.connect(self.database_path) as db:
@@ -138,7 +171,7 @@ class SQLiteUserStorage(TimezoneMixin):
         async with aiosqlite.connect(self.database_path) as db:
             db.row_factory = aiosqlite.Row
             cursor = await db.execute(
-                "SELECT user_id, full_name, phone, terms_accepted_at FROM users WHERE user_id = ?",
+                "SELECT user_id, full_name, phone, terms_accepted_at, language_code FROM users WHERE user_id = ?",
                 (user_id,),
             )
             row = await cursor.fetchone()
@@ -149,6 +182,7 @@ class SQLiteUserStorage(TimezoneMixin):
             full_name=row["full_name"],
             phone=row["phone"],
             terms_accepted_at=row["terms_accepted_at"],
+            language_code=row["language_code"],
         )
 
 
@@ -172,11 +206,13 @@ class PostgresUserStorage(TimezoneMixin):
                     full_name TEXT,
                     phone TEXT,
                     terms_accepted_at TEXT,
+                    language_code TEXT,
                     created_at TEXT NOT NULL,
                     updated_at TEXT NOT NULL
                 )
                 """
             )
+            await connection.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS language_code TEXT")
 
     async def close(self) -> None:
         if self.pool is not None:
@@ -235,6 +271,23 @@ class PostgresUserStorage(TimezoneMixin):
                 now,
             )
 
+    async def set_language(self, user_id: int, language_code: str) -> None:
+        now = self.now_text()
+        async with self.pool.acquire() as connection:
+            await connection.execute(
+                """
+                INSERT INTO users (user_id, language_code, created_at, updated_at)
+                VALUES ($1, $2, $3, $4)
+                ON CONFLICT(user_id) DO UPDATE SET
+                    language_code = EXCLUDED.language_code,
+                    updated_at = EXCLUDED.updated_at
+                """,
+                user_id,
+                language_code,
+                now,
+                now,
+            )
+
     async def accept_terms(self, user_id: int) -> str:
         accepted_at = self.now_text()
         async with self.pool.acquire() as connection:
@@ -256,7 +309,7 @@ class PostgresUserStorage(TimezoneMixin):
     async def get_profile(self, user_id: int) -> UserProfile | None:
         async with self.pool.acquire() as connection:
             row = await connection.fetchrow(
-                "SELECT user_id, full_name, phone, terms_accepted_at FROM users WHERE user_id = $1",
+                "SELECT user_id, full_name, phone, terms_accepted_at, language_code FROM users WHERE user_id = $1",
                 user_id,
             )
         if not row:
@@ -266,6 +319,7 @@ class PostgresUserStorage(TimezoneMixin):
             full_name=row["full_name"],
             phone=row["phone"],
             terms_accepted_at=row["terms_accepted_at"],
+            language_code=row["language_code"],
         )
 
 

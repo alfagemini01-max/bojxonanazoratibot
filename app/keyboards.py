@@ -7,45 +7,56 @@ from aiogram.types import (
     ReplyKeyboardMarkup,
 )
 
-CONTACT_BUTTON = "📱 Telefon raqamni yuborish"
-ACCEPT_TERMS_BUTTON = "✅ Shartlarga roziman"
-CHECK_BUTTON = "🔎 Tekshirish"
-TERMS_BUTTON = "📄 Foydalanish shartlari"
-CANCEL_BUTTON = "Bekor qilish"
+from app.i18n import LANGUAGES, button_texts, t
+
+CHECK_BUTTONS = button_texts("button_check")
+TERMS_BUTTONS = button_texts("button_terms")
+LANGUAGE_BUTTONS = button_texts("button_language")
+CANCEL_BUTTONS = button_texts("button_cancel")
 
 
-def contact_keyboard() -> ReplyKeyboardMarkup:
-    return ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text=CONTACT_BUTTON, request_contact=True)],
-        ],
-        resize_keyboard=True,
-        one_time_keyboard=True,
-        input_field_placeholder="Telefon raqamingizni yuboring",
-    )
-
-
-def terms_keyboard() -> InlineKeyboardMarkup:
+def language_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text=ACCEPT_TERMS_BUTTON, callback_data="accept_terms")],
+            [InlineKeyboardButton(text=label, callback_data=f"set_lang:{code}")]
+            for code, label in LANGUAGES.items()
         ]
     )
 
 
-def main_menu_keyboard() -> ReplyKeyboardMarkup:
+def contact_keyboard(lang: str = "uz") -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(text=CHECK_BUTTON)],
-            [KeyboardButton(text=TERMS_BUTTON)],
+            [KeyboardButton(text=t(lang, "button_contact"), request_contact=True)],
         ],
         resize_keyboard=True,
-        input_field_placeholder="Kerakli bo‘limni tanlang",
+        one_time_keyboard=True,
+        input_field_placeholder=t(lang, "contact_placeholder"),
     )
 
 
-def cancel_keyboard() -> ReplyKeyboardMarkup:
+def terms_keyboard(lang: str = "uz") -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text=t(lang, "button_accept_terms"), callback_data="accept_terms")],
+        ]
+    )
+
+
+def main_menu_keyboard(lang: str = "uz") -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
-        keyboard=[[KeyboardButton(text=CANCEL_BUTTON)]],
+        keyboard=[
+            [KeyboardButton(text=t(lang, "button_check"))],
+            [KeyboardButton(text=t(lang, "button_terms"))],
+            [KeyboardButton(text=t(lang, "button_language"))],
+        ],
+        resize_keyboard=True,
+        input_field_placeholder=t(lang, "menu_placeholder"),
+    )
+
+
+def cancel_keyboard(lang: str = "uz") -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[[KeyboardButton(text=t(lang, "button_cancel"))]],
         resize_keyboard=True,
     )
