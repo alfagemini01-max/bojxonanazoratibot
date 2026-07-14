@@ -26,7 +26,8 @@ def create_bot(settings: Settings) -> Bot:
 
 
 def create_dispatcher(settings: Settings) -> tuple[Dispatcher, UserStorage]:
-    user_storage = create_user_storage(settings.database_path, settings.timezone, settings.user_database_url)
+    user_database_url = getattr(settings, "user_database_url", "")
+    user_storage = create_user_storage(settings.database_path, settings.timezone, user_database_url)
     vehicle_repository = create_vehicle_repository(settings)
     dispatcher = Dispatcher(storage=MemoryStorage())
     dispatcher.include_router(build_router(user_storage, vehicle_repository, settings))
