@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 
 from aiogram import F, Router
 from aiogram.exceptions import TelegramNetworkError
@@ -24,16 +25,23 @@ from app.services.plate import looks_like_plate, normalize_plate
 from app.states import CheckState, RegistrationState
 from app.storage import UserStorage
 
+logger = logging.getLogger(__name__)
+
 
 def build_router(user_storage: UserStorage, vehicle_repository: VehicleRepository, settings: Settings) -> Router:
     router = Router(name="nazoratbot")
 
-    async def retry_once(send_action) -> None:
-        try:
-            await send_action()
-        except TelegramNetworkError:
-            await asyncio.sleep(1)
-            await send_action()
+    async def send_safely(send_action, *, retries: int = 2) -> bool:
+        for attempt in range(retries + 1):
+            try:
+                await send_action()
+                return True
+            except TelegramNetworkError as exc:
+                if attempt >= retries:
+                    logger.warning("Telegram message was not sent after retries: %s", exc)
+                    return False
+                await asyncio.sleep(1 + attempt)
+        return False
 
     async def save_telegram_user(message: Message) -> None:
         if not message.from_user:
@@ -52,7 +60,7 @@ def build_router(user_storage: UserStorage, vehicle_repository: VehicleRepositor
         )
 
         if settings.terms_pdf_path.exists():
-            await retry_once(
+            await send_safely(
                 lambda: message.answer_document(
                     FSInputFile(settings.terms_pdf_path),
                     caption=caption,
@@ -61,7 +69,7 @@ def build_router(user_storage: UserStorage, vehicle_repository: VehicleRepositor
             )
             return
 
-        await retry_once(
+        await send_safely(
             lambda: message.answer(
                 caption
                 + "\n\n"
@@ -70,6 +78,54 @@ def build_router(user_storage: UserStorage, vehicle_repository: VehicleRepositor
                 reply_markup=reply_markup,
             )
         )
+
+    async def process_contact(message: Message, state: FSMContext) -> None:
+        if not message.from_user or not message.contact:
+            return
+        await save_telegram_user(message)
+
+        if message.contact.user_id and message.contact.user_id != message.from_user.id:
+            await message.answer("Iltimos, o'zingizning Telegram kontakt raqamingizni yuboring.")
+            return
+
+        await user_storage.set_phone(message.from_user.id, message.contact.phone_number)
+        logger.info("Contact saved for user_id=%s", message.from_user.id)
+        await state.clear()
+        profile = await user_storage.get_profile(message.from_user.id)
+        if profile and profile.terms_accepted_at:
+            await message.answer(
+                "Telefon raqamingiz yangilandi.\n\nKerakli amalni tanlang.",
+                reply_markup=main_menu_keyboard(),
+            )
+            return
+        await message.answer("Telefon raqamingiz qabul qilindi.", reply_markup=ReplyKeyboardRemove())
+        await send_terms(message, show_accept_button=True)
+
+    async def process_plate(message: Message, state: FSMContext) -> None:
+        raw_plate = message.text or ""
+        if not looks_like_plate(raw_plate):
+            await message.answer(
+                "Davlat raqami noto'g'ri ko'rinishda yuborildi. Iltimos, qayta kiriting.\n"
+                "Masalan: <code>01A123BB</code>",
+                reply_markup=cancel_keyboard(),
+            )
+            return
+
+        plate = normalize_plate(raw_plate)
+        logger.info("Vehicle check requested by user_id=%s plate=%s", message.from_user.id if message.from_user else None, plate)
+        record = await vehicle_repository.find_by_plate(plate)
+
+        if record is None:
+            await message.answer(
+                build_not_found_message(plate, settings.timezone),
+                reply_markup=main_menu_keyboard(),
+            )
+        else:
+            await message.answer(
+                build_vehicle_message(record, settings.timezone),
+                reply_markup=main_menu_keyboard(),
+            )
+        await state.clear()
 
     async def continue_registration(message: Message, state: FSMContext) -> None:
         if not message.from_user:
@@ -139,18 +195,11 @@ def build_router(user_storage: UserStorage, vehicle_repository: VehicleRepositor
 
     @router.message(StateFilter(RegistrationState.waiting_for_contact), F.contact)
     async def receive_contact(message: Message, state: FSMContext) -> None:
-        if not message.from_user or not message.contact:
-            return
-        await save_telegram_user(message)
+        await process_contact(message, state)
 
-        if message.contact.user_id and message.contact.user_id != message.from_user.id:
-            await message.answer("Iltimos, o'zingizning Telegram kontakt raqamingizni yuboring.")
-            return
-
-        await user_storage.set_phone(message.from_user.id, message.contact.phone_number)
-        await state.clear()
-        await message.answer("Telefon raqamingiz qabul qilindi.", reply_markup=ReplyKeyboardRemove())
-        await send_terms(message, show_accept_button=True)
+    @router.message(F.contact)
+    async def receive_contact_without_state(message: Message, state: FSMContext) -> None:
+        await process_contact(message, state)
 
     @router.message(StateFilter(RegistrationState.waiting_for_contact))
     async def contact_expected(message: Message) -> None:
@@ -213,29 +262,7 @@ def build_router(user_storage: UserStorage, vehicle_repository: VehicleRepositor
 
     @router.message(StateFilter(CheckState.waiting_for_plate))
     async def check_plate(message: Message, state: FSMContext) -> None:
-        raw_plate = message.text or ""
-        if not looks_like_plate(raw_plate):
-            await message.answer(
-                "Davlat raqami noto'g'ri ko'rinishda yuborildi. Iltimos, qayta kiriting.\n"
-                "Masalan: <code>01A123BB</code>",
-                reply_markup=cancel_keyboard(),
-            )
-            return
-
-        plate = normalize_plate(raw_plate)
-        record = await vehicle_repository.find_by_plate(plate)
-
-        if record is None:
-            await message.answer(
-                build_not_found_message(plate, settings.timezone),
-                reply_markup=main_menu_keyboard(),
-            )
-        else:
-            await message.answer(
-                build_vehicle_message(record, settings.timezone),
-                reply_markup=main_menu_keyboard(),
-            )
-        await state.clear()
+        await process_plate(message, state)
 
     @router.message(Command("help"))
     async def help_command(message: Message) -> None:
@@ -252,6 +279,9 @@ def build_router(user_storage: UserStorage, vehicle_repository: VehicleRepositor
         profile = await user_storage.get_profile(message.from_user.id)
         if not profile or not profile.is_registered:
             await continue_registration(message, state)
+            return
+        if message.text and looks_like_plate(message.text):
+            await process_plate(message, state)
             return
         await message.answer("Kerakli amalni menyudan tanlang.", reply_markup=main_menu_keyboard())
 
