@@ -7,21 +7,19 @@ from aiogram import F, Router
 from aiogram.exceptions import TelegramNetworkError
 from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
-from aiogram.types import CallbackQuery, FSInputFile, Message, ReplyKeyboardRemove
+from aiogram.types import (
+    CallbackQuery,
+    FSInputFile,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    KeyboardButton,
+    Message,
+    ReplyKeyboardMarkup,
+    ReplyKeyboardRemove,
+)
 
 from app.config import Settings
-from app.i18n import LANGUAGES, normalize_lang, t
-from app.keyboards import (
-    CANCEL_BUTTONS,
-    CHECK_BUTTONS,
-    LANGUAGE_BUTTONS,
-    TERMS_BUTTONS,
-    cancel_keyboard,
-    contact_keyboard,
-    language_keyboard,
-    main_menu_keyboard,
-    terms_keyboard,
-)
+from app.i18n import LANGUAGES, button_texts, normalize_lang, t
 from app.repositories.base import VehicleRepository
 from app.services.message_templates import build_not_found_message, build_vehicle_message
 from app.services.plate import looks_like_plate, normalize_plate
@@ -29,6 +27,58 @@ from app.states import CheckState, RegistrationState
 from app.storage import UserStorage
 
 logger = logging.getLogger(__name__)
+
+CHECK_BUTTONS = button_texts("button_check")
+TERMS_BUTTONS = button_texts("button_terms")
+LANGUAGE_BUTTONS = button_texts("button_language")
+CANCEL_BUTTONS = button_texts("button_cancel")
+
+
+def language_keyboard() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text=label, callback_data=f"set_lang:{code}")]
+            for code, label in LANGUAGES.items()
+        ]
+    )
+
+
+def contact_keyboard(lang: str = "uz") -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text=t(lang, "button_contact"), request_contact=True)],
+        ],
+        resize_keyboard=True,
+        one_time_keyboard=True,
+        input_field_placeholder=t(lang, "contact_placeholder"),
+    )
+
+
+def terms_keyboard(lang: str = "uz") -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text=t(lang, "button_accept_terms"), callback_data="accept_terms")],
+        ]
+    )
+
+
+def main_menu_keyboard(lang: str = "uz") -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text=t(lang, "button_check"))],
+            [KeyboardButton(text=t(lang, "button_terms"))],
+            [KeyboardButton(text=t(lang, "button_language"))],
+        ],
+        resize_keyboard=True,
+        input_field_placeholder=t(lang, "menu_placeholder"),
+    )
+
+
+def cancel_keyboard(lang: str = "uz") -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[[KeyboardButton(text=t(lang, "button_cancel"))]],
+        resize_keyboard=True,
+    )
 
 
 def build_router(user_storage: UserStorage, vehicle_repository: VehicleRepository, settings: Settings) -> Router:
