@@ -64,6 +64,7 @@ async def run_polling() -> None:
 
     await user_storage.init()
     await start_health_server(settings)
+    logger.info("Starting Telegram polling mode. Existing webhook will be deleted.")
     await bot.delete_webhook(drop_pending_updates=True)
     try:
         await dispatcher.start_polling(bot)
@@ -95,6 +96,7 @@ def run_webhook() -> None:
 
     async def on_startup(bot: Bot) -> None:
         await user_storage.init()
+        logger.info("Setting Telegram webhook: %s", webhook_url)
         await bot.set_webhook(webhook_url, drop_pending_updates=True)
 
     async def on_shutdown(bot: Bot) -> None:
