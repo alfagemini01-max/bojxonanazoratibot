@@ -1,0 +1,19 @@
+services:
+  - type: worker
+    name: nazoratbot-telegram
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m app.main
+    envVars:
+      - key: BOT_TOKEN
+        sync: false
+      - key: BOT_MODE
+        value: polling
+      - key: DATA_SOURCE
+        value: demo
+      - key: TZ
+        value: Asia/Tashkent
+      - key: DATABASE_PATH
+        value: data/bot_data.sqlite3
+      - key: TERMS_PDF_PATH
+        value: assets/foydalanish_shartlari.pdf
