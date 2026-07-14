@@ -11,6 +11,24 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
 
+def _normalize_webhook_url(value: str) -> str:
+    url = value.strip().rstrip("/")
+    if not url:
+        return ""
+    if url.startswith("//"):
+        return "https:" + url
+    if not url.startswith(("https://", "http://")):
+        return "https://" + url
+    return url
+
+
+def _normalize_webhook_path(value: str) -> str:
+    path = value.strip() or "/webhook"
+    if not path.startswith("/"):
+        path = "/" + path
+    return path
+
+
 @dataclass(frozen=True)
 class Settings:
     bot_token: str
@@ -29,16 +47,14 @@ class Settings:
 
 
 def get_settings() -> Settings:
-    webhook_url = (os.getenv("WEBHOOK_URL") or os.getenv("RENDER_EXTERNAL_URL") or "").strip()
-    bot_mode = os.getenv("BOT_MODE", "").strip().lower()
-    if not bot_mode:
-        bot_mode = "webhook" if webhook_url else "polling"
+    webhook_url = _normalize_webhook_url(os.getenv("WEBHOOK_URL") or os.getenv("RENDER_EXTERNAL_URL") or "")
+    bot_mode = os.getenv("BOT_MODE", "polling").strip().lower()
 
     return Settings(
         bot_token=os.getenv("BOT_TOKEN", "").strip(),
         bot_mode=bot_mode,
         webhook_url=webhook_url,
-        webhook_path=os.getenv("WEBHOOK_PATH", "/webhook").strip(),
+        webhook_path=_normalize_webhook_path(os.getenv("WEBHOOK_PATH", "/webhook")),
         web_host=os.getenv("WEB_SERVER_HOST", "0.0.0.0").strip(),
         web_port=int(os.getenv("PORT", "8080")),
         data_source=os.getenv("DATA_SOURCE", "demo").strip().lower(),
