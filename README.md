@@ -7,7 +7,7 @@ Bot oqimi:
 1. `/start` bosilganda foydalanuvchidan bot tilini tanlash so'raladi.
 2. Foydalanuvchidan ism so'raladi.
 3. Telefon raqamini Telegram kontakt tugmasi orqali yuborish so'raladi.
-4. Foydalanish shartlari PDF ko'rinishida yuboriladi. PDF hali bo'lmasa, bot matnli ogohlantirish beradi.
+4. Foydalanish shartlari rasm ko'rinishida yuboriladi. Rasm hali bo'lmasa, bot PDF fallback yoki matnli ogohlantirish beradi.
 5. Foydalanuvchi `Shartlarga roziman` tugmasini bosadi.
 6. Rozilik vaqti foydalanuvchi bazasida saqlanadi. Render uchun tashqi Postgres ishlatish tavsiya etiladi.
 7. Asosiy menyuda `Tekshirish` tugmasi orqali davlat raqami kiritiladi.
@@ -65,15 +65,27 @@ USER_DATABASE_URL=postgresql://user:password@host:5432/dbname?sslmode=require
 
 `USER_DATABASE_URL` bo'lmasa bot SQLite faylga yozadi. Render Free Web Service redeploy/restart bo'lganda local fayllar o'chishi mumkin, shu sababli ishlab turgan bot uchun Postgres tavsiya etiladi.
 
-## Foydalanish shartlari PDF
+## Foydalanish shartlari rasmi
 
-PDF tayyor bo'lganda quyidagi manzilga joylashtiring:
+Bot foydalanish shartlarini Telegram photo ko'rinishida yuboradi. Rasm quyidagi manzilda bo'lishi kerak:
 
 ```text
-assets/foydalanish_shartlari.pdf
+assets/foydalanish_shartlari.png
 ```
 
-Kerak bo'lsa `.env` orqali boshqa fayl yo'lini ko'rsatish mumkin:
+Kerak bo'lsa `.env` yoki Render Environment Variables orqali boshqa rasm yo'lini ko'rsatish mumkin:
+
+```text
+TERMS_IMAGE_PATH=assets/foydalanish_shartlari.png
+```
+
+Bot rasmni birinchi marta yuborgandan keyin Render logida `Terms photo file_id cached: ...` degan yozuv chiqadi. Shu `file_id` ni Render envga qo'ysangiz, keyingi deploylardan keyin ham rasm Telegram serveridan juda tez yuboriladi:
+
+```text
+TERMS_PHOTO_FILE_ID=telegram_file_id
+```
+
+PDF fallback sifatida qoldirilgan:
 
 ```text
 TERMS_PDF_PATH=assets/foydalanish_shartlari.pdf

@@ -15,7 +15,11 @@ services:
         value: Asia/Tashkent
       - key: DATABASE_PATH
         value: data/bot_data.sqlite3
+      - key: TERMS_IMAGE_PATH
+        value: assets/foydalanish_shartlari.png
       - key: TERMS_PDF_PATH
         value: assets/foydalanish_shartlari.pdf
+      - key: TERMS_PHOTO_FILE_ID
+        sync: false
       - key: USER_DATABASE_URL
         sync: false
