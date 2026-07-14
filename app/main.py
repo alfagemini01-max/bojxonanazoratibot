@@ -14,6 +14,7 @@ from app.repositories.factory import create_vehicle_repository
 from app.storage import UserStorage, create_user_storage
 
 logger = logging.getLogger(__name__)
+APP_VERSION = "2026-07-14-i18n-iib-v2"
 
 
 def create_bot(settings: Settings) -> Bot:
@@ -44,7 +45,7 @@ async def start_health_server(settings: Settings) -> None:
         )
 
     async def health(_: web.Request) -> web.Response:
-        return web.json_response({"ok": True, "service": "nazoratbot-telegram"})
+        return web.json_response({"ok": True, "service": "nazoratbot-telegram", "version": APP_VERSION})
 
     app = web.Application()
     app.router.add_get("/", index)
@@ -54,7 +55,7 @@ async def start_health_server(settings: Settings) -> None:
     await runner.setup()
     site = web.TCPSite(runner, settings.web_host, settings.web_port)
     await site.start()
-    logger.info("Health server started on http://%s:%s", settings.web_host, settings.web_port)
+    logger.info("Health server started on http://%s:%s version=%s", settings.web_host, settings.web_port, APP_VERSION)
 
 
 async def run_polling() -> None:
@@ -92,7 +93,9 @@ def run_webhook() -> None:
         )
 
     async def health(_: web.Request) -> web.Response:
-        return web.json_response({"ok": True, "service": "nazoratbot-telegram", "mode": "webhook"})
+        return web.json_response(
+            {"ok": True, "service": "nazoratbot-telegram", "mode": "webhook", "version": APP_VERSION}
+        )
 
     async def on_startup(bot: Bot) -> None:
         await user_storage.init()
