@@ -4,13 +4,16 @@ Bu papka transport vositasi davlat raqami bo'yicha bojxona nazoratidagi hujjatla
 
 Bot oqimi:
 
-1. `/start` bosilganda foydalanuvchidan ism so'raladi.
-2. Telefon raqamini Telegram kontakt tugmasi orqali yuborish so'raladi.
-3. Foydalanish shartlari PDF ko'rinishida yuboriladi. PDF hali bo'lmasa, bot matnli ogohlantirish beradi.
-4. Foydalanuvchi `Shartlarga roziman` tugmasini bosadi.
-5. Rozilik vaqti SQLite bazasida saqlanadi.
-6. Asosiy menyuda `Tekshirish` tugmasi orqali davlat raqami kiritiladi.
-7. Bot nazoratdagi hujjatlar, bojxona yig'imlari, YHXB jarimasi va boshqa taqiqlar bo'yicha xabar qaytaradi.
+1. `/start` bosilganda foydalanuvchidan bot tilini tanlash so'raladi.
+2. Foydalanuvchidan ism so'raladi.
+3. Telefon raqamini Telegram kontakt tugmasi orqali yuborish so'raladi.
+4. Foydalanish shartlari PDF ko'rinishida yuboriladi. PDF hali bo'lmasa, bot matnli ogohlantirish beradi.
+5. Foydalanuvchi `Shartlarga roziman` tugmasini bosadi.
+6. Rozilik vaqti foydalanuvchi bazasida saqlanadi. Render uchun tashqi Postgres ishlatish tavsiya etiladi.
+7. Asosiy menyuda `Tekshirish` tugmasi orqali davlat raqami kiritiladi.
+8. Bot nazoratdagi hujjatlar, bojxona yig'imlari, IIB jarimasi va IIB qidiruvi bo'yicha xabar qaytaradi.
+
+Bot O'zbek, Rus va Ingliz tillarida ishlaydi. Tilni asosiy menyudagi `Tilni o'zgartirish` tugmasi yoki `/language` buyrug'i orqali almashtirish mumkin.
 
 ## Ishga tushirish
 
@@ -39,7 +42,9 @@ TZ=Asia/Tashkent
 
 Tavsiya qilingan servis turi: `Web Service`.
 
-Bot `polling` rejimida Telegramdan xabarlarni olib turadi va bir vaqtning o'zida Render uchun kichik HTTP tekshiruv serverini ham ochadi:
+Bot `polling` rejimida Telegramdan xabarlarni olib turadi. Shu bilan birga Render Web Service uchun kichik HTTP server ham ochiladi.
+
+Render uchun kichik HTTP tekshiruv endpointlari ham ochiladi:
 
 ```text
 /
@@ -52,7 +57,13 @@ Render Free Web Service 15 daqiqa kiruvchi trafik bo'lmasa uxlab qoladi. Botni u
 https://SIZNING-RENDER-NOMINGIZ.onrender.com/health
 ```
 
-Webhook ishlatmoqchi bo'lsangiz `BOT_MODE=webhook` va `WEBHOOK_URL` qiymatlarini kiriting.
+Foydalanuvchi ma'lumotlari restart/redeploydan keyin ham saqlanishi uchun tashqi Postgres URL kiriting:
+
+```text
+USER_DATABASE_URL=postgresql://user:password@host:5432/dbname?sslmode=require
+```
+
+`USER_DATABASE_URL` bo'lmasa bot SQLite faylga yozadi. Render Free Web Service redeploy/restart bo'lganda local fayllar o'chishi mumkin, shu sababli ishlab turgan bot uchun Postgres tavsiya etiladi.
 
 ## Foydalanish shartlari PDF
 
@@ -101,8 +112,8 @@ pip install -r requirements-sql.txt
 | `B777DD09` | Xorijiy yengil avtomobil, MB muddati o'tgan |
 | `270KZ777` | Xorijiy yuk mashinasi, YUBNK muddati o'tmagan |
 | `888KZ777` | Xorijiy yuk mashinasi, YUBNK muddati o'tgan |
-| `01C888EE` | Milliy yengil avtomobil, YHXB jarimasi bor |
-| `01D444FF` | Milliy yengil avtomobil, MIB taqiqi bor |
+| `01C888EE` | Milliy yengil avtomobil, IIB jarimasi bor |
+| `01D444FF` | Milliy yengil avtomobil, IIB qidiruvi bor |
 | `T1234AB` | Xorijiy tirkama, MB muddati o'tmagan |
 | `70ABC01` | Xorijiy yengil avtomobil, MB tugashiga 3 kun qolgan |
 | `TR9999KZ` | Xorijiy tirkama, MB tugashiga 3 kun qolgan |
@@ -115,10 +126,10 @@ pip install -r requirements-sql.txt
 | `77L777LL` | Xorijiy yuk mashinasi, tranzit deklaratsiya nazoratda |
 | `A000AA01` | Xorijiy transport, MB topilmagan |
 | `22X222XX` | Milliy yuk mashinasi, Eksport 3 qadam nazoratda |
-| `06M606MM` | Milliy yuk mashinasi, sud taqiqi va jarima bor |
+| `06M606MM` | Milliy yuk mashinasi, IIB qidiruvi va jarima bor |
 | `30BUS01` | Milliy avtobus, nazorat hujjati yo'q |
 | `KZ12345` | Xorijiy yuk mashinasi, TD va MB tugashiga 3 kun qolgan |
-| `RU9090A` | Xorijiy yengil avtomobil, MB va YHXB jarimasi bor |
+| `RU9090A` | Xorijiy yengil avtomobil, MB va IIB jarimasi bor |
 | `TJ7777T` | Xorijiy yuk mashinasi, yuk nazorati yo'q, MB bor |
 | `TRK111RU` | Xorijiy tirkama, MB muddati o'tgan |
 | `99A999AA` | Xorijiy yuk mashinasi, YUBNK muddati o'tgan va qarzdorlik bor |
