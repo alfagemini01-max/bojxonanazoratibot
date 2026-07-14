@@ -11,7 +11,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from app.config import Settings, get_settings
 from app.handlers import build_router
 from app.repositories.factory import create_vehicle_repository
-from app.storage import UserStorage
+from app.storage import UserStorage, create_user_storage
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ def create_bot(settings: Settings) -> Bot:
 
 
 def create_dispatcher(settings: Settings) -> tuple[Dispatcher, UserStorage]:
-    user_storage = UserStorage(settings.database_path, settings.timezone)
+    user_storage = create_user_storage(settings.database_path, settings.timezone, settings.user_database_url)
     vehicle_repository = create_vehicle_repository(settings)
     dispatcher = Dispatcher(storage=MemoryStorage())
     dispatcher.include_router(build_router(user_storage, vehicle_repository, settings))
@@ -64,7 +64,11 @@ async def run_polling() -> None:
     await user_storage.init()
     await start_health_server(settings)
     await bot.delete_webhook(drop_pending_updates=True)
-    await dispatcher.start_polling(bot)
+    try:
+        await dispatcher.start_polling(bot)
+    finally:
+        await user_storage.close()
+        await bot.session.close()
 
 
 def run_webhook() -> None:
@@ -79,18 +83,30 @@ def run_webhook() -> None:
     dispatcher, user_storage = create_dispatcher(settings)
     webhook_url = settings.webhook_url.rstrip("/") + settings.webhook_path
 
+    async def index(_: web.Request) -> web.Response:
+        return web.Response(
+            text="NazoratBot Telegram xizmati ishlayapti.\nHealth: /health\nWebhook: /webhook\n",
+            content_type="text/plain",
+        )
+
+    async def health(_: web.Request) -> web.Response:
+        return web.json_response({"ok": True, "service": "nazoratbot-telegram", "mode": "webhook"})
+
     async def on_startup(bot: Bot) -> None:
         await user_storage.init()
         await bot.set_webhook(webhook_url, drop_pending_updates=True)
 
     async def on_shutdown(bot: Bot) -> None:
         await bot.delete_webhook()
+        await user_storage.close()
         await bot.session.close()
 
     dispatcher.startup.register(on_startup)
     dispatcher.shutdown.register(on_shutdown)
 
     app = web.Application()
+    app.router.add_get("/", index)
+    app.router.add_get("/health", health)
     SimpleRequestHandler(dispatcher=dispatcher, bot=bot).register(app, path=settings.webhook_path)
     setup_application(app, dispatcher, bot=bot)
     web.run_app(app, host=settings.web_host, port=settings.web_port)
