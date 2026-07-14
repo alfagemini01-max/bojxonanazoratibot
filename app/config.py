@@ -29,10 +29,15 @@ class Settings:
 
 
 def get_settings() -> Settings:
+    webhook_url = (os.getenv("WEBHOOK_URL") or os.getenv("RENDER_EXTERNAL_URL") or "").strip()
+    bot_mode = os.getenv("BOT_MODE", "").strip().lower()
+    if not bot_mode:
+        bot_mode = "webhook" if webhook_url else "polling"
+
     return Settings(
         bot_token=os.getenv("BOT_TOKEN", "").strip(),
-        bot_mode=os.getenv("BOT_MODE", "polling").strip().lower(),
-        webhook_url=os.getenv("WEBHOOK_URL", "").strip(),
+        bot_mode=bot_mode,
+        webhook_url=webhook_url,
         webhook_path=os.getenv("WEBHOOK_PATH", "/webhook").strip(),
         web_host=os.getenv("WEB_SERVER_HOST", "0.0.0.0").strip(),
         web_port=int(os.getenv("PORT", "8080")),
