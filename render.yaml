@@ -8,7 +8,11 @@ services:
       - key: BOT_TOKEN
         sync: false
       - key: BOT_MODE
-        value: polling
+        value: webhook
+      - key: WEBHOOK_URL
+        value: https://bojxonanazoratibot.onrender.com
+      - key: WEBHOOK_PATH
+        value: /webhook
       - key: DATA_SOURCE
         value: demo
       - key: TZ
@@ -17,3 +21,5 @@ services:
         value: data/bot_data.sqlite3
       - key: TERMS_PDF_PATH
         value: assets/foydalanish_shartlari.pdf
+      - key: USER_DATABASE_URL
+        sync: false
