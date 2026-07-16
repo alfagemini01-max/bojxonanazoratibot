@@ -36,14 +36,16 @@ Render sozlamalarida Environment Variables:
 
 ```text
 BOT_TOKEN=Telegram BotFather bergan token
-BOT_MODE=polling
+BOT_MODE=webhook
+WEBHOOK_URL=https://bojxonanazoratibot.onrender.com
+WEBHOOK_PATH=/webhook
 PERMISSION_RULES_PATH=data/permission_rules.json
 TZ=Asia/Tashkent
 ```
 
 Tavsiya qilingan servis turi: `Web Service`.
 
-Bot `polling` rejimida Telegramdan xabarlarni olib turadi. Shu bilan birga Render Web Service uchun kichik HTTP server ham ochiladi.
+Bot Renderda `webhook` rejimida ishlaydi. Bu rejim bitta bot token bo'yicha bir nechta `getUpdates` so'rovlari to'qnashuvini oldini oladi.
 
 Render uchun kichik HTTP tekshiruv endpointlari ham ochiladi:
 
@@ -124,6 +126,14 @@ Shundan keyin tashuv turi avtomatik aniqlanadi:
 | Boshlangan va tugaydigan davlat O'zbekiston | Ichki tashuv |
 
 Yig'im faqat Excel spravochnikda `Сбор обязательно` deb belgilangan holatda hisoblanadi. Agar Excelda `Сбор не обязательно` bo'lsa, stavka jadvalida miqdor mavjud bo'lsa ham bot yig'im undirilmasligini ko'rsatadi.
+
+Qo'shimcha izohlar quyidagicha qo'llanadi:
+
+- Turkmaniston yuk avtotransport vositasi bilan uchinchi mamlakatlardan O'zbekistonga yuk olib kirish yoki O'zbekiston hududidan yuk olib chiqishda yig'imga 375 USD qo'shimcha qo'shiladi.
+- Og'ir vaznli yoki yirik gabaritli transport vositalarida alohida qonunchilik to'lovlari bo'lishi mumkinligi ogohlantirish sifatida ko'rsatiladi.
+- Gumanitar yuklar uchun kirish va tranzit yig'imlariga 0,5 kamaytiruvchi koeffitsiyent qo'llanishi mumkinligi ogohlantirish sifatida ko'rsatiladi.
+- Eron Islom Respublikasi transport vositalari uchun kirish va tranzit yig'im stavkasi 0 USD sifatida belgilanadi.
+- Xalqaro shartnomada boshqacha tartib belgilangan bo'lsa, xalqaro shartnoma qoidalari qo'llanishi ogohlantiriladi.
 
 ## Sinov uchun namunalar
 
