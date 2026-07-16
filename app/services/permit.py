@@ -67,6 +67,18 @@ COUNTRY_LABELS = {
 }
 
 
+COUNTRY_LABELS.update({
+    "496": {"uz": "Mongoliya", "ru": "Mongolia", "en": "Mongolia"},
+    "498": {"uz": "Moldova", "ru": "Moldova", "en": "Moldova"},
+    "528": {"uz": "Niderlandiya", "ru": "Netherlands", "en": "Netherlands"},
+    "616": {"uz": "Polsha", "ru": "Poland", "en": "Poland"},
+    "703": {"uz": "Slovakiya", "ru": "Slovakia", "en": "Slovakia"},
+    "705": {"uz": "Sloveniya", "ru": "Slovenia", "en": "Slovenia"},
+    "756": {"uz": "Shveytsariya", "ru": "Switzerland", "en": "Switzerland"},
+    "804": {"uz": "Ukraina", "ru": "Ukraine", "en": "Ukraine"},
+})
+
+
 COMMON_COUNTRY_ALIASES = {
     "860": ["uzb", "uzbek", "uzbekistan", "ozb", "ozbekiston", "o'zbekiston", "uzbekiston"],
     "156": ["xit", "xito", "xitoy", "china", "chin", "kitay", "kitai"],
@@ -81,6 +93,18 @@ COMMON_COUNTRY_ALIASES = {
     "792": ["turkiya", "turkey", "turkiye", "turkia"],
     "000": ["boshqa", "boshqa davlat", "nomalum", "noma'lum", "other", "not listed"],
 }
+
+
+COMMON_COUNTRY_ALIASES.update({
+    "496": ["mongoliya", "mongolia", "mongol"],
+    "498": ["moldova", "moldaviya", "moldavia"],
+    "528": ["niderlandiya", "niderland", "netherlands", "holland", "gollandiya"],
+    "616": ["polsha", "poland"],
+    "703": ["slovakiya", "slovakia", "slovak"],
+    "705": ["sloveniya", "slovenia", "sloven"],
+    "756": ["shveytsariya", "shveysariya", "switzerland", "swiss"],
+    "804": ["ukraina", "ukraine"],
+})
 
 
 @dataclass(frozen=True)
