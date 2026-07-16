@@ -144,7 +144,7 @@
     "498": "МОЛДАВИЯ",
     "528": "НИДЕРЛАНДЫ",
     "616": "ПОЛЬША",
-    "643": "РОССИЯ",
+    "643": "??????",
     "703": "СЛОВАКИЯ",
     "705": "СЛОВЕНИЯ",
     "756": "ШВЕЙЦАРИЯ",
@@ -11404,6 +11404,1176 @@
         "dues_name_ru": "Сбор обязательно",
         "source": "manual: Turkmenistan table screenshot"
       }
+    },
+    "643": {
+      "1": {
+        "vid_cd": "1",
+        "vid_name_ru": "Двухсторонний, начала перевозки Узбекистан",
+        "permission_cd": "2",
+        "permission_name_ru": "Не обязателно",
+        "exception_cd": "1",
+        "exception_name_ru": "Недоступен",
+        "dues_cd": "2",
+        "dues_name_ru": "Сбор не обязательно",
+        "source": "manual: Rossiya screenshot 16.07.2026; same code pattern as 398"
+      },
+      "2": {
+        "vid_cd": "2",
+        "vid_name_ru": "Двухсторонний, окончания перевозки Узбекистан",
+        "permission_cd": "2",
+        "permission_name_ru": "Не обязателно",
+        "exception_cd": "1",
+        "exception_name_ru": "Недоступен",
+        "dues_cd": "2",
+        "dues_name_ru": "Сбор не обязательно",
+        "source": "manual: Rossiya screenshot 16.07.2026; same code pattern as 398"
+      },
+      "3": {
+        "vid_cd": "3",
+        "vid_name_ru": "Транзитный",
+        "permission_cd": "2",
+        "permission_name_ru": "Не обязателно",
+        "exception_cd": "1",
+        "exception_name_ru": "Недоступен",
+        "dues_cd": "2",
+        "dues_name_ru": "Сбор не обязательно",
+        "source": "manual: Rossiya screenshot 16.07.2026; same code pattern as 398"
+      },
+      "4": {
+        "vid_cd": "4",
+        "vid_name_ru": "В третьи страны",
+        "permission_cd": "1",
+        "permission_name_ru": "Обязателно",
+        "exception_cd": "1",
+        "exception_name_ru": "Недоступен",
+        "dues_cd": "2",
+        "dues_name_ru": "Сбор не обязательно",
+        "source": "manual: Rossiya screenshot 16.07.2026; same code pattern as 398"
+      },
+      "5": {
+        "vid_cd": "5",
+        "vid_name_ru": "Из третьих стран",
+        "permission_cd": "1",
+        "permission_name_ru": "Обязателно",
+        "exception_cd": "1",
+        "exception_name_ru": "Недоступен",
+        "dues_cd": "2",
+        "dues_name_ru": "Сбор не обязательно",
+        "source": "manual: Rossiya screenshot 16.07.2026; same code pattern as 398"
+      },
+      "6": {
+        "vid_cd": "6",
+        "vid_name_ru": "Внутренный",
+        "permission_cd": "3",
+        "permission_name_ru": "Запрещен",
+        "exception_cd": "0",
+        "exception_name_ru": "-не выбрано-",
+        "dues_cd": "0",
+        "dues_name_ru": "-не выбрано-",
+        "source": "manual: Rossiya screenshot 16.07.2026; same code pattern as 398"
+      },
+      "7": {
+        "vid_cd": "7",
+        "vid_name_ru": "Порожный въезд по обязательству",
+        "permission_cd": "2",
+        "permission_name_ru": "Не обязателно",
+        "exception_cd": "1",
+        "exception_name_ru": "Недоступен",
+        "dues_cd": "2",
+        "dues_name_ru": "Сбор не обязательно",
+        "source": "manual: Rossiya screenshot 16.07.2026; same code pattern as 398"
+      },
+      "8": {
+        "vid_cd": "8",
+        "vid_name_ru": "Порожный транзит по обязательству",
+        "permission_cd": "2",
+        "permission_name_ru": "Не обязателно",
+        "exception_cd": "1",
+        "exception_name_ru": "Недоступен",
+        "dues_cd": "2",
+        "dues_name_ru": "Сбор не обязательно",
+        "source": "manual: Rossiya screenshot 16.07.2026; same code pattern as 398"
+      }
+    },
+    "031": {
+      "1": {
+        "vid_cd": "1",
+        "vid_name_ru": "Двухсторонний, начала перевозки Узбекистан",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "2",
+        "dues_name_ru": "Сбор не обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "2": {
+        "vid_cd": "2",
+        "vid_name_ru": "Двухсторонний, окончания перевозки Узбекистан",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "1",
+        "dues_name_ru": "Сбор обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "3": {
+        "vid_cd": "3",
+        "vid_name_ru": "Транзитный",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "1",
+        "dues_name_ru": "Сбор обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "4": {
+        "vid_cd": "4",
+        "vid_name_ru": "В третьи страны",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "0",
+        "dues_name_ru": "-не выбрано-",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "5": {
+        "vid_cd": "5",
+        "vid_name_ru": "Из третьих стран",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "0",
+        "dues_name_ru": "-не выбрано-",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "6": {
+        "vid_cd": "6",
+        "vid_name_ru": "Внутренный",
+        "permission_cd": "3",
+        "permission_name_ru": "Запрещен",
+        "exception_cd": "0",
+        "exception_name_ru": "-не выбрано-",
+        "dues_cd": "0",
+        "dues_name_ru": "-не выбрано-",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "7": {
+        "vid_cd": "7",
+        "vid_name_ru": "Порожный въезд по обязательству",
+        "permission_cd": "2",
+        "permission_name_ru": "Не обязателно",
+        "exception_cd": "1",
+        "exception_name_ru": "Недоступен",
+        "dues_cd": "1",
+        "dues_name_ru": "Сбор обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "8": {
+        "vid_cd": "8",
+        "vid_name_ru": "Порожный транзит по обязательству",
+        "permission_cd": "2",
+        "permission_name_ru": "Не обязателно",
+        "exception_cd": "1",
+        "exception_name_ru": "Недоступен",
+        "dues_cd": "1",
+        "dues_name_ru": "Сбор обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      }
+    },
+    "496": {
+      "1": {
+        "vid_cd": "1",
+        "vid_name_ru": "Двухсторонний, начала перевозки Узбекистан",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "2",
+        "dues_name_ru": "Сбор не обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "2": {
+        "vid_cd": "2",
+        "vid_name_ru": "Двухсторонний, окончания перевозки Узбекистан",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "1",
+        "dues_name_ru": "Сбор обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "3": {
+        "vid_cd": "3",
+        "vid_name_ru": "Транзитный",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "1",
+        "dues_name_ru": "Сбор обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "4": {
+        "vid_cd": "4",
+        "vid_name_ru": "В третьи страны",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "0",
+        "dues_name_ru": "-не выбрано-",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "5": {
+        "vid_cd": "5",
+        "vid_name_ru": "Из третьих стран",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "0",
+        "dues_name_ru": "-не выбрано-",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "6": {
+        "vid_cd": "6",
+        "vid_name_ru": "Внутренный",
+        "permission_cd": "3",
+        "permission_name_ru": "Запрещен",
+        "exception_cd": "0",
+        "exception_name_ru": "-не выбрано-",
+        "dues_cd": "0",
+        "dues_name_ru": "-не выбрано-",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "7": {
+        "vid_cd": "7",
+        "vid_name_ru": "Порожный въезд по обязательству",
+        "permission_cd": "2",
+        "permission_name_ru": "Не обязателно",
+        "exception_cd": "1",
+        "exception_name_ru": "Недоступен",
+        "dues_cd": "1",
+        "dues_name_ru": "Сбор обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "8": {
+        "vid_cd": "8",
+        "vid_name_ru": "Порожный транзит по обязательству",
+        "permission_cd": "2",
+        "permission_name_ru": "Не обязателно",
+        "exception_cd": "1",
+        "exception_name_ru": "Недоступен",
+        "dues_cd": "1",
+        "dues_name_ru": "Сбор обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      }
+    },
+    "498": {
+      "1": {
+        "vid_cd": "1",
+        "vid_name_ru": "Двухсторонний, начала перевозки Узбекистан",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "2",
+        "dues_name_ru": "Сбор не обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "2": {
+        "vid_cd": "2",
+        "vid_name_ru": "Двухсторонний, окончания перевозки Узбекистан",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "1",
+        "dues_name_ru": "Сбор обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "3": {
+        "vid_cd": "3",
+        "vid_name_ru": "Транзитный",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "1",
+        "dues_name_ru": "Сбор обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "4": {
+        "vid_cd": "4",
+        "vid_name_ru": "В третьи страны",
+        "permission_cd": "3",
+        "permission_name_ru": "Запрещен",
+        "exception_cd": "0",
+        "exception_name_ru": "-не выбрано-",
+        "dues_cd": "0",
+        "dues_name_ru": "-не выбрано-",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "5": {
+        "vid_cd": "5",
+        "vid_name_ru": "Из третьих стран",
+        "permission_cd": "3",
+        "permission_name_ru": "Запрещен",
+        "exception_cd": "0",
+        "exception_name_ru": "-не выбрано-",
+        "dues_cd": "0",
+        "dues_name_ru": "-не выбрано-",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "6": {
+        "vid_cd": "6",
+        "vid_name_ru": "Внутренный",
+        "permission_cd": "3",
+        "permission_name_ru": "Запрещен",
+        "exception_cd": "0",
+        "exception_name_ru": "-не выбрано-",
+        "dues_cd": "0",
+        "dues_name_ru": "-не выбрано-",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "7": {
+        "vid_cd": "7",
+        "vid_name_ru": "Порожный въезд по обязательству",
+        "permission_cd": "2",
+        "permission_name_ru": "Не обязателно",
+        "exception_cd": "1",
+        "exception_name_ru": "Недоступен",
+        "dues_cd": "1",
+        "dues_name_ru": "Сбор обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "8": {
+        "vid_cd": "8",
+        "vid_name_ru": "Порожный транзит по обязательству",
+        "permission_cd": "2",
+        "permission_name_ru": "Не обязателно",
+        "exception_cd": "1",
+        "exception_name_ru": "Недоступен",
+        "dues_cd": "1",
+        "dues_name_ru": "Сбор обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      }
+    },
+    "528": {
+      "1": {
+        "vid_cd": "1",
+        "vid_name_ru": "Двухсторонний, начала перевозки Узбекистан",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "2",
+        "dues_name_ru": "Сбор не обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "2": {
+        "vid_cd": "2",
+        "vid_name_ru": "Двухсторонний, окончания перевозки Узбекистан",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "1",
+        "dues_name_ru": "Сбор обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "3": {
+        "vid_cd": "3",
+        "vid_name_ru": "Транзитный",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "1",
+        "dues_name_ru": "Сбор обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "4": {
+        "vid_cd": "4",
+        "vid_name_ru": "В третьи страны",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "0",
+        "dues_name_ru": "-не выбрано-",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "5": {
+        "vid_cd": "5",
+        "vid_name_ru": "Из третьих стран",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "0",
+        "dues_name_ru": "-не выбрано-",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "6": {
+        "vid_cd": "6",
+        "vid_name_ru": "Внутренный",
+        "permission_cd": "3",
+        "permission_name_ru": "Запрещен",
+        "exception_cd": "0",
+        "exception_name_ru": "-не выбрано-",
+        "dues_cd": "0",
+        "dues_name_ru": "-не выбрано-",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "7": {
+        "vid_cd": "7",
+        "vid_name_ru": "Порожный въезд по обязательству",
+        "permission_cd": "2",
+        "permission_name_ru": "Не обязателно",
+        "exception_cd": "1",
+        "exception_name_ru": "Недоступен",
+        "dues_cd": "1",
+        "dues_name_ru": "Сбор обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "8": {
+        "vid_cd": "8",
+        "vid_name_ru": "Порожный транзит по обязательству",
+        "permission_cd": "2",
+        "permission_name_ru": "Не обязателно",
+        "exception_cd": "1",
+        "exception_name_ru": "Недоступен",
+        "dues_cd": "1",
+        "dues_name_ru": "Сбор обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      }
+    },
+    "616": {
+      "1": {
+        "vid_cd": "1",
+        "vid_name_ru": "Двухсторонний, начала перевозки Узбекистан",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "2",
+        "dues_name_ru": "Сбор не обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "2": {
+        "vid_cd": "2",
+        "vid_name_ru": "Двухсторонний, окончания перевозки Узбекистан",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "1",
+        "dues_name_ru": "Сбор обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "3": {
+        "vid_cd": "3",
+        "vid_name_ru": "Транзитный",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "1",
+        "dues_name_ru": "Сбор обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "4": {
+        "vid_cd": "4",
+        "vid_name_ru": "В третьи страны",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "0",
+        "dues_name_ru": "-не выбрано-",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "5": {
+        "vid_cd": "5",
+        "vid_name_ru": "Из третьих стран",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "0",
+        "dues_name_ru": "-не выбрано-",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "6": {
+        "vid_cd": "6",
+        "vid_name_ru": "Внутренный",
+        "permission_cd": "3",
+        "permission_name_ru": "Запрещен",
+        "exception_cd": "0",
+        "exception_name_ru": "-не выбрано-",
+        "dues_cd": "0",
+        "dues_name_ru": "-не выбрано-",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "7": {
+        "vid_cd": "7",
+        "vid_name_ru": "Порожный въезд по обязательству",
+        "permission_cd": "2",
+        "permission_name_ru": "Не обязателно",
+        "exception_cd": "1",
+        "exception_name_ru": "Недоступен",
+        "dues_cd": "1",
+        "dues_name_ru": "Сбор обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "8": {
+        "vid_cd": "8",
+        "vid_name_ru": "Порожный транзит по обязательству",
+        "permission_cd": "2",
+        "permission_name_ru": "Не обязателно",
+        "exception_cd": "1",
+        "exception_name_ru": "Недоступен",
+        "dues_cd": "1",
+        "dues_name_ru": "Сбор обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      }
+    },
+    "703": {
+      "1": {
+        "vid_cd": "1",
+        "vid_name_ru": "Двухсторонний, начала перевозки Узбекистан",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "2",
+        "dues_name_ru": "Сбор не обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "2": {
+        "vid_cd": "2",
+        "vid_name_ru": "Двухсторонний, окончания перевозки Узбекистан",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "1",
+        "dues_name_ru": "Сбор обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "3": {
+        "vid_cd": "3",
+        "vid_name_ru": "Транзитный",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "1",
+        "dues_name_ru": "Сбор обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "4": {
+        "vid_cd": "4",
+        "vid_name_ru": "В третьи страны",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "0",
+        "dues_name_ru": "-не выбрано-",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "5": {
+        "vid_cd": "5",
+        "vid_name_ru": "Из третьих стран",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "0",
+        "dues_name_ru": "-не выбрано-",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "6": {
+        "vid_cd": "6",
+        "vid_name_ru": "Внутренный",
+        "permission_cd": "3",
+        "permission_name_ru": "Запрещен",
+        "exception_cd": "0",
+        "exception_name_ru": "-не выбрано-",
+        "dues_cd": "0",
+        "dues_name_ru": "-не выбрано-",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "7": {
+        "vid_cd": "7",
+        "vid_name_ru": "Порожный въезд по обязательству",
+        "permission_cd": "2",
+        "permission_name_ru": "Не обязателно",
+        "exception_cd": "1",
+        "exception_name_ru": "Недоступен",
+        "dues_cd": "1",
+        "dues_name_ru": "Сбор обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "8": {
+        "vid_cd": "8",
+        "vid_name_ru": "Порожный транзит по обязательству",
+        "permission_cd": "2",
+        "permission_name_ru": "Не обязателно",
+        "exception_cd": "1",
+        "exception_name_ru": "Недоступен",
+        "dues_cd": "1",
+        "dues_name_ru": "Сбор обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      }
+    },
+    "705": {
+      "1": {
+        "vid_cd": "1",
+        "vid_name_ru": "Двухсторонний, начала перевозки Узбекистан",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "2",
+        "dues_name_ru": "Сбор не обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "2": {
+        "vid_cd": "2",
+        "vid_name_ru": "Двухсторонний, окончания перевозки Узбекистан",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "1",
+        "dues_name_ru": "Сбор обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "3": {
+        "vid_cd": "3",
+        "vid_name_ru": "Транзитный",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "1",
+        "dues_name_ru": "Сбор обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "4": {
+        "vid_cd": "4",
+        "vid_name_ru": "В третьи страны",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "0",
+        "dues_name_ru": "-не выбрано-",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "5": {
+        "vid_cd": "5",
+        "vid_name_ru": "Из третьих стран",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "0",
+        "dues_name_ru": "-не выбрано-",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "6": {
+        "vid_cd": "6",
+        "vid_name_ru": "Внутренный",
+        "permission_cd": "3",
+        "permission_name_ru": "Запрещен",
+        "exception_cd": "0",
+        "exception_name_ru": "-не выбрано-",
+        "dues_cd": "0",
+        "dues_name_ru": "-не выбрано-",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "7": {
+        "vid_cd": "7",
+        "vid_name_ru": "Порожный въезд по обязательству",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "1",
+        "dues_name_ru": "Сбор обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "8": {
+        "vid_cd": "8",
+        "vid_name_ru": "Порожный транзит по обязательству",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "1",
+        "dues_name_ru": "Сбор обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      }
+    },
+    "756": {
+      "1": {
+        "vid_cd": "1",
+        "vid_name_ru": "Двухсторонний, начала перевозки Узбекистан",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "2",
+        "dues_name_ru": "Сбор не обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "2": {
+        "vid_cd": "2",
+        "vid_name_ru": "Двухсторонний, окончания перевозки Узбекистан",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "1",
+        "dues_name_ru": "Сбор обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "3": {
+        "vid_cd": "3",
+        "vid_name_ru": "Транзитный",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "1",
+        "dues_name_ru": "Сбор обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "4": {
+        "vid_cd": "4",
+        "vid_name_ru": "В третьи страны",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "0",
+        "dues_name_ru": "-не выбрано-",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "5": {
+        "vid_cd": "5",
+        "vid_name_ru": "Из третьих стран",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "0",
+        "dues_name_ru": "-не выбрано-",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "6": {
+        "vid_cd": "6",
+        "vid_name_ru": "Внутренный",
+        "permission_cd": "3",
+        "permission_name_ru": "Запрещен",
+        "exception_cd": "0",
+        "exception_name_ru": "-не выбрано-",
+        "dues_cd": "0",
+        "dues_name_ru": "-не выбрано-",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "7": {
+        "vid_cd": "7",
+        "vid_name_ru": "Порожный въезд по обязательству",
+        "permission_cd": "2",
+        "permission_name_ru": "Не обязателно",
+        "exception_cd": "1",
+        "exception_name_ru": "Недоступен",
+        "dues_cd": "1",
+        "dues_name_ru": "Сбор обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "8": {
+        "vid_cd": "8",
+        "vid_name_ru": "Порожный транзит по обязательству",
+        "permission_cd": "2",
+        "permission_name_ru": "Не обязателно",
+        "exception_cd": "1",
+        "exception_name_ru": "Недоступен",
+        "dues_cd": "1",
+        "dues_name_ru": "Сбор обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      }
+    },
+    "762": {
+      "1": {
+        "vid_cd": "1",
+        "vid_name_ru": "Двухсторонний, начала перевозки Узбекистан",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "2",
+        "dues_name_ru": "Сбор не обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "2": {
+        "vid_cd": "2",
+        "vid_name_ru": "Двухсторонний, окончания перевозки Узбекистан",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "1",
+        "dues_name_ru": "Сбор обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "3": {
+        "vid_cd": "3",
+        "vid_name_ru": "Транзитный",
+        "permission_cd": "2",
+        "permission_name_ru": "Не обязателно",
+        "exception_cd": "1",
+        "exception_name_ru": "Недоступен",
+        "dues_cd": "1",
+        "dues_name_ru": "Сбор обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "4": {
+        "vid_cd": "4",
+        "vid_name_ru": "В третьи страны",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "0",
+        "dues_name_ru": "-не выбрано-",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "5": {
+        "vid_cd": "5",
+        "vid_name_ru": "Из третьих стран",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "0",
+        "dues_name_ru": "-не выбрано-",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "6": {
+        "vid_cd": "6",
+        "vid_name_ru": "Внутренный",
+        "permission_cd": "3",
+        "permission_name_ru": "Запрещен",
+        "exception_cd": "0",
+        "exception_name_ru": "-не выбрано-",
+        "dues_cd": "0",
+        "dues_name_ru": "-не выбрано-",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "7": {
+        "vid_cd": "7",
+        "vid_name_ru": "Порожный въезд по обязательству",
+        "permission_cd": "2",
+        "permission_name_ru": "Не обязателно",
+        "exception_cd": "1",
+        "exception_name_ru": "Недоступен",
+        "dues_cd": "1",
+        "dues_name_ru": "Сбор обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "8": {
+        "vid_cd": "8",
+        "vid_name_ru": "Порожный транзит по обязательству",
+        "permission_cd": "2",
+        "permission_name_ru": "Не обязателно",
+        "exception_cd": "1",
+        "exception_name_ru": "Недоступен",
+        "dues_cd": "1",
+        "dues_name_ru": "Сбор обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      }
+    },
+    "792": {
+      "1": {
+        "vid_cd": "1",
+        "vid_name_ru": "Двухсторонний, начала перевозки Узбекистан",
+        "permission_cd": "2",
+        "permission_name_ru": "Не обязателно",
+        "exception_cd": "1",
+        "exception_name_ru": "Недоступен",
+        "dues_cd": "2",
+        "dues_name_ru": "Сбор не обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "2": {
+        "vid_cd": "2",
+        "vid_name_ru": "Двухсторонний, окончания перевозки Узбекистан",
+        "permission_cd": "2",
+        "permission_name_ru": "Не обязателно",
+        "exception_cd": "1",
+        "exception_name_ru": "Недоступен",
+        "dues_cd": "1",
+        "dues_name_ru": "Сбор обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "3": {
+        "vid_cd": "3",
+        "vid_name_ru": "Транзитный",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "1",
+        "dues_name_ru": "Сбор обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "4": {
+        "vid_cd": "4",
+        "vid_name_ru": "В третьи страны",
+        "permission_cd": "3",
+        "permission_name_ru": "Запрещен",
+        "exception_cd": "0",
+        "exception_name_ru": "-не выбрано-",
+        "dues_cd": "0",
+        "dues_name_ru": "-не выбрано-",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "5": {
+        "vid_cd": "5",
+        "vid_name_ru": "Из третьих стран",
+        "permission_cd": "3",
+        "permission_name_ru": "Запрещен",
+        "exception_cd": "0",
+        "exception_name_ru": "-не выбрано-",
+        "dues_cd": "0",
+        "dues_name_ru": "-не выбрано-",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "6": {
+        "vid_cd": "6",
+        "vid_name_ru": "Внутренный",
+        "permission_cd": "3",
+        "permission_name_ru": "Запрещен",
+        "exception_cd": "0",
+        "exception_name_ru": "-не выбрано-",
+        "dues_cd": "0",
+        "dues_name_ru": "-не выбрано-",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "7": {
+        "vid_cd": "7",
+        "vid_name_ru": "Порожный въезд по обязательству",
+        "permission_cd": "2",
+        "permission_name_ru": "Не обязателно",
+        "exception_cd": "1",
+        "exception_name_ru": "Недоступен",
+        "dues_cd": "1",
+        "dues_name_ru": "Сбор обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "8": {
+        "vid_cd": "8",
+        "vid_name_ru": "Порожный транзит по обязательству",
+        "permission_cd": "2",
+        "permission_name_ru": "Не обязателно",
+        "exception_cd": "1",
+        "exception_name_ru": "Недоступен",
+        "dues_cd": "1",
+        "dues_name_ru": "Сбор обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      }
+    },
+    "804": {
+      "1": {
+        "vid_cd": "1",
+        "vid_name_ru": "Двухсторонний, начала перевозки Узбекистан",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "2",
+        "dues_name_ru": "Сбор не обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "2": {
+        "vid_cd": "2",
+        "vid_name_ru": "Двухсторонний, окончания перевозки Узбекистан",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "1",
+        "dues_name_ru": "Сбор обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "3": {
+        "vid_cd": "3",
+        "vid_name_ru": "Транзитный",
+        "permission_cd": "1",
+        "permission_name_ru": "??????????",
+        "exception_cd": "2",
+        "exception_name_ru": "???????? ? ???????????? ??????????",
+        "dues_cd": "1",
+        "dues_name_ru": "Сбор обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "4": {
+        "vid_cd": "4",
+        "vid_name_ru": "В третьи страны",
+        "permission_cd": "3",
+        "permission_name_ru": "Запрещен",
+        "exception_cd": "0",
+        "exception_name_ru": "-не выбрано-",
+        "dues_cd": "0",
+        "dues_name_ru": "-не выбрано-",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "5": {
+        "vid_cd": "5",
+        "vid_name_ru": "Из третьих стран",
+        "permission_cd": "3",
+        "permission_name_ru": "Запрещен",
+        "exception_cd": "0",
+        "exception_name_ru": "-не выбрано-",
+        "dues_cd": "0",
+        "dues_name_ru": "-не выбрано-",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "6": {
+        "vid_cd": "6",
+        "vid_name_ru": "Внутренный",
+        "permission_cd": "3",
+        "permission_name_ru": "Запрещен",
+        "exception_cd": "0",
+        "exception_name_ru": "-не выбрано-",
+        "dues_cd": "0",
+        "dues_name_ru": "-не выбрано-",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "7": {
+        "vid_cd": "7",
+        "vid_name_ru": "Порожный въезд по обязательству",
+        "permission_cd": "2",
+        "permission_name_ru": "Не обязателно",
+        "exception_cd": "1",
+        "exception_name_ru": "Недоступен",
+        "dues_cd": "1",
+        "dues_name_ru": "Сбор обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      },
+      "8": {
+        "vid_cd": "8",
+        "vid_name_ru": "Порожный транзит по обязательству",
+        "permission_cd": "2",
+        "permission_name_ru": "Не обязателно",
+        "exception_cd": "1",
+        "exception_name_ru": "Недоступен",
+        "dues_cd": "1",
+        "dues_name_ru": "Сбор обязательно",
+        "source": "fallback: generated from Dazvol istisnolar mask and default rule because permission workbook has no country row"
+      }
+    },
+    "860": {
+      "1": {
+        "vid_cd": "1",
+        "vid_name_ru": "Двухсторонний, начала перевозки Узбекистан",
+        "permission_cd": "2",
+        "permission_name_ru": "?? ??????????",
+        "exception_cd": "1",
+        "exception_name_ru": "??????????",
+        "dues_cd": "2",
+        "dues_name_ru": "???? ?? ???????????",
+        "source": "manual: Uzbekistan vehicle is not subject to foreign vehicle permit/fee table"
+      },
+      "2": {
+        "vid_cd": "2",
+        "vid_name_ru": "Двухсторонний, окончания перевозки Узбекистан",
+        "permission_cd": "2",
+        "permission_name_ru": "?? ??????????",
+        "exception_cd": "1",
+        "exception_name_ru": "??????????",
+        "dues_cd": "2",
+        "dues_name_ru": "???? ?? ???????????",
+        "source": "manual: Uzbekistan vehicle is not subject to foreign vehicle permit/fee table"
+      },
+      "3": {
+        "vid_cd": "3",
+        "vid_name_ru": "Транзитный",
+        "permission_cd": "2",
+        "permission_name_ru": "?? ??????????",
+        "exception_cd": "1",
+        "exception_name_ru": "??????????",
+        "dues_cd": "2",
+        "dues_name_ru": "???? ?? ???????????",
+        "source": "manual: Uzbekistan vehicle is not subject to foreign vehicle permit/fee table"
+      },
+      "4": {
+        "vid_cd": "4",
+        "vid_name_ru": "В третьи страны",
+        "permission_cd": "2",
+        "permission_name_ru": "?? ??????????",
+        "exception_cd": "1",
+        "exception_name_ru": "??????????",
+        "dues_cd": "2",
+        "dues_name_ru": "???? ?? ???????????",
+        "source": "manual: Uzbekistan vehicle is not subject to foreign vehicle permit/fee table"
+      },
+      "5": {
+        "vid_cd": "5",
+        "vid_name_ru": "Из третьих стран",
+        "permission_cd": "2",
+        "permission_name_ru": "?? ??????????",
+        "exception_cd": "1",
+        "exception_name_ru": "??????????",
+        "dues_cd": "2",
+        "dues_name_ru": "???? ?? ???????????",
+        "source": "manual: Uzbekistan vehicle is not subject to foreign vehicle permit/fee table"
+      },
+      "6": {
+        "vid_cd": "6",
+        "vid_name_ru": "Внутренный",
+        "permission_cd": "2",
+        "permission_name_ru": "?? ??????????",
+        "exception_cd": "1",
+        "exception_name_ru": "??????????",
+        "dues_cd": "2",
+        "dues_name_ru": "???? ?? ???????????",
+        "source": "manual: Uzbekistan vehicle is not subject to foreign vehicle permit/fee table"
+      },
+      "7": {
+        "vid_cd": "7",
+        "vid_name_ru": "Порожный въезд по обязательству",
+        "permission_cd": "2",
+        "permission_name_ru": "?? ??????????",
+        "exception_cd": "1",
+        "exception_name_ru": "??????????",
+        "dues_cd": "2",
+        "dues_name_ru": "???? ?? ???????????",
+        "source": "manual: Uzbekistan vehicle is not subject to foreign vehicle permit/fee table"
+      },
+      "8": {
+        "vid_cd": "8",
+        "vid_name_ru": "Порожный транзит по обязательству",
+        "permission_cd": "2",
+        "permission_name_ru": "?? ??????????",
+        "exception_cd": "1",
+        "exception_name_ru": "??????????",
+        "dues_cd": "2",
+        "dues_name_ru": "???? ?? ???????????",
+        "source": "manual: Uzbekistan vehicle is not subject to foreign vehicle permit/fee table"
+      }
     }
   },
   "exceptions": {
@@ -13005,6 +14175,10 @@
       "Турция"
     ],
     "643": [
+      "??????",
+      "RF",
+      "RUS",
+      "Rossia",
       "Rossiya",
       "Russia",
       "Россия"
@@ -13019,5 +14193,8 @@
       "Other country",
       "Not listed"
     ]
+  },
+  "metadata": {
+    "note": "643 Rossiya rules were added manually from the user-provided screenshot dated 16.07.2026 because the current permission workbook sheet does not contain COUNTRY_CD=643. Missing country rules were generated from exception masks and default rules for: 031:11111000, 496:11111000, 498:11100000, 528:11111000, 616:11111000, 703:11111000, 705:11111011, 756:11111000, 762:11011000, 792:00100000, 804:11100000. 860 Uzbekistan rules were added as not subject to the foreign vehicle permit/fee table."
   }
 }
