@@ -13008,6 +13008,16 @@
       "Rossiya",
       "Russia",
       "Россия"
+    ],
+    "000": [
+      "Boshqa davlat",
+      "Royxatda yoq",
+      "Ro‘yxatda yo‘q",
+      "Noma’lum davlat",
+      "Неизвестна",
+      "Другое государство",
+      "Other country",
+      "Not listed"
     ]
   }
 }
