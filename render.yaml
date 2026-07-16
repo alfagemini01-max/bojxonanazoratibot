@@ -9,8 +9,8 @@ services:
         sync: false
       - key: BOT_MODE
         value: polling
-      - key: DATA_SOURCE
-        value: demo
+      - key: PERMISSION_RULES_PATH
+        value: data/permission_rules.json
       - key: TZ
         value: Asia/Tashkent
       - key: DATABASE_PATH
