@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import html
 import logging
+import re
 
 from aiogram import F, Router
 from aiogram.exceptions import TelegramNetworkError
@@ -26,6 +27,7 @@ from app.states import CheckState, RegistrationState
 from app.storage import UserStorage
 
 logger = logging.getLogger(__name__)
+MAX_TELEGRAM_TEXT_LENGTH = 3800
 
 CHECK_BUTTONS = button_texts("button_check")
 TERMS_BUTTONS = button_texts("button_terms")
@@ -80,18 +82,38 @@ def cancel_keyboard(lang: str = "uz") -> ReplyKeyboardMarkup:
     )
 
 
+def _country_from_match(match):
+    return getattr(match, "country", match)
+
+
 def country_choices_keyboard(matches, slot: str, lang: str = "uz") -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
+    rows = []
+    seen_codes = set()
+    for match in matches:
+        country = _country_from_match(match)
+        if not country or country.code in seen_codes:
+            continue
+        seen_codes.add(country.code)
+        rows.append(
             [
                 InlineKeyboardButton(
-                    text=f"{country_label(match.country, lang)} ({match.country.code})",
-                    callback_data=f"pick_country:{slot}:{match.country.code}",
+                    text=f"{country_label(country, lang)} ({country.code})",
+                    callback_data=f"pick_country:{slot}:{country.code}",
                 )
             ]
-            for match in matches
-        ]
-    )
+        )
+
+    if "000" not in seen_codes:
+        rows.append(
+            [
+                InlineKeyboardButton(
+                    text=t(lang, "button_other_country") + " (000)",
+                    callback_data=f"pick_country:{slot}:000",
+                )
+            ]
+        )
+
+    return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
 def other_country_keyboard(slot: str, lang: str = "uz") -> InlineKeyboardMarkup:
@@ -100,6 +122,30 @@ def other_country_keyboard(slot: str, lang: str = "uz") -> InlineKeyboardMarkup:
             [InlineKeyboardButton(text=t(lang, "button_other_country") + " (000)", callback_data=f"pick_country:{slot}:000")]
         ]
     )
+
+
+def split_telegram_text(text: str, limit: int = MAX_TELEGRAM_TEXT_LENGTH) -> list[str]:
+    if len(text) <= limit:
+        return [text]
+
+    chunks: list[str] = []
+    current: list[str] = []
+    current_length = 0
+    for line in text.splitlines():
+        line_length = len(line) + 1
+        if current and current_length + line_length > limit:
+            chunks.append("\n".join(current))
+            current = []
+            current_length = 0
+        if line_length > limit:
+            chunks.append(line[:limit])
+            continue
+        current.append(line)
+        current_length += line_length
+
+    if current:
+        chunks.append("\n".join(current))
+    return chunks
 
 
 def build_router(user_storage: UserStorage, settings: Settings) -> Router:
@@ -205,8 +251,38 @@ def build_router(user_storage: UserStorage, settings: Settings) -> Router:
             reply_markup=other_country_keyboard(slot, lang),
         )
 
+    def country_by_code(code: str):
+        finder = getattr(permit_service, "country_by_code", None)
+        if callable(finder):
+            return finder(code)
+        return permit_service.find_country(str(code).zfill(3))
+
+    def search_country_matches(raw_country: str, limit: int = 8):
+        searcher = getattr(permit_service, "search_countries", None)
+        if callable(searcher):
+            return searcher(raw_country, threshold=0.6, limit=limit)
+
+        suggester = getattr(permit_service, "suggest_countries", None)
+        if not callable(suggester):
+            return []
+
+        countries = []
+        seen_codes = set()
+        for suggestion in suggester(raw_country, limit=limit):
+            match = re.search(r"\((\d{3})\)\s*$", str(suggestion))
+            if not match:
+                continue
+            code = match.group(1)
+            if code in seen_codes:
+                continue
+            country = country_by_code(code)
+            if country:
+                countries.append(country)
+                seen_codes.add(code)
+        return countries
+
     async def show_country_choices(message: Message, lang: str, raw_country: str, slot: str) -> None:
-        matches = permit_service.search_countries(raw_country, threshold=0.75, limit=8)
+        matches = search_country_matches(raw_country, limit=8)
         if not matches:
             await answer_country_not_found(message, lang, raw_country, slot)
             return
@@ -215,32 +291,52 @@ def build_router(user_storage: UserStorage, settings: Settings) -> Router:
             reply_markup=country_choices_keyboard(matches, slot, lang),
         )
 
+    async def answer_long(message: Message, text: str, *, reply_markup=None) -> None:
+        chunks = split_telegram_text(text)
+        for index, chunk in enumerate(chunks):
+            await message.answer(
+                chunk,
+                reply_markup=reply_markup if index == len(chunks) - 1 else None,
+            )
+
     async def evaluate_route(message: Message, state: FSMContext, lang: str, vehicle_country_code: str, user_id: int | None = None) -> None:
         data = await state.get_data()
         origin = permit_service.find_country(str(data.get("origin_country_code", "")))
         destination = permit_service.find_country(str(data.get("destination_country_code", "")))
-        vehicle_country = permit_service.find_country(vehicle_country_code)
+        vehicle_country = country_by_code(vehicle_country_code)
         if not origin or not destination or not vehicle_country:
             await state.clear()
             await message.answer(t(lang, "route_session_expired"), reply_markup=main_menu_keyboard(lang))
             return
 
-        result = permit_service.evaluate(origin, destination, vehicle_country)
-        logger.info(
-            "Permit check requested user_id=%s origin=%s destination=%s vehicle_country=%s vid=%s permission=%s dues=%s",
-            user_id or (message.from_user.id if message.from_user else None),
-            origin.code,
-            destination.code,
-            vehicle_country.code,
-            result.vid_cd,
-            result.rule.get("permission_cd") if result.rule else None,
-            result.rule.get("dues_cd") if result.rule else None,
-        )
-        await state.clear()
-        await message.answer(
-            build_permit_message(result, settings.timezone, lang),
-            reply_markup=main_menu_keyboard(lang),
-        )
+        try:
+            result = permit_service.evaluate(origin, destination, vehicle_country)
+            logger.info(
+                "Permit check requested user_id=%s origin=%s destination=%s vehicle_country=%s vid=%s permission=%s dues=%s",
+                user_id or (message.from_user.id if message.from_user else None),
+                origin.code,
+                destination.code,
+                vehicle_country.code,
+                result.vid_cd,
+                result.rule.get("permission_cd") if result.rule else None,
+                result.rule.get("dues_cd") if result.rule else None,
+            )
+            await state.clear()
+            await answer_long(
+                message,
+                build_permit_message(result, settings.timezone, lang),
+                reply_markup=main_menu_keyboard(lang),
+            )
+        except Exception:
+            logger.exception(
+                "Permit check failed user_id=%s origin=%s destination=%s vehicle_country=%s",
+                user_id or (message.from_user.id if message.from_user else None),
+                origin.code,
+                destination.code,
+                vehicle_country.code,
+            )
+            await state.clear()
+            await message.answer(t(lang, "technical_error"), reply_markup=main_menu_keyboard(lang))
 
     async def continue_registration(message: Message, state: FSMContext) -> None:
         if not message.from_user:
@@ -445,7 +541,7 @@ def build_router(user_storage: UserStorage, settings: Settings) -> Router:
         if len(parts) != 3:
             return
         _, slot, code = parts
-        country = permit_service.country_by_code(code)
+        country = country_by_code(code)
         lang = await profile_lang(callback.from_user.id)
         if not country:
             await callback.answer(t(lang, "route_session_expired"), show_alert=True)
