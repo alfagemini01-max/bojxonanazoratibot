@@ -13,7 +13,7 @@ from app.handlers import build_router
 from app.storage import UserStorage, create_user_storage
 
 logger = logging.getLogger(__name__)
-APP_VERSION = "2026-07-16-permit-rules-v2"
+APP_VERSION = "2026-07-16-permit-rules-v4"
 
 
 def create_bot(settings: Settings) -> Bot:
@@ -101,7 +101,6 @@ def run_webhook() -> None:
         await bot.set_webhook(webhook_url, drop_pending_updates=True)
 
     async def on_shutdown(bot: Bot) -> None:
-        await bot.delete_webhook()
         await user_storage.close()
         await bot.session.close()
 

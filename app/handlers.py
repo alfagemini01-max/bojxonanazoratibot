@@ -94,6 +94,14 @@ def country_choices_keyboard(matches, slot: str, lang: str = "uz") -> InlineKeyb
     )
 
 
+def other_country_keyboard(slot: str, lang: str = "uz") -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text=t(lang, "button_other_country") + " (000)", callback_data=f"pick_country:{slot}:000")]
+        ]
+    )
+
+
 def build_router(user_storage: UserStorage, settings: Settings) -> Router:
     router = Router(name="nazoratbot")
     terms_photo_file_id = settings.terms_photo_file_id
@@ -191,16 +199,16 @@ def build_router(user_storage: UserStorage, settings: Settings) -> Router:
         await message.answer(t(lang, "contact_saved"), reply_markup=ReplyKeyboardRemove())
         await send_terms(message, show_accept_button=True, lang=lang)
 
-    async def answer_country_not_found(message: Message, lang: str, raw_country: str) -> None:
+    async def answer_country_not_found(message: Message, lang: str, raw_country: str, slot: str) -> None:
         await message.answer(
             t(lang, "country_no_match", country=html.escape(raw_country.strip())),
-            reply_markup=cancel_keyboard(lang),
+            reply_markup=other_country_keyboard(slot, lang),
         )
 
     async def show_country_choices(message: Message, lang: str, raw_country: str, slot: str) -> None:
         matches = permit_service.search_countries(raw_country, threshold=0.75, limit=8)
         if not matches:
-            await answer_country_not_found(message, lang, raw_country)
+            await answer_country_not_found(message, lang, raw_country, slot)
             return
         await message.answer(
             t(lang, "country_choose"),
@@ -475,6 +483,10 @@ def build_router(user_storage: UserStorage, settings: Settings) -> Router:
             await continue_registration(message, state)
             return
         lang = normalize_lang(profile.language_code)
+        if message.text:
+            await state.set_state(CheckState.waiting_for_origin_country)
+            await show_country_choices(message, lang, message.text, "origin")
+            return
         await message.answer(t(lang, "fallback"), reply_markup=main_menu_keyboard(lang))
 
     return router
