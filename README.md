@@ -11,7 +11,8 @@ Bot oqimi:
 5. Foydalanuvchi `Shartlarga roziman` tugmasini bosadi.
 6. Rozilik vaqti foydalanuvchi bazasida saqlanadi. Render uchun tashqi Postgres ishlatish tavsiya etiladi.
 7. Asosiy menyuda `Tekshirish` tugmasi orqali tashuv boshlangan davlat, tashuv tugaydigan davlat va avtotransport ro'yxatdan o'tgan davlat ketma-ket kiritiladi.
-8. Bot tashuv turini avtomatik aniqlaydi va ruxsatnoma talab etilishi hamda yig'im undirilishi bo'yicha xabar qaytaradi.
+8. Har bir davlat nomi yozilganda bot 75 foizdan yuqori mos kelgan davlatlarni kod va nomi bilan tugma ko'rinishida chiqaradi.
+9. Foydalanuvchi ro'yxatdan kerakli davlatni tanlagandan keyin bot tashuv turini avtomatik aniqlaydi va ruxsatnoma talab etilishi hamda yig'im undirilishi bo'yicha xabar qaytaradi.
 
 Bot O'zbek, Rus va Ingliz tillarida ishlaydi. Tilni asosiy menyudagi `Tilni o'zgartirish` tugmasi yoki `/language` buyrug'i orqali almashtirish mumkin.
 
@@ -108,6 +109,8 @@ Bot foydalanuvchidan 3 ta davlatni so'raydi:
 1. Tashuv boshlangan davlat.
 2. Tashuv tugaydigan davlat.
 3. Avtotransport ro'yxatdan o'tgan davlat.
+
+Davlat nomi matn orqali yakuniy qabul qilinmaydi. Bot avval o'xshash davlatlar ro'yxatini chiqaradi, foydalanuvchi esa aniq davlatni tugma orqali tanlaydi.
 
 Shundan keyin tashuv turi avtomatik aniqlanadi:
 
