@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import html
 import logging
 
 from aiogram import F, Router
@@ -20,9 +21,7 @@ from aiogram.types import (
 
 from app.config import Settings
 from app.i18n import LANGUAGES, button_texts, normalize_lang, t
-from app.repositories.base import VehicleRepository
-from app.services.message_templates import build_not_found_message, build_vehicle_message
-from app.services.plate import looks_like_plate, normalize_plate
+from app.services.permit import PermitRuleService, build_permit_message
 from app.states import CheckState, RegistrationState
 from app.storage import UserStorage
 
@@ -81,9 +80,10 @@ def cancel_keyboard(lang: str = "uz") -> ReplyKeyboardMarkup:
     )
 
 
-def build_router(user_storage: UserStorage, vehicle_repository: VehicleRepository, settings: Settings) -> Router:
+def build_router(user_storage: UserStorage, settings: Settings) -> Router:
     router = Router(name="nazoratbot")
     terms_photo_file_id = settings.terms_photo_file_id
+    permit_service = PermitRuleService(settings.permission_rules_path)
 
     async def profile_lang(user_id: int | None) -> str:
         if user_id is None:
@@ -177,31 +177,40 @@ def build_router(user_storage: UserStorage, vehicle_repository: VehicleRepositor
         await message.answer(t(lang, "contact_saved"), reply_markup=ReplyKeyboardRemove())
         await send_terms(message, show_accept_button=True, lang=lang)
 
-    async def process_plate(message: Message, state: FSMContext) -> None:
-        raw_plate = message.text or ""
-        lang = await profile_lang(message.from_user.id if message.from_user else None)
-        if not looks_like_plate(raw_plate):
-            await message.answer(
-                t(lang, "bad_plate"),
-                reply_markup=cancel_keyboard(lang),
-            )
+    async def answer_country_not_found(message: Message, lang: str, raw_country: str) -> None:
+        suggestions = permit_service.suggest_countries(raw_country)
+        text = t(lang, "country_not_found", country=html.escape(raw_country.strip()))
+        if suggestions:
+            safe_suggestions = ", ".join(html.escape(item) for item in suggestions)
+            text += "\n" + t(lang, "country_suggestions", suggestions=safe_suggestions)
+        await message.answer(text, reply_markup=cancel_keyboard(lang))
+
+    async def evaluate_route(message: Message, state: FSMContext, lang: str, vehicle_country_code: str) -> None:
+        data = await state.get_data()
+        origin = permit_service.find_country(str(data.get("origin_country_code", "")))
+        destination = permit_service.find_country(str(data.get("destination_country_code", "")))
+        vehicle_country = permit_service.find_country(vehicle_country_code)
+        if not origin or not destination or not vehicle_country:
+            await state.clear()
+            await message.answer(t(lang, "route_session_expired"), reply_markup=main_menu_keyboard(lang))
             return
 
-        plate = normalize_plate(raw_plate)
-        logger.info("Vehicle check requested by user_id=%s plate=%s", message.from_user.id if message.from_user else None, plate)
-        record = await vehicle_repository.find_by_plate(plate)
-
-        if record is None:
-            await message.answer(
-                build_not_found_message(plate, settings.timezone, lang),
-                reply_markup=main_menu_keyboard(lang),
-            )
-        else:
-            await message.answer(
-                build_vehicle_message(record, settings.timezone, lang),
-                reply_markup=main_menu_keyboard(lang),
-            )
+        result = permit_service.evaluate(origin, destination, vehicle_country)
+        logger.info(
+            "Permit check requested user_id=%s origin=%s destination=%s vehicle_country=%s vid=%s permission=%s dues=%s",
+            message.from_user.id if message.from_user else None,
+            origin.code,
+            destination.code,
+            vehicle_country.code,
+            result.vid_cd,
+            result.rule.get("permission_cd") if result.rule else None,
+            result.rule.get("dues_cd") if result.rule else None,
+        )
         await state.clear()
+        await message.answer(
+            build_permit_message(result, settings.timezone, lang),
+            reply_markup=main_menu_keyboard(lang),
+        )
 
     async def continue_registration(message: Message, state: FSMContext) -> None:
         if not message.from_user:
@@ -362,8 +371,9 @@ def build_router(user_storage: UserStorage, vehicle_repository: VehicleRepositor
         lang = normalize_lang(profile.language_code if profile else None)
         await send_terms(message, show_accept_button=not bool(profile and profile.terms_accepted_at), lang=lang)
 
+    @router.message(Command("check"))
     @router.message(F.text.in_(CHECK_BUTTONS))
-    async def ask_plate(message: Message, state: FSMContext) -> None:
+    async def ask_route_origin(message: Message, state: FSMContext) -> None:
         if not message.from_user:
             return
 
@@ -373,15 +383,54 @@ def build_router(user_storage: UserStorage, vehicle_repository: VehicleRepositor
             await continue_registration(message, state)
             return
 
-        await state.set_state(CheckState.waiting_for_plate)
+        await state.set_state(CheckState.waiting_for_origin_country)
         await message.answer(
-            t(lang, "ask_plate"),
+            t(lang, "ask_origin_country"),
             reply_markup=cancel_keyboard(lang),
         )
 
-    @router.message(StateFilter(CheckState.waiting_for_plate))
-    async def check_plate(message: Message, state: FSMContext) -> None:
-        await process_plate(message, state)
+    @router.message(StateFilter(CheckState.waiting_for_origin_country))
+    async def receive_origin_country(message: Message, state: FSMContext) -> None:
+        lang = await profile_lang(message.from_user.id if message.from_user else None)
+        raw_country = message.text or ""
+        country = permit_service.find_country(raw_country)
+        if not country:
+            await answer_country_not_found(message, lang, raw_country)
+            return
+
+        await state.update_data(origin_country_code=country.code)
+        await state.set_state(CheckState.waiting_for_destination_country)
+        await message.answer(
+            t(lang, "ask_destination_country"),
+            reply_markup=cancel_keyboard(lang),
+        )
+
+    @router.message(StateFilter(CheckState.waiting_for_destination_country))
+    async def receive_destination_country(message: Message, state: FSMContext) -> None:
+        lang = await profile_lang(message.from_user.id if message.from_user else None)
+        raw_country = message.text or ""
+        country = permit_service.find_country(raw_country)
+        if not country:
+            await answer_country_not_found(message, lang, raw_country)
+            return
+
+        await state.update_data(destination_country_code=country.code)
+        await state.set_state(CheckState.waiting_for_vehicle_country)
+        await message.answer(
+            t(lang, "ask_vehicle_country"),
+            reply_markup=cancel_keyboard(lang),
+        )
+
+    @router.message(StateFilter(CheckState.waiting_for_vehicle_country))
+    async def receive_vehicle_country(message: Message, state: FSMContext) -> None:
+        lang = await profile_lang(message.from_user.id if message.from_user else None)
+        raw_country = message.text or ""
+        country = permit_service.find_country(raw_country)
+        if not country:
+            await answer_country_not_found(message, lang, raw_country)
+            return
+
+        await evaluate_route(message, state, lang, country.code)
 
     @router.message(Command("help"))
     async def help_command(message: Message) -> None:
@@ -400,9 +449,6 @@ def build_router(user_storage: UserStorage, vehicle_repository: VehicleRepositor
             await continue_registration(message, state)
             return
         lang = normalize_lang(profile.language_code)
-        if message.text and looks_like_plate(message.text):
-            await process_plate(message, state)
-            return
         await message.answer(t(lang, "fallback"), reply_markup=main_menu_keyboard(lang))
 
     return router

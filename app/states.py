@@ -7,4 +7,6 @@ class RegistrationState(StatesGroup):
 
 
 class CheckState(StatesGroup):
-    waiting_for_plate = State()
+    waiting_for_origin_country = State()
+    waiting_for_destination_country = State()
+    waiting_for_vehicle_country = State()

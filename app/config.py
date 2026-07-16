@@ -43,6 +43,7 @@ class Settings:
     terms_image_path: Path
     terms_photo_file_id: str
     terms_pdf_path: Path
+    permission_rules_path: Path
     sql_connection_string: str
     sql_query_path: Path
     timezone: str = "Asia/Tashkent"
@@ -65,6 +66,7 @@ def get_settings() -> Settings:
         terms_image_path=BASE_DIR / os.getenv("TERMS_IMAGE_PATH", "assets/foydalanish_shartlari.png"),
         terms_photo_file_id=os.getenv("TERMS_PHOTO_FILE_ID", "").strip(),
         terms_pdf_path=BASE_DIR / os.getenv("TERMS_PDF_PATH", "assets/foydalanish_shartlari.pdf"),
+        permission_rules_path=BASE_DIR / os.getenv("PERMISSION_RULES_PATH", "data/permission_rules.json"),
         sql_connection_string=os.getenv("SQL_CONNECTION_STRING", "").strip(),
         sql_query_path=BASE_DIR / os.getenv(
             "SQL_QUERY_PATH",
