@@ -21,7 +21,7 @@ from aiogram.types import (
 
 from app.config import Settings
 from app.i18n import LANGUAGES, button_texts, normalize_lang, t
-from app.services.permit import PermitRuleService, build_permit_message
+from app.services.permit import PermitRuleService, build_permit_message, country_label
 from app.states import CheckState, RegistrationState
 from app.storage import UserStorage
 
@@ -77,6 +77,20 @@ def cancel_keyboard(lang: str = "uz") -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[[KeyboardButton(text=t(lang, "button_cancel"))]],
         resize_keyboard=True,
+    )
+
+
+def country_choices_keyboard(matches, slot: str, lang: str = "uz") -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text=f"{country_label(match.country, lang)} ({match.country.code})",
+                    callback_data=f"pick_country:{slot}:{match.country.code}",
+                )
+            ]
+            for match in matches
+        ]
     )
 
 
@@ -178,14 +192,22 @@ def build_router(user_storage: UserStorage, settings: Settings) -> Router:
         await send_terms(message, show_accept_button=True, lang=lang)
 
     async def answer_country_not_found(message: Message, lang: str, raw_country: str) -> None:
-        suggestions = permit_service.suggest_countries(raw_country)
-        text = t(lang, "country_not_found", country=html.escape(raw_country.strip()))
-        if suggestions:
-            safe_suggestions = ", ".join(html.escape(item) for item in suggestions)
-            text += "\n" + t(lang, "country_suggestions", suggestions=safe_suggestions)
-        await message.answer(text, reply_markup=cancel_keyboard(lang))
+        await message.answer(
+            t(lang, "country_no_match", country=html.escape(raw_country.strip())),
+            reply_markup=cancel_keyboard(lang),
+        )
 
-    async def evaluate_route(message: Message, state: FSMContext, lang: str, vehicle_country_code: str) -> None:
+    async def show_country_choices(message: Message, lang: str, raw_country: str, slot: str) -> None:
+        matches = permit_service.search_countries(raw_country, threshold=0.75, limit=8)
+        if not matches:
+            await answer_country_not_found(message, lang, raw_country)
+            return
+        await message.answer(
+            t(lang, "country_choose"),
+            reply_markup=country_choices_keyboard(matches, slot, lang),
+        )
+
+    async def evaluate_route(message: Message, state: FSMContext, lang: str, vehicle_country_code: str, user_id: int | None = None) -> None:
         data = await state.get_data()
         origin = permit_service.find_country(str(data.get("origin_country_code", "")))
         destination = permit_service.find_country(str(data.get("destination_country_code", "")))
@@ -198,7 +220,7 @@ def build_router(user_storage: UserStorage, settings: Settings) -> Router:
         result = permit_service.evaluate(origin, destination, vehicle_country)
         logger.info(
             "Permit check requested user_id=%s origin=%s destination=%s vehicle_country=%s vid=%s permission=%s dues=%s",
-            message.from_user.id if message.from_user else None,
+            user_id or (message.from_user.id if message.from_user else None),
             origin.code,
             destination.code,
             vehicle_country.code,
@@ -393,44 +415,48 @@ def build_router(user_storage: UserStorage, settings: Settings) -> Router:
     async def receive_origin_country(message: Message, state: FSMContext) -> None:
         lang = await profile_lang(message.from_user.id if message.from_user else None)
         raw_country = message.text or ""
-        country = permit_service.find_country(raw_country)
-        if not country:
-            await answer_country_not_found(message, lang, raw_country)
-            return
-
-        await state.update_data(origin_country_code=country.code)
-        await state.set_state(CheckState.waiting_for_destination_country)
-        await message.answer(
-            t(lang, "ask_destination_country"),
-            reply_markup=cancel_keyboard(lang),
-        )
+        await show_country_choices(message, lang, raw_country, "origin")
 
     @router.message(StateFilter(CheckState.waiting_for_destination_country))
     async def receive_destination_country(message: Message, state: FSMContext) -> None:
         lang = await profile_lang(message.from_user.id if message.from_user else None)
         raw_country = message.text or ""
-        country = permit_service.find_country(raw_country)
-        if not country:
-            await answer_country_not_found(message, lang, raw_country)
-            return
-
-        await state.update_data(destination_country_code=country.code)
-        await state.set_state(CheckState.waiting_for_vehicle_country)
-        await message.answer(
-            t(lang, "ask_vehicle_country"),
-            reply_markup=cancel_keyboard(lang),
-        )
+        await show_country_choices(message, lang, raw_country, "destination")
 
     @router.message(StateFilter(CheckState.waiting_for_vehicle_country))
     async def receive_vehicle_country(message: Message, state: FSMContext) -> None:
         lang = await profile_lang(message.from_user.id if message.from_user else None)
         raw_country = message.text or ""
-        country = permit_service.find_country(raw_country)
+        await show_country_choices(message, lang, raw_country, "vehicle")
+
+    @router.callback_query(F.data.startswith("pick_country:"))
+    async def pick_country(callback: CallbackQuery, state: FSMContext) -> None:
+        if not callback.from_user or not callback.message or not callback.data:
+            return
+        parts = callback.data.split(":")
+        if len(parts) != 3:
+            return
+        _, slot, code = parts
+        country = permit_service.country_by_code(code)
+        lang = await profile_lang(callback.from_user.id)
         if not country:
-            await answer_country_not_found(message, lang, raw_country)
+            await callback.answer(t(lang, "route_session_expired"), show_alert=True)
             return
 
-        await evaluate_route(message, state, lang, country.code)
+        await callback.answer(country_label(country, lang))
+        if slot == "origin":
+            await state.update_data(origin_country_code=country.code)
+            await state.set_state(CheckState.waiting_for_destination_country)
+            await callback.message.answer(t(lang, "ask_destination_country"), reply_markup=cancel_keyboard(lang))
+            return
+        if slot == "destination":
+            await state.update_data(destination_country_code=country.code)
+            await state.set_state(CheckState.waiting_for_vehicle_country)
+            await callback.message.answer(t(lang, "ask_vehicle_country"), reply_markup=cancel_keyboard(lang))
+            return
+        if slot == "vehicle":
+            await evaluate_route(callback.message, state, lang, country.code, user_id=callback.from_user.id)
+            return
 
     @router.message(Command("help"))
     async def help_command(message: Message) -> None:

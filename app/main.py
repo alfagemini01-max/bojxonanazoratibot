@@ -13,7 +13,7 @@ from app.handlers import build_router
 from app.storage import UserStorage, create_user_storage
 
 logger = logging.getLogger(__name__)
-APP_VERSION = "2026-07-15-permit-rules-v1"
+APP_VERSION = "2026-07-16-permit-rules-v2"
 
 
 def create_bot(settings: Settings) -> Bot:
