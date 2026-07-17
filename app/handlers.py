@@ -22,7 +22,7 @@ from aiogram.types import (
 
 from app.config import Settings
 from app.i18n import LANGUAGES, button_texts, normalize_lang, t
-from app.services.permit import PermitRuleService, build_permit_message, country_label
+from app.services.permit import PermitRuleService, UZBEKISTAN_CODE, build_permit_message, country_label
 from app.states import CheckState, RegistrationState
 from app.storage import UserStorage
 
@@ -307,6 +307,10 @@ def build_router(user_storage: UserStorage, settings: Settings) -> Router:
         if not origin or not destination or not vehicle_country:
             await state.clear()
             await message.answer(t(lang, "route_session_expired"), reply_markup=main_menu_keyboard(lang))
+            return
+        if UZBEKISTAN_CODE not in {origin.code, destination.code, vehicle_country.code}:
+            await state.clear()
+            await message.answer(t(lang, "route_not_related_to_uzbekistan"), reply_markup=main_menu_keyboard(lang))
             return
 
         try:
