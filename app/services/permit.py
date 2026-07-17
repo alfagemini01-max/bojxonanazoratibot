@@ -14,6 +14,7 @@ UZBEKISTAN_CODE = "860"
 DEFAULT_RULE_CODE = "000"
 IRAN_CODE = "364"
 TURKMENISTAN_CODE = "795"
+MAX_EXCEPTIONS_IN_MESSAGE = 6
 
 VID_LABELS = {
     "uz": {
@@ -394,31 +395,31 @@ def permit_status_text(rule: dict[str, str] | None, lang: str | None = "uz") -> 
     code = _lang(lang)
     if not rule:
         return {
-            "uz": "⚪ Ruxsatnoma: qoida topilmadi",
+            "uz": "📄 Ruxsat: ⚪ qoida yo'q",
             "ru": "⚪ Разрешение: правило не найдено",
             "en": "⚪ Permit: rule not found",
         }[code]
     permission_cd = str(rule.get("permission_cd", "0"))
     if permission_cd == "1":
         return {
-            "uz": "📄 Ruxsatnoma: ⚠️ majburiy",
+            "uz": "📄 Ruxsat: ⚠️ kerak",
             "ru": "📄 Разрешение: ⚠️ обязательно",
             "en": "📄 Permit: ⚠️ required",
         }[code]
     if permission_cd == "2":
         return {
-            "uz": "📄 Ruxsatnoma: ✅ talab etilmaydi",
+            "uz": "📄 Ruxsat: ✅ kerak emas",
             "ru": "📄 Разрешение: ✅ не требуется",
             "en": "📄 Permit: ✅ not required",
         }[code]
     if permission_cd == "3":
         return {
-            "uz": "📄 Ruxsatnoma: ⛔ ushbu tashuv turi taqiqlangan",
+            "uz": "📄 Ruxsat: ⛔ taqiqlangan",
             "ru": "📄 Разрешение: ⛔ данный вид перевозки запрещен",
             "en": "📄 Permit: ⛔ this carriage type is prohibited",
         }[code]
     return {
-        "uz": "📄 Ruxsatnoma: ⚪ aniqlanmadi",
+        "uz": "📄 Ruxsat: ⚪ aniqlanmadi",
         "ru": "📄 Разрешение: ⚪ не определено",
         "en": "📄 Permit: ⚪ not determined",
     }[code]
@@ -457,7 +458,7 @@ def fee_status_lines(result: PermitResult, lang: str | None = "uz") -> tuple[str
     rule = result.rule
     if not rule:
         return {
-            "uz": ("💵 Yig'im: ⚪ qoida topilmadi", "Spravochnikda ushbu davlat va tashuv turi bo'yicha qoida topilmadi."),
+            "uz": ("💵 Yig'im: ⚪ qoida yo'q", "Spravochnikda ushbu davlat va tashuv turi bo'yicha qoida topilmadi."),
             "ru": ("💵 Сбор: ⚪ правило не найдено", "В справочнике не найдено правило по данной стране и виду перевозки."),
             "en": ("💵 Fee: ⚪ rule not found", "No rule was found in the reference data for this country and carriage type."),
         }[code]
@@ -466,36 +467,36 @@ def fee_status_lines(result: PermitResult, lang: str | None = "uz") -> tuple[str
     if dues_cd == "2":
         if turkmenistan_extra_fee_applies(result):
             return {
-                "uz": (f"💵 Yig'im undiriladi: <b>{turkmenistan_extra_fee_text(code)}</b>", "Turkmaniston bo'yicha qo'shimcha yig'im qo'llanadi."),
+                "uz": (f"💵 Yig'im: <b>{turkmenistan_extra_fee_text(code)}</b>", "Turkmaniston bo'yicha qo'shimcha yig'im qo'llanadi."),
                 "ru": (f"💵 Сбор взимается: <b>{turkmenistan_extra_fee_text(code)}</b>", "Применяется дополнительный сбор по Туркменистану."),
                 "en": (f"💵 Fee is charged: <b>{turkmenistan_extra_fee_text(code)}</b>", "The additional Turkmenistan fee applies."),
             }[code]
         return {
-            "uz": ("✅ Yig'im undirilmaydi", "Excel spravochnikda ushbu tashuv turi bo'yicha yig'im majburiy emas deb belgilangan."),
+            "uz": ("💵 Yig'im: ✅ yo'q", "Excel spravochnikda ushbu tashuv turi bo'yicha yig'im majburiy emas deb belgilangan."),
             "ru": ("✅ Сбор не взимается", "В Excel-справочнике по данному виду перевозки сбор указан как необязательный."),
             "en": ("✅ Fee is not charged", "The Excel reference data marks the fee as not mandatory for this carriage type."),
         }[code]
     if dues_cd == "3":
         if turkmenistan_extra_fee_applies(result):
             return {
-                "uz": (f"⚠️ Yig'im ruxsatnoma turiga qarab aniqlanadi; <b>{turkmenistan_extra_fee_text(code)}</b>", "Spravochnikda yig'im ruxsatnoma turiga qarab belgilangan, Turkmaniston bo'yicha qo'shimcha yig'im ham qo'llanadi."),
+                "uz": (f"💵 Yig'im: ⚠️ ruxsat turiga qarab; <b>{turkmenistan_extra_fee_text(code)}</b>", "Spravochnikda yig'im ruxsatnoma turiga qarab belgilangan, Turkmaniston bo'yicha qo'shimcha yig'im ham qo'llanadi."),
                 "ru": (f"⚠️ Сбор определяется по виду разрешения; <b>{turkmenistan_extra_fee_text(code)}</b>", "Сбор определяется по виду разрешения, также применяется дополнительный сбор по Туркменистану."),
                 "en": (f"⚠️ Fee depends on the permit type; <b>{turkmenistan_extra_fee_text(code)}</b>", "The fee depends on the permit type and the additional Turkmenistan fee also applies."),
             }[code]
         return {
-            "uz": ("⚠️ Yig'im ruxsatnoma turiga qarab aniqlanadi", "Spravochnikda yig'im ruxsatnoma turiga qarab belgilanishi ko'rsatilgan."),
+            "uz": ("💵 Yig'im: ⚠️ ruxsat turiga qarab", "Spravochnikda yig'im ruxsatnoma turiga qarab belgilanishi ko'rsatilgan."),
             "ru": ("⚠️ Сбор определяется по виду разрешения", "В справочнике указано, что сбор определяется в зависимости от вида разрешения."),
             "en": ("⚠️ Fee depends on the permit type", "The reference data states that the fee is determined by the permit type."),
         }[code]
     if dues_cd != "1":
         if turkmenistan_extra_fee_applies(result):
             return {
-                "uz": (f"💵 Yig'im undiriladi: <b>{turkmenistan_extra_fee_text(code)}</b>", "Turkmaniston bo'yicha qo'shimcha yig'im qo'llanadi."),
+                "uz": (f"💵 Yig'im: <b>{turkmenistan_extra_fee_text(code)}</b>", "Turkmaniston bo'yicha qo'shimcha yig'im qo'llanadi."),
                 "ru": (f"💵 Сбор взимается: <b>{turkmenistan_extra_fee_text(code)}</b>", "Применяется дополнительный сбор по Туркменистану."),
                 "en": (f"💵 Fee is charged: <b>{turkmenistan_extra_fee_text(code)}</b>", "The additional Turkmenistan fee applies."),
             }[code]
         return {
-            "uz": ("⚪ Yig'im qo'llanmaydi", "Yig'im bo'yicha majburiy belgi mavjud emas."),
+            "uz": ("💵 Yig'im: ⚪ qo'llanmaydi", "Yig'im bo'yicha majburiy belgi mavjud emas."),
             "ru": ("⚪ Сбор не применяется", "Обязательная отметка по сбору отсутствует."),
             "en": ("⚪ Fee is not applied", "There is no mandatory fee mark in the reference data."),
         }[code]
@@ -504,7 +505,7 @@ def fee_status_lines(result: PermitResult, lang: str | None = "uz") -> tuple[str
     if turkmenistan_extra_fee_applies(result):
         rate = f"{rate}; {turkmenistan_extra_fee_text(code)}"
     return {
-        "uz": (f"💵 Yig'im undiriladi: <b>{rate}</b>", "Excel spravochnikda yig'im majburiy deb belgilanganligi sababli stavka qo'llanadi."),
+        "uz": (f"💵 Yig'im: <b>{rate}</b>", "Excel spravochnikda yig'im majburiy deb belgilanganligi sababli stavka qo'llanadi."),
         "ru": (f"💵 Сбор взимается: <b>{rate}</b>", "Так как в Excel-справочнике сбор указан как обязательный, применяется ставка сбора."),
         "en": (f"💵 Fee is charged: <b>{rate}</b>", "Because the Excel reference data marks the fee as mandatory, the fee rate is applied."),
     }[code]
@@ -517,45 +518,45 @@ def additional_note_lines(result: PermitResult, lang: str | None = "uz") -> list
 
     if turkmenistan_extra_fee_applies(result):
         notes.append({
-            "uz": "Turkmaniston Respublikasi yuk avtotransport vositasi bilan uchinchi mamlakatlardan O'zbekistonga yuk olib kirish yoki O'zbekiston hududidan yuk olib chiqishda 375 USD qo'shimcha yig'im undiriladi.",
+            "uz": "🇹🇲 Turkmaniston TV: 3-davlatdan O'zbekistonga yoki O'zbekistondan 3-davlatga tashuvda +375 USD.",
             "ru": "Для грузовых автотранспортных средств Туркменистана при ввозе грузов из третьих стран в Узбекистан либо вывозе грузов с территории Узбекистана взимается дополнительный сбор 375 USD.",
             "en": "For Turkmenistan freight vehicles, an additional fee of 375 USD is charged when importing goods into Uzbekistan from third countries or exporting goods from Uzbekistan.",
         }[code])
 
     if result.vehicle_country.code == IRAN_CODE:
         notes.append({
-            "uz": "Eron Islom Respublikasi avtotransport vositalari uchun kirish va tranzit yig'im stavkasi tenglik asosida 0 USD etib belgilangan.",
+            "uz": "🇮🇷 Eron TV uchun kirish/tranzit yig'imi: 0 USD.",
             "ru": "Для автотранспортных средств Исламской Республики Иран ставка сбора за въезд и транзит на основе взаимности установлена в размере 0 USD.",
             "en": "For vehicles of the Islamic Republic of Iran, the entry and transit fee rate is set at 0 USD on a reciprocity basis.",
         }[code])
 
     if is_eu_or_azerbaijan(result.vehicle_country.code) and str(rule.get("dues_cd")) == "1":
         notes.append({
-            "uz": "Yevropa Ittifoqi davlatlari va Ozarbayjon bo'yicha yig'im muddati chiqishda transport vositasining haqiqiy bo'lgan muddatiga qarab qayta hisob-kitob qilinadi.",
+            "uz": "🇪🇺 YI/Ozarbayjon: chiqishda muddatga qarab qayta hisoblanadi.",
             "ru": "По государствам Европейского союза и Азербайджану сумма сбора при выезде пересчитывается исходя из фактического срока нахождения транспортного средства.",
             "en": "For EU countries and Azerbaijan, the fee is recalculated on exit based on the vehicle's actual stay period.",
         }[code])
 
     if str(rule.get("permission_cd")) == "1":
         notes.append({
-            "uz": "Ruxsatnoma blanki milliy tashuvchilar ehtiyojidan ortiq qismdan realizatsiya qilinganda 400 USD undiriladi; tranzit ruxsatnomasi uchun 0,5 koeffitsiyent, uchinchi mamlakatlardan yuk tashish ruxsatnomasi uchun 2,0 koeffitsiyent qo'llaniladi.",
+            "uz": "📄 Ruxsat blanki: 400 USD. Tranzit: 0,5 koeff.; 3-davlat tashuvi: 2,0 koeff.",
             "ru": "При реализации разрешения сверх потребности национальных перевозчиков взимается 400 USD; для транзитного разрешения применяется коэффициент 0,5, для разрешения на перевозку из третьих стран — коэффициент 2,0.",
             "en": "When permit forms are issued from the surplus over national carriers' needs, 400 USD is charged; a 0.5 coefficient applies to transit permits and a 2.0 coefficient to third-country carriage permits.",
         }[code])
 
     notes.extend([
         {
-            "uz": "Agar transport vositasi og'ir vaznli yoki yirik gabaritli bo'lsa, mazkur yig'imlardan tashqari qonunchilikda belgilangan alohida to'lovlar ham undiriladi.",
+            "uz": "🚛 Og'ir/yirik gabaritli TV uchun alohida to'lov bo'lishi mumkin.",
             "ru": "Если транспортное средство является тяжеловесным или крупногабаритным, помимо указанных сборов взимаются отдельные платежи, установленные законодательством.",
             "en": "If the vehicle is heavy or oversized, separate statutory charges are collected in addition to these fees.",
         }[code],
         {
-            "uz": "Gumanitar yuklar olib o'tilganda kirish va tranzit yig'imlariga nisbatan 0,5 kamaytiruvchi koeffitsiyent qo'llanishi mumkin.",
+            "uz": "🆘 Gumanitar yuklarda 0,5 koeff. qo'llanishi mumkin.",
             "ru": "При перевозке гуманитарных грузов к ставкам сборов за въезд и транзит может применяться понижающий коэффициент 0,5.",
             "en": "For humanitarian cargo, a reduction coefficient of 0.5 may apply to entry and transit fee rates.",
         }[code],
         {
-            "uz": "Agar xalqaro shartnomada boshqacha tartib belgilangan bo'lsa, xalqaro shartnoma qoidalari qo'llaniladi.",
+            "uz": "🤝 Xalqaro shartnoma bo'lsa, shartnoma qoidasi ustuvor.",
             "ru": "Если международным договором установлен иной порядок, применяются правила международного договора.",
             "en": "If an international treaty establishes different rules, the treaty provisions apply.",
         }[code],
@@ -570,16 +571,16 @@ def build_permit_message(result: PermitResult, timezone: str = "Asia/Tashkent", 
     fee_text, _ = fee_status_lines(result, code)
     labels = {
         "uz": {
-            "title": "🚛 <b>Ruxsatnoma va yig'im tekshiruvi</b>",
-            "origin": "📍 Tashuv boshlangan davlat",
-            "destination": "🏁 Tashuv tugaydigan davlat",
-            "vehicle": "🚚 Avtotransport ro'yxatdan o'tgan davlat",
-            "type": "🧭 Aniqlangan tashuv turi",
-            "exceptions_title": "🧾 Ushbu tashuv turi bo'yicha ruxsatnoma talab etilmaydigan istisno holatlar",
-            "notes_title": "📌 Qo'shimcha izohlar",
-            "unknown": "⚠️ Ushbu javob yakuniy huquqiy xulosa emas. Vakolatli tizimda qayta tekshirish talab etiladi.",
-            "advisory": "⚠️ Ma'lumotlar axborot-tavsiyaviy xususiyatga ega.",
-            "time": "🕘 Tekshiruv vaqti",
+            "title": "🚛📄 <b>Ruxsat/yig'im tekshiruvi</b>",
+            "origin": "📍 Boshlanish",
+            "destination": "🏁 Tugash",
+            "vehicle": "🚚 Ro'yxat davlati",
+            "type": "🧭 Tashuv turi",
+            "exceptions_title": "🧾 Istisnolar",
+            "notes_title": "📌 Eslatma",
+            "unknown": "⚠️ Yakuniy huquqiy xulosa emas. Vakolatli tizimda qayta tekshiring.",
+            "advisory": "⚠️ Tavsiyaviy ma'lumot.",
+            "time": "🕘 Vaqt",
         },
         "ru": {
             "title": "🚛 <b>Проверка разрешения и сбора</b>",
@@ -621,8 +622,16 @@ def build_permit_message(result: PermitResult, timezone: str = "Asia/Tashkent", 
     ]
     if result.exceptions:
         lines.append(labels["exceptions_title"] + ":")
-        for index, item in enumerate(result.exceptions, start=1):
+        shown_exceptions = result.exceptions[:MAX_EXCEPTIONS_IN_MESSAGE]
+        for index, item in enumerate(shown_exceptions, start=1):
             lines.append(f"{index}. {_html(item.get('exception_desc'))}")
+        if len(result.exceptions) > len(shown_exceptions):
+            more_count = len(result.exceptions) - len(shown_exceptions)
+            lines.append({
+                "uz": f"➕ Yana {more_count} ta istisno bor.",
+                "ru": f"➕ Еще {more_count} исключений.",
+                "en": f"➕ {more_count} more exceptions.",
+            }[code])
         lines.append("")
     if not rule:
         lines.append(labels["unknown"])
