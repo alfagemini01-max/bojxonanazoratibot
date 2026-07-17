@@ -308,7 +308,10 @@ def build_router(user_storage: UserStorage, settings: Settings) -> Router:
             await state.clear()
             await message.answer(t(lang, "route_session_expired"), reply_markup=main_menu_keyboard(lang))
             return
-        if UZBEKISTAN_CODE not in {origin.code, destination.code, vehicle_country.code}:
+        if (
+            origin.code == destination.code == vehicle_country.code
+            and origin.code != UZBEKISTAN_CODE
+        ):
             await state.clear()
             await message.answer(t(lang, "route_not_related_to_uzbekistan"), reply_markup=main_menu_keyboard(lang))
             return
