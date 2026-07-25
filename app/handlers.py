@@ -465,11 +465,6 @@ def build_router(user_storage: UserStorage, settings: Settings) -> Router:
             await message.answer(t(lang, "ask_fee_customs_value"), reply_markup=cancel_keyboard(lang))
             return
 
-        if is_cargo_vehicle(data) and direction == "transit" and not data.get("fee_transit_declaration"):
-            await state.set_state(FeeCalcState.waiting_for_transit_declaration)
-            await message.answer(t(lang, "ask_fee_transit_declaration"), reply_markup=yes_no_keyboard(lang))
-            return
-
         if not data.get("fee_tinted"):
             await state.set_state(FeeCalcState.waiting_for_tinted)
             await message.answer(t(lang, "ask_fee_tinted"), reply_markup=yes_no_keyboard(lang))
