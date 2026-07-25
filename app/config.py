@@ -47,6 +47,9 @@ class Settings:
     fees_rules_path: Path
     bhm_value: int
     usd_fallback_rate: float
+    admin_username: str
+    admin_password: str
+    admin_session_secret: str
     sql_connection_string: str
     sql_query_path: Path
     timezone: str = "Asia/Tashkent"
@@ -73,6 +76,9 @@ def get_settings() -> Settings:
         fees_rules_path=BASE_DIR / os.getenv("FEES_RULES_PATH", "data/fees_2026.json"),
         bhm_value=int(os.getenv("BHM_VALUE", "412000")),
         usd_fallback_rate=float(os.getenv("USD_FALLBACK_RATE", "12600")),
+        admin_username=os.getenv("ADMIN_USERNAME", "admin").strip(),
+        admin_password=os.getenv("ADMIN_PASSWORD", "nazorat2026").strip(),
+        admin_session_secret=os.getenv("ADMIN_SESSION_SECRET", "change-this-admin-secret").strip(),
         sql_connection_string=os.getenv("SQL_CONNECTION_STRING", "").strip(),
         sql_query_path=BASE_DIR / os.getenv(
             "SQL_QUERY_PATH",

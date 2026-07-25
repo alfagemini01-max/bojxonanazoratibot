@@ -9,11 +9,12 @@ from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 
 from app.config import Settings, get_settings
+from app.admin_panel import setup_admin_routes
 from app.handlers import build_router
 from app.storage import UserStorage, create_user_storage
 
 logger = logging.getLogger(__name__)
-APP_VERSION = "2026-07-25-telegram-fee-table-v4"
+APP_VERSION = "2026-07-25-admin-panel-v1"
 
 
 def create_bot(settings: Settings) -> Bot:
@@ -48,6 +49,7 @@ async def start_health_server(settings: Settings) -> None:
     app = web.Application()
     app.router.add_get("/", index)
     app.router.add_get("/health", health)
+    setup_admin_routes(app, settings)
 
     runner = web.AppRunner(app)
     await runner.setup()
@@ -110,6 +112,7 @@ def run_webhook() -> None:
     app = web.Application()
     app.router.add_get("/", index)
     app.router.add_get("/health", health)
+    setup_admin_routes(app, settings)
     SimpleRequestHandler(dispatcher=dispatcher, bot=bot).register(app, path=settings.webhook_path)
     setup_application(app, dispatcher, bot=bot)
     web.run_app(app, host=settings.web_host, port=settings.web_port)
