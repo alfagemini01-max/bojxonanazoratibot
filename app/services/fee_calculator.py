@@ -79,12 +79,29 @@ def _int_value(value: object) -> int:
 class FeeCalculator:
     def __init__(self, data_path: Path, bhm_value: int, usd_rate: float) -> None:
         self.data_path = data_path
-        self.data = json.loads(data_path.read_text(encoding="utf-8"))
+        self._mtime_ns = 0
+        self.data = {}
         self.bhm_value = int(bhm_value or self.data.get("bhm", {}).get("value", 412000))
         self.usd_rate = float(usd_rate or 0) or 12600.0
+        self._load_data()
+
+    def _load_data(self) -> None:
+        stat = self.data_path.stat()
+        self._mtime_ns = stat.st_mtime_ns
+        self.data = json.loads(self.data_path.read_text(encoding="utf-8"))
+        self.bhm_value = int(self.data.get("bhm", {}).get("value") or self.bhm_value or 412000)
         self.legal_basis = self.data.get("legal_basis", {})
 
+    def reload_if_changed(self) -> None:
+        try:
+            mtime_ns = self.data_path.stat().st_mtime_ns
+        except OSError:
+            return
+        if mtime_ns != self._mtime_ns:
+            self._load_data()
+
     def customs_clearance_amount(self, customs_value_usd: float) -> tuple[float, int]:
+        self.reload_if_changed()
         for row in self.data["customs_clearance_bhm_scale"]:
             max_usd = row.get("max_usd")
             if max_usd is None or customs_value_usd <= float(max_usd):
@@ -93,6 +110,7 @@ class FeeCalculator:
         return 25.0, int(round(25 * self.bhm_value))
 
     def base_entry_fee_usd(self, vehicle_country_code: str, weight_category: str | None, stay_duration: str | None) -> float:
+        self.reload_if_changed()
         fees = self.data["entry_fee"]
         if vehicle_country_code == IRAN_CODE:
             return float(fees["iran_usd"])
@@ -117,6 +135,7 @@ class FeeCalculator:
         timezone: str = "Asia/Tashkent",
         lang: str | None = "uz",
     ) -> str:
+        self.reload_if_changed()
         code = lang if lang in {"uz", "ru", "en"} else "uz"
         now = datetime.now(_load_timezone(timezone)).strftime("%d.%m.%Y, %H:%M")
 

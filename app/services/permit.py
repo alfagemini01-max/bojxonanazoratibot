@@ -173,13 +173,27 @@ def transliterate_cyrillic_to_latin(value: str) -> str:
 class PermitRuleService:
     def __init__(self, data_path: Path) -> None:
         self.data_path = data_path
-        self.data = json.loads(data_path.read_text(encoding="utf-8"))
+        self._mtime_ns = 0
+        self._load_data()
+
+    def _load_data(self) -> None:
+        stat = self.data_path.stat()
+        self._mtime_ns = stat.st_mtime_ns
+        self.data = json.loads(self.data_path.read_text(encoding="utf-8"))
         self.countries: dict[str, str] = dict(self.data["countries"])
         self.rules: dict[str, dict[str, dict[str, str]]] = self.data["rules"]
         self.exceptions: dict[str, list[dict[str, str]]] = self.data.get("exceptions", {})
         self.vid_types: dict[str, str] = self.data["vid_types"]
         self.aliases = self._build_aliases()
         self.country_candidates = self._build_country_candidates()
+
+    def reload_if_changed(self) -> None:
+        try:
+            mtime_ns = self.data_path.stat().st_mtime_ns
+        except OSError:
+            return
+        if mtime_ns != self._mtime_ns:
+            self._load_data()
 
     def _build_aliases(self) -> dict[str, str]:
         aliases: dict[str, str] = {}
@@ -210,6 +224,7 @@ class PermitRuleService:
         return candidates
 
     def find_country(self, text: str) -> Country | None:
+        self.reload_if_changed()
         normalized = normalize_country_text(text)
         if not normalized:
             return None
@@ -233,6 +248,7 @@ class PermitRuleService:
         return Country(code, name) if name else None
 
     def country_by_code(self, code: str) -> Country | None:
+        self.reload_if_changed()
         return self.find_country(str(code).zfill(3))
 
     @staticmethod
@@ -252,6 +268,7 @@ class PermitRuleService:
         return SequenceMatcher(None, query, candidate).ratio()
 
     def search_countries(self, text: str, threshold: float = 0.75, limit: int = 8) -> list[CountryMatch]:
+        self.reload_if_changed()
         needle = normalize_country_text(text)
         if not needle:
             return []
@@ -286,6 +303,7 @@ class PermitRuleService:
         return "3"
 
     def evaluate(self, origin: Country, destination: Country, vehicle_country: Country) -> PermitResult:
+        self.reload_if_changed()
         vid_cd = self.detect_transport_type(origin, destination, vehicle_country)
         country_rules = self.rules.get(vehicle_country.code, {})
         rule = country_rules.get(vid_cd)
@@ -303,6 +321,7 @@ class PermitRuleService:
         )
 
     def matching_exceptions(self, country_code: str, vid_cd: str) -> list[dict[str, str]]:
+        self.reload_if_changed()
         try:
             index = int(vid_cd) - 1
         except ValueError:
