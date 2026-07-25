@@ -14,7 +14,7 @@ UZBEKISTAN_CODE = "860"
 DEFAULT_RULE_CODE = "000"
 IRAN_CODE = "364"
 TURKMENISTAN_CODE = "795"
-MAX_EXCEPTIONS_IN_MESSAGE = 6
+MAX_EXCEPTIONS_IN_MESSAGE = 3
 
 VID_LABELS = {
     "uz": {
@@ -639,7 +639,7 @@ def build_permit_message(result: PermitResult, timezone: str = "Asia/Tashkent", 
     fee_text, _ = fee_status_lines(result, code)
     labels = {
         "uz": {
-            "title": "🚛📄 <b>Ruxsat/yig'im tekshiruvi</b>",
+            "title": "🚛📄 <b>Dazvol tekshiruvi</b>",
             "origin": "📍 Boshlanish",
             "destination": "🏁 Tugash",
             "vehicle": "🚚 Ro'yxat davlati",
