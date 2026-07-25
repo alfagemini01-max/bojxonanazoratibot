@@ -22,14 +22,17 @@ from aiogram.types import (
 
 from app.config import Settings
 from app.i18n import LANGUAGES, button_texts, normalize_lang, t
-from app.services.permit import PermitRuleService, UZBEKISTAN_CODE, build_permit_message, country_label
-from app.states import CheckState, RegistrationState
+from app.services.fee_calculator import FeeCalculator, TAJIKISTAN_CODE
+from app.services.permit import PermitRuleService, UZBEKISTAN_CODE, build_permit_message, country_label, turkmenistan_extra_fee_applies
+from app.services.permit import TURKMENISTAN_CODE, is_eu_or_azerbaijan
+from app.states import CheckState, FeeCalcState, RegistrationState
 from app.storage import UserStorage
 
 logger = logging.getLogger(__name__)
 MAX_TELEGRAM_TEXT_LENGTH = 3800
 
 CHECK_BUTTONS = button_texts("button_check")
+FEE_BUTTONS = button_texts("button_fees")
 TERMS_BUTTONS = button_texts("button_terms")
 LANGUAGE_BUTTONS = button_texts("button_language")
 CANCEL_BUTTONS = button_texts("button_cancel")
@@ -66,7 +69,7 @@ def terms_keyboard(lang: str = "uz") -> InlineKeyboardMarkup:
 def main_menu_keyboard(lang: str = "uz") -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(text=t(lang, "button_check"))],
+            [KeyboardButton(text=t(lang, "button_check")), KeyboardButton(text=t(lang, "button_fees"))],
             [KeyboardButton(text=t(lang, "button_terms"))],
             [KeyboardButton(text=t(lang, "button_language"))],
         ],
@@ -80,6 +83,26 @@ def cancel_keyboard(lang: str = "uz") -> ReplyKeyboardMarkup:
         keyboard=[[KeyboardButton(text=t(lang, "button_cancel"))]],
         resize_keyboard=True,
     )
+
+
+def simple_options_keyboard(lang: str, keys: list[str], columns: int = 2) -> ReplyKeyboardMarkup:
+    rows: list[list[KeyboardButton]] = []
+    for index in range(0, len(keys), columns):
+        rows.append([KeyboardButton(text=t(lang, key)) for key in keys[index : index + columns]])
+    rows.append([KeyboardButton(text=t(lang, "button_cancel"))])
+    return ReplyKeyboardMarkup(keyboard=rows, resize_keyboard=True)
+
+
+def yes_no_keyboard(lang: str) -> ReplyKeyboardMarkup:
+    return simple_options_keyboard(lang, ["button_yes", "button_no"])
+
+
+def button_value(lang: str, key_to_value: dict[str, str], text: str | None) -> str | None:
+    value = (text or "").strip()
+    for key, mapped_value in key_to_value.items():
+        if value == t(lang, key):
+            return mapped_value
+    return None
 
 
 def _country_from_match(match):
@@ -152,6 +175,7 @@ def build_router(user_storage: UserStorage, settings: Settings) -> Router:
     router = Router(name="nazoratbot")
     terms_photo_file_id = settings.terms_photo_file_id
     permit_service = PermitRuleService(settings.permission_rules_path)
+    fee_calculator = FeeCalculator(settings.fees_rules_path, settings.bhm_value, settings.usd_fallback_rate)
 
     async def profile_lang(user_id: int | None) -> str:
         if user_id is None:
@@ -345,6 +369,162 @@ def build_router(user_storage: UserStorage, settings: Settings) -> Router:
             await state.clear()
             await message.answer(t(lang, "technical_error"), reply_markup=main_menu_keyboard(lang))
 
+    def is_cargo_vehicle(data: dict[str, object]) -> bool:
+        return str(data.get("fee_vehicle_type", "")) in {"truck", "truck_trailer"}
+
+    def fee_yes_no_value(lang: str, text: str | None) -> str | None:
+        return button_value(lang, {"button_yes": "yes", "button_no": "no"}, text)
+
+    def fee_rule_needs_rate(data: dict[str, object]) -> bool:
+        if not is_cargo_vehicle(data):
+            return False
+        if str(data.get("fee_direction")) not in {"entry", "transit"}:
+            return False
+        vehicle_country = country_by_code(str(data.get("fee_vehicle_country_code", "")))
+        origin = country_by_code(str(data.get("fee_origin_country_code", ""))) if data.get("fee_origin_country_code") else None
+        destination = country_by_code(str(data.get("fee_destination_country_code", ""))) if data.get("fee_destination_country_code") else None
+        if not vehicle_country or vehicle_country.code == UZBEKISTAN_CODE or not origin or not destination:
+            return False
+        result = permit_service.evaluate(origin, destination, vehicle_country)
+        rule = result.rule or {}
+        return str(rule.get("dues_cd", "0")) == "1" or turkmenistan_extra_fee_applies(result)
+
+    async def finish_fee_calculation(message: Message, state: FSMContext, lang: str) -> None:
+        data = await state.get_data()
+        payload = {
+            "vehicle_type": data.get("fee_vehicle_type"),
+            "vehicle_country_code": data.get("fee_vehicle_country_code"),
+            "direction": data.get("fee_direction"),
+            "origin_country_code": data.get("fee_origin_country_code"),
+            "destination_country_code": data.get("fee_destination_country_code"),
+            "weight_category": data.get("fee_weight_category"),
+            "stay_duration": data.get("fee_stay_duration"),
+            "declared": data.get("fee_declared"),
+            "customs_value_usd": data.get("fee_customs_value_usd"),
+            "transit_declaration": data.get("fee_transit_declaration"),
+            "tinted": data.get("fee_tinted"),
+            "osago_missing": "yes" if data.get("fee_osago") == "no" else "no",
+            "osago_period": data.get("fee_osago_period"),
+            "heavy": data.get("fee_heavy"),
+            "humanitarian": data.get("fee_humanitarian"),
+            "animal": data.get("fee_animal"),
+            "temp_overstay_days": data.get("fee_temp_overstay_days"),
+            "delivery_overdue_days": data.get("fee_delivery_overdue_days"),
+        }
+        await state.clear()
+        await answer_long(
+            message,
+            fee_calculator.build_message(payload, permit_service, settings.timezone, lang),
+            reply_markup=main_menu_keyboard(lang),
+        )
+
+    async def continue_fee_questions(message: Message, state: FSMContext, lang: str) -> None:
+        data = await state.get_data()
+        vehicle_country = country_by_code(str(data.get("fee_vehicle_country_code", "")))
+        direction = str(data.get("fee_direction", ""))
+        foreign_vehicle = bool(vehicle_country and vehicle_country.code != UZBEKISTAN_CODE)
+        needs_rate = fee_rule_needs_rate(data)
+
+        if (
+            needs_rate
+            and vehicle_country
+            and vehicle_country.code in {TAJIKISTAN_CODE, TURKMENISTAN_CODE}
+            and not data.get("fee_weight_category")
+        ):
+            await state.set_state(FeeCalcState.waiting_for_weight_category)
+            await message.answer(
+                t(lang, "ask_fee_weight"),
+                reply_markup=simple_options_keyboard(
+                    lang,
+                    ["button_weight_up_to_10", "button_weight_10_20", "button_weight_over_20"],
+                    columns=1,
+                ),
+            )
+            return
+
+        if (
+            needs_rate
+            and vehicle_country
+            and is_eu_or_azerbaijan(vehicle_country.code)
+            and not data.get("fee_stay_duration")
+        ):
+            await state.set_state(FeeCalcState.waiting_for_stay_duration)
+            await message.answer(
+                t(lang, "ask_fee_stay_duration"),
+                reply_markup=simple_options_keyboard(lang, ["button_stay_up_to_14", "button_stay_over_14"], columns=1),
+            )
+            return
+
+        if is_cargo_vehicle(data) and not data.get("fee_declared"):
+            await state.set_state(FeeCalcState.waiting_for_declaration)
+            await message.answer(t(lang, "ask_fee_declaration"), reply_markup=yes_no_keyboard(lang))
+            return
+
+        if data.get("fee_declared") == "yes" and not data.get("fee_customs_value_usd"):
+            await state.set_state(FeeCalcState.waiting_for_customs_value)
+            await message.answer(t(lang, "ask_fee_customs_value"), reply_markup=cancel_keyboard(lang))
+            return
+
+        if is_cargo_vehicle(data) and direction == "transit" and not data.get("fee_transit_declaration"):
+            await state.set_state(FeeCalcState.waiting_for_transit_declaration)
+            await message.answer(t(lang, "ask_fee_transit_declaration"), reply_markup=yes_no_keyboard(lang))
+            return
+
+        if not data.get("fee_tinted"):
+            await state.set_state(FeeCalcState.waiting_for_tinted)
+            await message.answer(t(lang, "ask_fee_tinted"), reply_markup=yes_no_keyboard(lang))
+            return
+
+        if foreign_vehicle and direction in {"entry", "transit"} and not data.get("fee_osago"):
+            await state.set_state(FeeCalcState.waiting_for_osago)
+            await message.answer(t(lang, "ask_fee_osago"), reply_markup=yes_no_keyboard(lang))
+            return
+
+        if foreign_vehicle and direction in {"entry", "transit"} and data.get("fee_osago") == "no" and not data.get("fee_osago_period"):
+            await state.set_state(FeeCalcState.waiting_for_osago_period)
+            await message.answer(
+                t(lang, "ask_fee_osago_period"),
+                reply_markup=simple_options_keyboard(lang, ["button_osago_15", "button_osago_1m", "button_osago_more"], columns=1),
+            )
+            return
+
+        if is_cargo_vehicle(data) and not data.get("fee_heavy"):
+            await state.set_state(FeeCalcState.waiting_for_heavy)
+            await message.answer(t(lang, "ask_fee_heavy"), reply_markup=yes_no_keyboard(lang))
+            return
+
+        if is_cargo_vehicle(data) and not data.get("fee_humanitarian"):
+            await state.set_state(FeeCalcState.waiting_for_humanitarian)
+            await message.answer(t(lang, "ask_fee_humanitarian"), reply_markup=yes_no_keyboard(lang))
+            return
+
+        if is_cargo_vehicle(data) and not data.get("fee_animal"):
+            await state.set_state(FeeCalcState.waiting_for_animal)
+            await message.answer(t(lang, "ask_fee_animal"), reply_markup=yes_no_keyboard(lang))
+            return
+
+        if foreign_vehicle and direction == "exit" and not data.get("fee_temp_overstay"):
+            await state.set_state(FeeCalcState.waiting_for_temp_overstay)
+            await message.answer(t(lang, "ask_fee_temp_overstay"), reply_markup=yes_no_keyboard(lang))
+            return
+
+        if data.get("fee_temp_overstay") == "yes" and not data.get("fee_temp_overstay_days"):
+            await state.set_state(FeeCalcState.waiting_for_temp_overstay_days)
+            await message.answer(t(lang, "ask_fee_temp_overstay_days"), reply_markup=cancel_keyboard(lang))
+            return
+
+        if is_cargo_vehicle(data) and direction in {"transit", "exit"} and not data.get("fee_delivery_overdue"):
+            await state.set_state(FeeCalcState.waiting_for_delivery_overdue)
+            await message.answer(t(lang, "ask_fee_delivery_overdue"), reply_markup=yes_no_keyboard(lang))
+            return
+
+        if data.get("fee_delivery_overdue") == "yes" and not data.get("fee_delivery_overdue_days"):
+            await state.set_state(FeeCalcState.waiting_for_delivery_overdue_days)
+            await message.answer(t(lang, "ask_fee_delivery_overdue_days"), reply_markup=cancel_keyboard(lang))
+            return
+
+        await finish_fee_calculation(message, state, lang)
+
     async def continue_registration(message: Message, state: FSMContext) -> None:
         if not message.from_user:
             return
@@ -504,6 +684,258 @@ def build_router(user_storage: UserStorage, settings: Settings) -> Router:
         lang = normalize_lang(profile.language_code if profile else None)
         await send_terms(message, show_accept_button=not bool(profile and profile.terms_accepted_at), lang=lang)
 
+    @router.message(Command("fees"))
+    @router.message(F.text.in_(FEE_BUTTONS))
+    async def ask_fee_vehicle_type(message: Message, state: FSMContext) -> None:
+        if not message.from_user:
+            return
+
+        profile = await user_storage.get_profile(message.from_user.id)
+        lang = normalize_lang(profile.language_code if profile else None)
+        if not profile or not profile.is_registered:
+            await continue_registration(message, state)
+            return
+
+        await state.clear()
+        await state.set_state(FeeCalcState.waiting_for_vehicle_type)
+        await message.answer(
+            t(lang, "ask_fee_vehicle_type"),
+            reply_markup=simple_options_keyboard(
+                lang,
+                ["button_vehicle_light", "button_vehicle_bus", "button_vehicle_truck", "button_vehicle_trailer"],
+                columns=2,
+            ),
+        )
+
+    @router.message(StateFilter(FeeCalcState.waiting_for_vehicle_type))
+    async def receive_fee_vehicle_type(message: Message, state: FSMContext) -> None:
+        lang = await profile_lang(message.from_user.id if message.from_user else None)
+        vehicle_type = button_value(
+            lang,
+            {
+                "button_vehicle_light": "light",
+                "button_vehicle_bus": "bus",
+                "button_vehicle_truck": "truck",
+                "button_vehicle_trailer": "truck_trailer",
+            },
+            message.text,
+        )
+        if not vehicle_type:
+            await message.answer(t(lang, "ask_fee_vehicle_type"))
+            return
+        await state.update_data(fee_vehicle_type=vehicle_type)
+        await state.set_state(FeeCalcState.waiting_for_vehicle_country)
+        await message.answer(t(lang, "ask_fee_vehicle_country"), reply_markup=cancel_keyboard(lang))
+
+    @router.message(StateFilter(FeeCalcState.waiting_for_vehicle_country))
+    async def receive_fee_vehicle_country(message: Message, state: FSMContext) -> None:
+        lang = await profile_lang(message.from_user.id if message.from_user else None)
+        await show_country_choices(message, lang, message.text or "", "fee_vehicle")
+
+    @router.message(StateFilter(FeeCalcState.waiting_for_direction))
+    async def receive_fee_direction(message: Message, state: FSMContext) -> None:
+        lang = await profile_lang(message.from_user.id if message.from_user else None)
+        direction = button_value(
+            lang,
+            {
+                "button_direction_entry": "entry",
+                "button_direction_transit": "transit",
+                "button_direction_exit": "exit",
+            },
+            message.text,
+        )
+        if not direction:
+            await message.answer(t(lang, "ask_fee_direction"))
+            return
+        await state.update_data(fee_direction=direction)
+        data = await state.get_data()
+        if is_cargo_vehicle(data):
+            await state.set_state(FeeCalcState.waiting_for_origin_country)
+            await message.answer(t(lang, "ask_fee_origin"), reply_markup=cancel_keyboard(lang))
+            return
+        await continue_fee_questions(message, state, lang)
+
+    @router.message(StateFilter(FeeCalcState.waiting_for_origin_country))
+    async def receive_fee_origin_country(message: Message, state: FSMContext) -> None:
+        lang = await profile_lang(message.from_user.id if message.from_user else None)
+        await show_country_choices(message, lang, message.text or "", "fee_origin")
+
+    @router.message(StateFilter(FeeCalcState.waiting_for_destination_country))
+    async def receive_fee_destination_country(message: Message, state: FSMContext) -> None:
+        lang = await profile_lang(message.from_user.id if message.from_user else None)
+        await show_country_choices(message, lang, message.text or "", "fee_destination")
+
+    @router.message(StateFilter(FeeCalcState.waiting_for_weight_category))
+    async def receive_fee_weight(message: Message, state: FSMContext) -> None:
+        lang = await profile_lang(message.from_user.id if message.from_user else None)
+        weight = button_value(
+            lang,
+            {
+                "button_weight_up_to_10": "up_to_10",
+                "button_weight_10_20": "from_10_to_20",
+                "button_weight_over_20": "over_20",
+            },
+            message.text,
+        )
+        if not weight:
+            await message.answer(t(lang, "ask_fee_weight"))
+            return
+        await state.update_data(fee_weight_category=weight)
+        await continue_fee_questions(message, state, lang)
+
+    @router.message(StateFilter(FeeCalcState.waiting_for_stay_duration))
+    async def receive_fee_stay_duration(message: Message, state: FSMContext) -> None:
+        lang = await profile_lang(message.from_user.id if message.from_user else None)
+        stay = button_value(
+            lang,
+            {"button_stay_up_to_14": "up_to_14", "button_stay_over_14": "over_14"},
+            message.text,
+        )
+        if not stay:
+            await message.answer(t(lang, "ask_fee_stay_duration"))
+            return
+        await state.update_data(fee_stay_duration=stay)
+        await continue_fee_questions(message, state, lang)
+
+    @router.message(StateFilter(FeeCalcState.waiting_for_declaration))
+    async def receive_fee_declaration(message: Message, state: FSMContext) -> None:
+        lang = await profile_lang(message.from_user.id if message.from_user else None)
+        value = fee_yes_no_value(lang, message.text)
+        if not value:
+            await message.answer(t(lang, "ask_fee_declaration"), reply_markup=yes_no_keyboard(lang))
+            return
+        await state.update_data(fee_declared=value)
+        await continue_fee_questions(message, state, lang)
+
+    @router.message(StateFilter(FeeCalcState.waiting_for_customs_value))
+    async def receive_fee_customs_value(message: Message, state: FSMContext) -> None:
+        lang = await profile_lang(message.from_user.id if message.from_user else None)
+        raw_value = (message.text or "").replace(" ", "").replace(",", ".")
+        try:
+            value = float(raw_value)
+        except ValueError:
+            await message.answer(t(lang, "invalid_number"))
+            return
+        if value <= 0:
+            await message.answer(t(lang, "invalid_number"))
+            return
+        await state.update_data(fee_customs_value_usd=value)
+        await continue_fee_questions(message, state, lang)
+
+    @router.message(StateFilter(FeeCalcState.waiting_for_transit_declaration))
+    async def receive_fee_transit_declaration(message: Message, state: FSMContext) -> None:
+        lang = await profile_lang(message.from_user.id if message.from_user else None)
+        value = fee_yes_no_value(lang, message.text)
+        if not value:
+            await message.answer(t(lang, "ask_fee_transit_declaration"), reply_markup=yes_no_keyboard(lang))
+            return
+        await state.update_data(fee_transit_declaration=value)
+        await continue_fee_questions(message, state, lang)
+
+    @router.message(StateFilter(FeeCalcState.waiting_for_tinted))
+    async def receive_fee_tinted(message: Message, state: FSMContext) -> None:
+        lang = await profile_lang(message.from_user.id if message.from_user else None)
+        value = fee_yes_no_value(lang, message.text)
+        if not value:
+            await message.answer(t(lang, "ask_fee_tinted"), reply_markup=yes_no_keyboard(lang))
+            return
+        await state.update_data(fee_tinted=value)
+        await continue_fee_questions(message, state, lang)
+
+    @router.message(StateFilter(FeeCalcState.waiting_for_osago))
+    async def receive_fee_osago(message: Message, state: FSMContext) -> None:
+        lang = await profile_lang(message.from_user.id if message.from_user else None)
+        value = fee_yes_no_value(lang, message.text)
+        if not value:
+            await message.answer(t(lang, "ask_fee_osago"), reply_markup=yes_no_keyboard(lang))
+            return
+        await state.update_data(fee_osago=value)
+        await continue_fee_questions(message, state, lang)
+
+    @router.message(StateFilter(FeeCalcState.waiting_for_osago_period))
+    async def receive_fee_osago_period(message: Message, state: FSMContext) -> None:
+        lang = await profile_lang(message.from_user.id if message.from_user else None)
+        period = button_value(
+            lang,
+            {"button_osago_15": "up_to_15", "button_osago_1m": "one_month", "button_osago_more": "over_one_month"},
+            message.text,
+        )
+        if not period:
+            await message.answer(t(lang, "ask_fee_osago_period"))
+            return
+        await state.update_data(fee_osago_period=period)
+        await continue_fee_questions(message, state, lang)
+
+    @router.message(StateFilter(FeeCalcState.waiting_for_heavy))
+    async def receive_fee_heavy(message: Message, state: FSMContext) -> None:
+        lang = await profile_lang(message.from_user.id if message.from_user else None)
+        value = fee_yes_no_value(lang, message.text)
+        if not value:
+            await message.answer(t(lang, "ask_fee_heavy"), reply_markup=yes_no_keyboard(lang))
+            return
+        await state.update_data(fee_heavy=value)
+        await continue_fee_questions(message, state, lang)
+
+    @router.message(StateFilter(FeeCalcState.waiting_for_humanitarian))
+    async def receive_fee_humanitarian(message: Message, state: FSMContext) -> None:
+        lang = await profile_lang(message.from_user.id if message.from_user else None)
+        value = fee_yes_no_value(lang, message.text)
+        if not value:
+            await message.answer(t(lang, "ask_fee_humanitarian"), reply_markup=yes_no_keyboard(lang))
+            return
+        await state.update_data(fee_humanitarian=value)
+        await continue_fee_questions(message, state, lang)
+
+    @router.message(StateFilter(FeeCalcState.waiting_for_animal))
+    async def receive_fee_animal(message: Message, state: FSMContext) -> None:
+        lang = await profile_lang(message.from_user.id if message.from_user else None)
+        value = fee_yes_no_value(lang, message.text)
+        if not value:
+            await message.answer(t(lang, "ask_fee_animal"), reply_markup=yes_no_keyboard(lang))
+            return
+        await state.update_data(fee_animal=value)
+        await continue_fee_questions(message, state, lang)
+
+    @router.message(StateFilter(FeeCalcState.waiting_for_temp_overstay))
+    async def receive_fee_temp_overstay(message: Message, state: FSMContext) -> None:
+        lang = await profile_lang(message.from_user.id if message.from_user else None)
+        value = fee_yes_no_value(lang, message.text)
+        if not value:
+            await message.answer(t(lang, "ask_fee_temp_overstay"), reply_markup=yes_no_keyboard(lang))
+            return
+        await state.update_data(fee_temp_overstay=value)
+        await continue_fee_questions(message, state, lang)
+
+    @router.message(StateFilter(FeeCalcState.waiting_for_temp_overstay_days))
+    async def receive_fee_temp_overstay_days(message: Message, state: FSMContext) -> None:
+        lang = await profile_lang(message.from_user.id if message.from_user else None)
+        raw_value = (message.text or "").strip()
+        if not raw_value.isdigit() or int(raw_value) <= 0:
+            await message.answer(t(lang, "invalid_number"))
+            return
+        await state.update_data(fee_temp_overstay_days=int(raw_value))
+        await continue_fee_questions(message, state, lang)
+
+    @router.message(StateFilter(FeeCalcState.waiting_for_delivery_overdue))
+    async def receive_fee_delivery_overdue(message: Message, state: FSMContext) -> None:
+        lang = await profile_lang(message.from_user.id if message.from_user else None)
+        value = fee_yes_no_value(lang, message.text)
+        if not value:
+            await message.answer(t(lang, "ask_fee_delivery_overdue"), reply_markup=yes_no_keyboard(lang))
+            return
+        await state.update_data(fee_delivery_overdue=value)
+        await continue_fee_questions(message, state, lang)
+
+    @router.message(StateFilter(FeeCalcState.waiting_for_delivery_overdue_days))
+    async def receive_fee_delivery_overdue_days(message: Message, state: FSMContext) -> None:
+        lang = await profile_lang(message.from_user.id if message.from_user else None)
+        raw_value = (message.text or "").strip()
+        if not raw_value.isdigit() or int(raw_value) <= 0:
+            await message.answer(t(lang, "invalid_number"))
+            return
+        await state.update_data(fee_delivery_overdue_days=int(raw_value))
+        await continue_fee_questions(message, state, lang)
+
     @router.message(Command("check"))
     @router.message(F.text.in_(CHECK_BUTTONS))
     async def ask_route_origin(message: Message, state: FSMContext) -> None:
@@ -567,6 +999,27 @@ def build_router(user_storage: UserStorage, settings: Settings) -> Router:
             return
         if slot == "vehicle":
             await evaluate_route(callback.message, state, lang, country.code, user_id=callback.from_user.id)
+            return
+        if slot == "fee_vehicle":
+            await state.update_data(fee_vehicle_country_code=country.code)
+            await state.set_state(FeeCalcState.waiting_for_direction)
+            await callback.message.answer(
+                t(lang, "ask_fee_direction"),
+                reply_markup=simple_options_keyboard(
+                    lang,
+                    ["button_direction_entry", "button_direction_transit", "button_direction_exit"],
+                    columns=1,
+                ),
+            )
+            return
+        if slot == "fee_origin":
+            await state.update_data(fee_origin_country_code=country.code)
+            await state.set_state(FeeCalcState.waiting_for_destination_country)
+            await callback.message.answer(t(lang, "ask_fee_destination"), reply_markup=cancel_keyboard(lang))
+            return
+        if slot == "fee_destination":
+            await state.update_data(fee_destination_country_code=country.code)
+            await continue_fee_questions(callback.message, state, lang)
             return
 
     @router.message(Command("help"))

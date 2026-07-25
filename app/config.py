@@ -44,6 +44,9 @@ class Settings:
     terms_photo_file_id: str
     terms_pdf_path: Path
     permission_rules_path: Path
+    fees_rules_path: Path
+    bhm_value: int
+    usd_fallback_rate: float
     sql_connection_string: str
     sql_query_path: Path
     timezone: str = "Asia/Tashkent"
@@ -67,6 +70,9 @@ def get_settings() -> Settings:
         terms_photo_file_id=os.getenv("TERMS_PHOTO_FILE_ID", "").strip(),
         terms_pdf_path=BASE_DIR / os.getenv("TERMS_PDF_PATH", "assets/foydalanish_shartlari.pdf"),
         permission_rules_path=BASE_DIR / os.getenv("PERMISSION_RULES_PATH", "data/permission_rules.json"),
+        fees_rules_path=BASE_DIR / os.getenv("FEES_RULES_PATH", "data/fees_2026.json"),
+        bhm_value=int(os.getenv("BHM_VALUE", "412000")),
+        usd_fallback_rate=float(os.getenv("USD_FALLBACK_RATE", "12600")),
         sql_connection_string=os.getenv("SQL_CONNECTION_STRING", "").strip(),
         sql_query_path=BASE_DIR / os.getenv(
             "SQL_QUERY_PATH",

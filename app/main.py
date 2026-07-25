@@ -13,7 +13,7 @@ from app.handlers import build_router
 from app.storage import UserStorage, create_user_storage
 
 logger = logging.getLogger(__name__)
-APP_VERSION = "2026-07-17-transit-logic-v10"
+APP_VERSION = "2026-07-25-border-fee-calculator-v1"
 
 
 def create_bot(settings: Settings) -> Bot:
