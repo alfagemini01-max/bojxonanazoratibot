@@ -1,0 +1,61 @@
+{
+  "source": {
+    "note": "Bojxona_Tolovlari_Kalkulyatori_Sxemasi.txt asosida tayyorlangan dastlabki kalkulyator qoidalari.",
+    "effective_period": "2026"
+  },
+  "bhm": {
+    "value": 412000,
+    "legal_basis": "Prezidentning 02.06.2025 y. PF-91-son Farmoni"
+  },
+  "legal_basis": {
+    "entry_transit_fee": "O'RQ-1105, 10-ilova; undirish tartibi - 2694-son Nizom",
+    "customs_clearance": "VMning 31.01.2025 y. 55-son qarori, 1-ilova",
+    "transit_declaration": "VMning 31.01.2025 y. 55-son qarori, 1-ilova",
+    "overdue_delivery": "VMning 31.12.2022 y. 737-son qarori, 3-1-band",
+    "temporary_import_overstay": "VMning 31.12.2022 y. 737-son qarori, 3-1-band",
+    "tinted_foreign": "IIV, DBQ, MV va DXXning 2018 y. qo'shma qarori",
+    "tinted_domestic": "VMning 18.07.2018 y. 547-son qarori",
+    "osago": "VMning 30.12.2021 y. 790-son qarori",
+    "yhx_fines": "VMning 05.08.2020 y. 463-son qarori"
+  },
+  "customs_clearance_bhm_scale": [
+    {"max_usd": 10000, "bhm": 1},
+    {"max_usd": 20000, "bhm": 1.5},
+    {"max_usd": 40000, "bhm": 2.5},
+    {"max_usd": 60000, "bhm": 4},
+    {"max_usd": 100000, "bhm": 7},
+    {"max_usd": 200000, "bhm": 10},
+    {"max_usd": 500000, "bhm": 15},
+    {"max_usd": 1000000, "bhm": 20},
+    {"max_usd": null, "bhm": 25}
+  ],
+  "fixed": {
+    "transit_declaration_bhm": 0.25,
+    "transit_declaration_change_bhm": 0.1,
+    "delivery_overdue_bhm_per_day": 1,
+    "temporary_import_overstay_bhm_per_day": 1,
+    "tinted_foreign_usd": 15
+  },
+  "entry_fee": {
+    "iran_usd": 0,
+    "afghanistan_usd": 50,
+    "kazakhstan_usd": 300,
+    "kyrgyzstan_usd": 300,
+    "default_foreign_usd": 400,
+    "turkmenistan_extra_usd": 375,
+    "tajikistan_by_weight_usd": {
+      "up_to_10": 100,
+      "from_10_to_20": 150,
+      "over_20": 200
+    },
+    "turkmenistan_by_weight_usd": {
+      "up_to_10": 130,
+      "from_10_to_20": 180,
+      "over_20": 250
+    },
+    "eu_azerbaijan_by_stay_usd": {
+      "up_to_14": 80,
+      "over_14": 280
+    }
+  }
+}
