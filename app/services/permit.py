@@ -458,7 +458,7 @@ def fee_status_lines(result: PermitResult, lang: str | None = "uz") -> tuple[str
     rule = result.rule
     if not rule:
         return {
-            "uz": ("💵 Yig'im: ⚪ qoida yo'q", "Spravochnikda ushbu davlat va tashuv turi bo'yicha qoida topilmadi."),
+            "uz": ("💵 Kirish/tranzit yig'imi: ⚪ qoida yo'q", "Spravochnikda ushbu davlat va tashuv turi bo'yicha qoida topilmadi."),
             "ru": ("💵 Сбор: ⚪ правило не найдено", "В справочнике не найдено правило по данной стране и виду перевозки."),
             "en": ("💵 Fee: ⚪ rule not found", "No rule was found in the reference data for this country and carriage type."),
         }[code]
@@ -467,36 +467,36 @@ def fee_status_lines(result: PermitResult, lang: str | None = "uz") -> tuple[str
     if dues_cd == "2":
         if turkmenistan_extra_fee_applies(result):
             return {
-                "uz": (f"💵 Yig'im: <b>{turkmenistan_extra_fee_text(code)}</b>", "Turkmaniston bo'yicha qo'shimcha yig'im qo'llanadi."),
+                "uz": (f"💵 Kirish/tranzit yig'imi: <b>{turkmenistan_extra_fee_text(code)}</b>", "Turkmaniston bo'yicha qo'shimcha yig'im qo'llanadi."),
                 "ru": (f"💵 Сбор взимается: <b>{turkmenistan_extra_fee_text(code)}</b>", "Применяется дополнительный сбор по Туркменистану."),
                 "en": (f"💵 Fee is charged: <b>{turkmenistan_extra_fee_text(code)}</b>", "The additional Turkmenistan fee applies."),
             }[code]
         return {
-            "uz": ("💵 Yig'im: ✅ yo'q", "Excel spravochnikda ushbu tashuv turi bo'yicha yig'im majburiy emas deb belgilangan."),
+            "uz": ("💵 Kirish/tranzit yig'imi: ✅ yo'q", "Excel spravochnikda ushbu tashuv turi bo'yicha yig'im majburiy emas deb belgilangan."),
             "ru": ("✅ Сбор не взимается", "В Excel-справочнике по данному виду перевозки сбор указан как необязательный."),
             "en": ("✅ Fee is not charged", "The Excel reference data marks the fee as not mandatory for this carriage type."),
         }[code]
     if dues_cd == "3":
         if turkmenistan_extra_fee_applies(result):
             return {
-                "uz": (f"💵 Yig'im: ⚠️ ruxsat turiga qarab; <b>{turkmenistan_extra_fee_text(code)}</b>", "Spravochnikda yig'im ruxsatnoma turiga qarab belgilangan, Turkmaniston bo'yicha qo'shimcha yig'im ham qo'llanadi."),
+                "uz": (f"💵 Kirish/tranzit yig'imi: ⚠️ ruxsat turiga qarab; <b>{turkmenistan_extra_fee_text(code)}</b>", "Spravochnikda yig'im ruxsatnoma turiga qarab belgilangan, Turkmaniston bo'yicha qo'shimcha yig'im ham qo'llanadi."),
                 "ru": (f"⚠️ Сбор определяется по виду разрешения; <b>{turkmenistan_extra_fee_text(code)}</b>", "Сбор определяется по виду разрешения, также применяется дополнительный сбор по Туркменистану."),
                 "en": (f"⚠️ Fee depends on the permit type; <b>{turkmenistan_extra_fee_text(code)}</b>", "The fee depends on the permit type and the additional Turkmenistan fee also applies."),
             }[code]
         return {
-            "uz": ("💵 Yig'im: ⚠️ ruxsat turiga qarab", "Spravochnikda yig'im ruxsatnoma turiga qarab belgilanishi ko'rsatilgan."),
+            "uz": ("💵 Kirish/tranzit yig'imi: ⚠️ ruxsat turiga qarab", "Spravochnikda yig'im ruxsatnoma turiga qarab belgilanishi ko'rsatilgan."),
             "ru": ("⚠️ Сбор определяется по виду разрешения", "В справочнике указано, что сбор определяется в зависимости от вида разрешения."),
             "en": ("⚠️ Fee depends on the permit type", "The reference data states that the fee is determined by the permit type."),
         }[code]
     if dues_cd != "1":
         if turkmenistan_extra_fee_applies(result):
             return {
-                "uz": (f"💵 Yig'im: <b>{turkmenistan_extra_fee_text(code)}</b>", "Turkmaniston bo'yicha qo'shimcha yig'im qo'llanadi."),
+                "uz": (f"💵 Kirish/tranzit yig'imi: <b>{turkmenistan_extra_fee_text(code)}</b>", "Turkmaniston bo'yicha qo'shimcha yig'im qo'llanadi."),
                 "ru": (f"💵 Сбор взимается: <b>{turkmenistan_extra_fee_text(code)}</b>", "Применяется дополнительный сбор по Туркменистану."),
                 "en": (f"💵 Fee is charged: <b>{turkmenistan_extra_fee_text(code)}</b>", "The additional Turkmenistan fee applies."),
             }[code]
         return {
-            "uz": ("💵 Yig'im: ⚪ qo'llanmaydi", "Yig'im bo'yicha majburiy belgi mavjud emas."),
+            "uz": ("💵 Kirish/tranzit yig'imi: ⚪ qo'llanmaydi", "Yig'im bo'yicha majburiy belgi mavjud emas."),
             "ru": ("⚪ Сбор не применяется", "Обязательная отметка по сбору отсутствует."),
             "en": ("⚪ Fee is not applied", "There is no mandatory fee mark in the reference data."),
         }[code]
@@ -505,7 +505,7 @@ def fee_status_lines(result: PermitResult, lang: str | None = "uz") -> tuple[str
     if turkmenistan_extra_fee_applies(result):
         rate = f"{rate}; {turkmenistan_extra_fee_text(code)}"
     return {
-        "uz": (f"💵 Yig'im: <b>{rate}</b>", "Excel spravochnikda yig'im majburiy deb belgilanganligi sababli stavka qo'llanadi."),
+        "uz": (f"💵 Kirish/tranzit yig'imi: <b>{rate}</b>", "Excel spravochnikda yig'im majburiy deb belgilanganligi sababli stavka qo'llanadi."),
         "ru": (f"💵 Сбор взимается: <b>{rate}</b>", "Так как в Excel-справочнике сбор указан как обязательный, применяется ставка сбора."),
         "en": (f"💵 Fee is charged: <b>{rate}</b>", "Because the Excel reference data marks the fee as mandatory, the fee rate is applied."),
     }[code]
@@ -537,19 +537,7 @@ def additional_note_lines(result: PermitResult, lang: str | None = "uz") -> list
             "en": "For EU countries and Azerbaijan, the fee is recalculated on exit based on the vehicle's actual stay period.",
         }[code])
 
-    if str(rule.get("permission_cd")) == "1":
-        notes.append({
-            "uz": "📄 Ruxsat blanki: 400 USD. Tranzit: 0,5 koeff.; 3-davlat tashuvi: 2,0 koeff.",
-            "ru": "При реализации разрешения сверх потребности национальных перевозчиков взимается 400 USD; для транзитного разрешения применяется коэффициент 0,5, для разрешения на перевозку из третьих стран — коэффициент 2,0.",
-            "en": "When permit forms are issued from the surplus over national carriers' needs, 400 USD is charged; a 0.5 coefficient applies to transit permits and a 2.0 coefficient to third-country carriage permits.",
-        }[code])
-
     notes.extend([
-        {
-            "uz": "🚛 Og'ir/yirik gabaritli TV uchun alohida to'lov bo'lishi mumkin.",
-            "ru": "Если транспортное средство является тяжеловесным или крупногабаритным, помимо указанных сборов взимаются отдельные платежи, установленные законодательством.",
-            "en": "If the vehicle is heavy or oversized, separate statutory charges are collected in addition to these fees.",
-        }[code],
         {
             "uz": "🆘 Gumanitar yuklarda 0,5 koeff. qo'llanishi mumkin.",
             "ru": "При перевозке гуманитарных грузов к ставкам сборов за въезд и транзит может применяться понижающий коэффициент 0,5.",
@@ -562,6 +550,56 @@ def additional_note_lines(result: PermitResult, lang: str | None = "uz") -> list
         }[code],
     ])
     return notes
+
+
+def border_payment_info_lines(result: PermitResult, lang: str | None = "uz") -> list[str]:
+    code = _lang(lang)
+    transit_related = result.vid_cd in {"2", "3", "5"}
+    export_related = result.vid_cd in {"1", "4"}
+    if code == "ru":
+        lines = []
+        if transit_related:
+            lines.append("📄 Транзитная декларация: 0,25 БРВ = 103 000 сум за одну декларацию.")
+            lines.append("✏️ Изменение транзитной декларации по обращению декларанта: 0,10 БРВ = 41 200 сум.")
+            lines.append("⏱️ Просрочка доставки под таможенным контролем: 1 БРВ = 412 000 сум за каждый день.")
+        if export_related:
+            lines.append("🧾 Экспортная/грузовая декларация: сбор определяется по таможенной стоимости — от 1 до 25 БРВ.")
+        lines.extend([
+            "🧾 Если оформляется ГТД по товару: до 10 000 USD — 1 БРВ; 10-20 тыс. — 1,5; 20-40 тыс. — 2,5; 40-60 тыс. — 4; 60-100 тыс. — 7; 100-200 тыс. — 10; 200-500 тыс. — 15; 500 тыс.-1 млн — 20; от 1 млн — 25 БРВ.",
+            "🛡️ Для иностранного транспорта ОСАГО обязательно при отсутствии действующего международного полиса; срок не менее 15 дней, сумма рассчитывается страховой системой.",
+            "🌿 Карантинный, ветеринарный или фитосанитарный контроль оплачивается, если товар относится к подконтрольным товарам; сумма определяется по действующему прейскуранту профильного органа.",
+            "🚛 Для тяжеловесного или крупногабаритного транспорта могут взиматься отдельные платежи.",
+        ])
+        return lines
+    if code == "en":
+        lines = []
+        if transit_related:
+            lines.append("📄 Transit declaration: 0.25 BCU = 103,000 UZS per declaration.")
+            lines.append("✏️ Amendment to a transit declaration upon declarant request: 0.10 BCU = 41,200 UZS.")
+            lines.append("⏱️ Overdue delivery under customs control: 1 BCU = 412,000 UZS per day.")
+        if export_related:
+            lines.append("🧾 Export/cargo declaration: the fee is based on customs value, from 1 to 25 BCU.")
+        lines.extend([
+            "🧾 If a cargo customs declaration is filed: up to 10,000 USD — 1 BCU; 10-20k — 1.5; 20-40k — 2.5; 40-60k — 4; 60-100k — 7; 100-200k — 10; 200-500k — 15; 500k-1m — 20; from 1m — 25 BCU.",
+            "🛡️ OSAGO is mandatory for a foreign vehicle if there is no valid international insurance policy; minimum term is 15 days, and the amount is calculated by the insurance system.",
+            "🌿 Quarantine, veterinary or phytosanitary control is charged if the goods are controlled goods; the amount is determined under the current price list of the competent authority.",
+            "🚛 Heavy or oversized vehicles may be subject to separate statutory charges.",
+        ])
+        return lines
+    lines = []
+    if transit_related:
+        lines.append("📄 Tranzit deklaratsiyasi: 0,25 BHM = 103 000 so'm / 1 ta deklaratsiya.")
+        lines.append("✏️ Tranzit deklaratsiyasiga o'zgartirish kiritish: 0,10 BHM = 41 200 so'm.")
+        lines.append("⏱️ Bojxona nazoratidagi yukni muddatida yetkazmaslik: 1 BHM = 412 000 so'm / har bir kechikkan kun.")
+    if export_related:
+        lines.append("🧾 Eksport/yuk bojxona deklaratsiyasi: bojxona qiymatiga qarab 1 BHMdan 25 BHMgacha.")
+    lines.extend([
+        "🧾 Yuk bojxona deklaratsiyasi rasmiylashtirilsa: 10 000 USDgacha — 1 BHM; 10-20 ming — 1,5; 20-40 ming — 2,5; 40-60 ming — 4; 60-100 ming — 7; 100-200 ming — 10; 200-500 ming — 15; 500 ming-1 mln — 20; 1 mln va undan yuqori — 25 BHM.",
+        "🛡️ Xorijiy transport uchun xalqaro sug'urta polisingiz bo'lmasa, OSAGO majburiy; kamida 15 kunga rasmiylashtiriladi, summa sug'urta tizimida hisoblanadi.",
+        "🌿 Karantin, veterinariya yoki fitosanitariya nazorati: tovar nazoratdagi tovar turiga kirsa, vakolatli organning amaldagi preyskuranti bo'yicha undiriladi.",
+        "🚛 Og'ir vaznli yoki yirik gabaritli transport bo'lsa, alohida to'lovlar qo'llaniladi.",
+    ])
+    return lines
 
 
 def build_permit_message(result: PermitResult, timezone: str = "Asia/Tashkent", lang: str | None = "uz") -> str:
@@ -577,6 +615,7 @@ def build_permit_message(result: PermitResult, timezone: str = "Asia/Tashkent", 
             "vehicle": "🚚 Ro'yxat davlati",
             "type": "🧭 Tashuv turi",
             "exceptions_title": "🧾 Istisnolar",
+            "border_payments_title": "💳 Chegarada qo'shimcha tekshiriladigan to'lovlar",
             "notes_title": "📌 Eslatma",
             "unknown": "⚠️ Yakuniy huquqiy xulosa emas. Vakolatli tizimda qayta tekshiring.",
             "advisory": "⚠️ Tavsiyaviy ma'lumot.",
@@ -589,6 +628,7 @@ def build_permit_message(result: PermitResult, timezone: str = "Asia/Tashkent", 
             "vehicle": "🚚 Государство регистрации автотранспорта",
             "type": "🧭 Определенный вид перевозки",
             "exceptions_title": "🧾 Исключения, при которых разрешение по данному виду перевозки не требуется",
+            "border_payments_title": "💳 Дополнительные платежи, проверяемые на границе",
             "notes_title": "📌 Дополнительные примечания",
             "unknown": "⚠️ Данный ответ не является окончательным правовым заключением. Требуется повторная проверка в уполномоченной системе.",
             "advisory": "⚠️ Информация носит информационно-рекомендательный характер.",
@@ -601,6 +641,7 @@ def build_permit_message(result: PermitResult, timezone: str = "Asia/Tashkent", 
             "vehicle": "🚚 Vehicle registration country",
             "type": "🧭 Detected carriage type",
             "exceptions_title": "🧾 Exceptions where a permit is not required for this carriage type",
+            "border_payments_title": "💳 Additional payments checked at the border",
             "notes_title": "📌 Additional notes",
             "unknown": "⚠️ This response is not a final legal conclusion. Re-checking in the authorized system is required.",
             "advisory": "⚠️ The information is provided for reference and advisory purposes.",
@@ -620,6 +661,12 @@ def build_permit_message(result: PermitResult, timezone: str = "Asia/Tashkent", 
         fee_text,
         "",
     ]
+    border_payment_lines = border_payment_info_lines(result, code)
+    if border_payment_lines:
+        lines.append(labels["border_payments_title"] + ":")
+        for index, payment_line in enumerate(border_payment_lines, start=1):
+            lines.append(f"{index}. {_html(payment_line)}")
+        lines.append("")
     if result.exceptions:
         lines.append(labels["exceptions_title"] + ":")
         shown_exceptions = result.exceptions[:MAX_EXCEPTIONS_IN_MESSAGE]
