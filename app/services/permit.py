@@ -515,6 +515,10 @@ def additional_note_lines(result: PermitResult, lang: str | None = "uz") -> list
     code = _lang(lang)
     rule = result.rule or {}
     notes: list[str] = []
+    has_entry_or_transit_fee = (
+        result.vehicle_country.code not in {UZBEKISTAN_CODE, IRAN_CODE}
+        and (str(rule.get("dues_cd")) == "1" or turkmenistan_extra_fee_applies(result))
+    )
 
     if turkmenistan_extra_fee_applies(result):
         notes.append({
@@ -537,69 +541,76 @@ def additional_note_lines(result: PermitResult, lang: str | None = "uz") -> list
             "en": "For EU countries and Azerbaijan, the fee is recalculated on exit based on the vehicle's actual stay period.",
         }[code])
 
-    notes.extend([
-        {
+    if has_entry_or_transit_fee:
+        notes.append({
             "uz": "🆘 Gumanitar yuklarda 0,5 koeff. qo'llanishi mumkin.",
             "ru": "При перевозке гуманитарных грузов к ставкам сборов за въезд и транзит может применяться понижающий коэффициент 0,5.",
             "en": "For humanitarian cargo, a reduction coefficient of 0.5 may apply to entry and transit fee rates.",
-        }[code],
-        {
-            "uz": "🤝 Xalqaro shartnoma bo'lsa, shartnoma qoidasi ustuvor.",
-            "ru": "Если международным договором установлен иной порядок, применяются правила международного договора.",
-            "en": "If an international treaty establishes different rules, the treaty provisions apply.",
-        }[code],
-    ])
+        }[code])
+
+    notes.append({
+        "uz": "🤝 Xalqaro shartnoma bo'lsa, shartnoma qoidasi ustuvor.",
+        "ru": "Если международным договором установлен иной порядок, применяются правила международного договора.",
+        "en": "If an international treaty establishes different rules, the treaty provisions apply.",
+    }[code])
     return notes
 
 
-def border_payment_info_lines(result: PermitResult, lang: str | None = "uz") -> list[str]:
+def border_payment_table(result: PermitResult, lang: str | None = "uz") -> str:
     code = _lang(lang)
     transit_related = result.vid_cd in {"2", "3", "5"}
     export_related = result.vid_cd in {"1", "4"}
+    foreign_vehicle = result.vehicle_country.code != UZBEKISTAN_CODE
+
+    def table(rows: list[tuple[str, str, str]], headers: tuple[str, str, str]) -> str:
+        col1 = 26
+        col2 = 18
+        lines = [
+            f"{headers[0]:<{col1}} {headers[1]:<{col2}} {headers[2]}",
+            f"{'-' * 26} {'-' * 18} {'-' * 18}",
+        ]
+        for name, amount, note in rows:
+            lines.append(f"{name:<{col1}} {amount:<{col2}} {note}")
+        return "\n".join(lines)
+
     if code == "ru":
-        lines = []
+        rows: list[tuple[str, str, str]] = []
         if transit_related:
-            lines.append("📄 Транзитная декларация: 0,25 БРВ = 103 000 сум за одну декларацию.")
-            lines.append("✏️ Изменение транзитной декларации по обращению декларанта: 0,10 БРВ = 41 200 сум.")
-            lines.append("⏱️ Просрочка доставки под таможенным контролем: 1 БРВ = 412 000 сум за каждый день.")
+            rows.append(("Транзитная декларация", "103 000 сум", "0,25 БРВ / 1 декларация"))
+            rows.append(("Изменение ТД", "41 200 сум", "0,10 БРВ"))
+            rows.append(("Просрочка доставки", "412 000 сум/день", "1 БРВ за день"))
         if export_related:
-            lines.append("🧾 Экспортная/грузовая декларация: сбор определяется по таможенной стоимости — от 1 до 25 БРВ.")
-        lines.extend([
-            "🧾 Если оформляется ГТД по товару: до 10 000 USD — 1 БРВ; 10-20 тыс. — 1,5; 20-40 тыс. — 2,5; 40-60 тыс. — 4; 60-100 тыс. — 7; 100-200 тыс. — 10; 200-500 тыс. — 15; 500 тыс.-1 млн — 20; от 1 млн — 25 БРВ.",
-            "🛡️ Для иностранного транспорта ОСАГО обязательно при отсутствии действующего международного полиса; срок не менее 15 дней, сумма рассчитывается страховой системой.",
-            "🌿 Карантинный, ветеринарный или фитосанитарный контроль оплачивается, если товар относится к подконтрольным товарам; сумма определяется по действующему прейскуранту профильного органа.",
-            "🚛 Для тяжеловесного или крупногабаритного транспорта могут взиматься отдельные платежи.",
-        ])
-        return lines
+            rows.append(("Грузовая декларация", "1-25 БРВ", "по таможенной стоимости"))
+        rows.append(("Карантин/вет/фито", "по прейскуранту", "если товар подконтролен"))
+        if foreign_vehicle:
+            rows.append(("ОСАГО", "по тарифу", "если нет межд. полиса"))
+        rows.append(("Тяж./крупногабарит", "отдельно", "если применимо"))
+        return table(rows, ("Платеж", "Сумма", "Условие"))
     if code == "en":
-        lines = []
+        rows: list[tuple[str, str, str]] = []
         if transit_related:
-            lines.append("📄 Transit declaration: 0.25 BCU = 103,000 UZS per declaration.")
-            lines.append("✏️ Amendment to a transit declaration upon declarant request: 0.10 BCU = 41,200 UZS.")
-            lines.append("⏱️ Overdue delivery under customs control: 1 BCU = 412,000 UZS per day.")
+            rows.append(("Transit declaration", "103,000 UZS", "0.25 BCU / declaration"))
+            rows.append(("TD amendment", "41,200 UZS", "0.10 BCU"))
+            rows.append(("Delivery overdue", "412,000 UZS/day", "1 BCU per day"))
         if export_related:
-            lines.append("🧾 Export/cargo declaration: the fee is based on customs value, from 1 to 25 BCU.")
-        lines.extend([
-            "🧾 If a cargo customs declaration is filed: up to 10,000 USD — 1 BCU; 10-20k — 1.5; 20-40k — 2.5; 40-60k — 4; 60-100k — 7; 100-200k — 10; 200-500k — 15; 500k-1m — 20; from 1m — 25 BCU.",
-            "🛡️ OSAGO is mandatory for a foreign vehicle if there is no valid international insurance policy; minimum term is 15 days, and the amount is calculated by the insurance system.",
-            "🌿 Quarantine, veterinary or phytosanitary control is charged if the goods are controlled goods; the amount is determined under the current price list of the competent authority.",
-            "🚛 Heavy or oversized vehicles may be subject to separate statutory charges.",
-        ])
-        return lines
-    lines = []
+            rows.append(("Cargo declaration", "1-25 BCU", "by customs value"))
+        rows.append(("Quarantine/vet/phyto", "price list", "if goods are controlled"))
+        if foreign_vehicle:
+            rows.append(("OSAGO", "by tariff", "if no intl. policy"))
+        rows.append(("Heavy/oversized", "separate", "if applicable"))
+        return table(rows, ("Payment", "Amount", "Condition"))
+    rows: list[tuple[str, str, str]] = []
     if transit_related:
-        lines.append("📄 Tranzit deklaratsiyasi: 0,25 BHM = 103 000 so'm / 1 ta deklaratsiya.")
-        lines.append("✏️ Tranzit deklaratsiyasiga o'zgartirish kiritish: 0,10 BHM = 41 200 so'm.")
-        lines.append("⏱️ Bojxona nazoratidagi yukni muddatida yetkazmaslik: 1 BHM = 412 000 so'm / har bir kechikkan kun.")
+        rows.append(("Tranzit deklaratsiyasi", "103 000 so'm", "0,25 BHM / 1 ta"))
+        rows.append(("TD o'zgartirish", "41 200 so'm", "0,10 BHM"))
+        rows.append(("Yuk kechiksa", "412 000 so'm/kun", "1 BHM har kun"))
     if export_related:
-        lines.append("🧾 Eksport/yuk bojxona deklaratsiyasi: bojxona qiymatiga qarab 1 BHMdan 25 BHMgacha.")
-    lines.extend([
-        "🧾 Yuk bojxona deklaratsiyasi rasmiylashtirilsa: 10 000 USDgacha — 1 BHM; 10-20 ming — 1,5; 20-40 ming — 2,5; 40-60 ming — 4; 60-100 ming — 7; 100-200 ming — 10; 200-500 ming — 15; 500 ming-1 mln — 20; 1 mln va undan yuqori — 25 BHM.",
-        "🛡️ Xorijiy transport uchun xalqaro sug'urta polisingiz bo'lmasa, OSAGO majburiy; kamida 15 kunga rasmiylashtiriladi, summa sug'urta tizimida hisoblanadi.",
-        "🌿 Karantin, veterinariya yoki fitosanitariya nazorati: tovar nazoratdagi tovar turiga kirsa, vakolatli organning amaldagi preyskuranti bo'yicha undiriladi.",
-        "🚛 Og'ir vaznli yoki yirik gabaritli transport bo'lsa, alohida to'lovlar qo'llaniladi.",
-    ])
-    return lines
+        rows.append(("Yuk deklaratsiyasi", "1-25 BHM", "bojxona qiymatiga qarab"))
+    rows.append(("Karantin/vet/fito", "preyskurant", "tovar turiga qarab"))
+    if foreign_vehicle:
+        rows.append(("OSAGO sug'urta", "tarif bo'yicha", "xalqaro polis bo'lmasa"))
+    rows.append(("Og'ir/yirik gabarit", "alohida", "tegishli bo'lsa"))
+    return table(rows, ("To'lov turi", "Miqdor", "Shart"))
 
 
 def build_permit_message(result: PermitResult, timezone: str = "Asia/Tashkent", lang: str | None = "uz") -> str:
@@ -661,11 +672,10 @@ def build_permit_message(result: PermitResult, timezone: str = "Asia/Tashkent", 
         fee_text,
         "",
     ]
-    border_payment_lines = border_payment_info_lines(result, code)
-    if border_payment_lines:
+    border_payments = border_payment_table(result, code)
+    if border_payments:
         lines.append(labels["border_payments_title"] + ":")
-        for index, payment_line in enumerate(border_payment_lines, start=1):
-            lines.append(f"{index}. {_html(payment_line)}")
+        lines.append(f"<pre>{_html(border_payments)}</pre>")
         lines.append("")
     if result.exceptions:
         lines.append(labels["exceptions_title"] + ":")

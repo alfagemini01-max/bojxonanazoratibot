@@ -137,6 +137,7 @@ class FeeCalculator:
         foreign_vehicle = bool(vehicle_country and vehicle_country.code != UZBEKISTAN_CODE)
         cargo_vehicle = vehicle_type in {"truck", "truck_trailer"}
         entry_or_transit = direction in {"entry", "transit"}
+        humanitarian_reduction_applied = False
 
         if foreign_vehicle and cargo_vehicle and entry_or_transit and permit_result:
             rule = permit_result.rule or {}
@@ -150,6 +151,7 @@ class FeeCalculator:
                 )
                 if _yes(payload.get("humanitarian")):
                     entry_fee_usd = entry_fee_usd * 0.5
+                    humanitarian_reduction_applied = entry_fee_usd > 0
             if turkmenistan_extra_fee_applies(permit_result):
                 entry_fee_usd += float(self.data["entry_fee"]["turkmenistan_extra_usd"])
 
@@ -215,7 +217,7 @@ class FeeCalculator:
         if _yes(payload.get("heavy")):
             warnings.append("🚛 Og'ir vaznli yoki yirik gabaritli transport uchun qonunchilikda belgilangan alohida to'lov undirilishi mumkin.")
 
-        if _yes(payload.get("humanitarian")):
+        if _yes(payload.get("humanitarian")) and humanitarian_reduction_applied:
             warnings.append("🆘 Gumanitar yuk deb belgilangan holatda kirish/tranzit yig'imlariga 0,5 kamaytiruvchi koeffitsiyent qo'llanishi mumkin.")
 
         if _yes(payload.get("animal")):
