@@ -11,6 +11,7 @@ from typing import Any
 from aiohttp import web
 
 from app.config import Settings
+from app.services.permit import COUNTRY_LABELS, transliterate_cyrillic_to_latin
 
 
 SESSION_COOKIE = "nazorat_admin"
@@ -27,6 +28,79 @@ DUES_NAMES = {
     "1": "Сбор обязательно",
     "2": "Сбор не обязательно",
     "3": "Сбор зависит от вида разрешения",
+}
+
+DEFAULT_FEE_ITEMS = {
+    "import": [
+        {
+            "id": "transit_declaration_import",
+            "title": "Tranzit deklaratsiyasi",
+            "amount": "103 000 so'm",
+            "condition": "Yuk bojxona nazoratiga qo'yilganda",
+            "basis": "VMning 31.01.2025 y. 55-son qarori, 1-ilova",
+            "enabled": True,
+        },
+        {
+            "id": "osago_import",
+            "title": "OSAGO sug'urta",
+            "amount": "Tarif bo'yicha",
+            "condition": "Xorijiy transportda xalqaro sug'urta polisi bo'lmasa",
+            "basis": "VMning 30.12.2021 y. 790-son qarori",
+            "enabled": True,
+        },
+        {
+            "id": "quarantine_import",
+            "title": "Karantin/veterinariya/fitosanitariya",
+            "amount": "Preyskurant bo'yicha",
+            "condition": "Tovar nazoratdagi tovar turiga kirsa",
+            "basis": "Vakolatli organlarning amaldagi preyskuranti",
+            "enabled": True,
+        },
+    ],
+    "export": [
+        {
+            "id": "cargo_declaration_export",
+            "title": "Eksport/yuk deklaratsiyasi",
+            "amount": "1-25 BHM",
+            "condition": "Yuk deklaratsiyasi rasmiylashtirilganda",
+            "basis": "VMning 31.01.2025 y. 55-son qarori, 1-ilova",
+            "enabled": True,
+        },
+        {
+            "id": "delivery_overdue_export",
+            "title": "Yukni kech yetkazish",
+            "amount": "412 000 so'm / kun",
+            "condition": "Bojxona nazoratidagi yuk muddati o'tsa",
+            "basis": "VMning 31.12.2022 y. 737-son qarori",
+            "enabled": True,
+        },
+    ],
+    "transit": [
+        {
+            "id": "transit_declaration",
+            "title": "Tranzit deklaratsiyasi",
+            "amount": "103 000 so'm",
+            "condition": "Har bir tranzit deklaratsiyasi uchun",
+            "basis": "VMning 31.01.2025 y. 55-son qarori, 1-ilova",
+            "enabled": True,
+        },
+        {
+            "id": "transit_declaration_change",
+            "title": "TD o'zgartirish",
+            "amount": "41 200 so'm",
+            "condition": "Deklarant murojaati bilan o'zgartirilsa",
+            "basis": "VMning 31.01.2025 y. 55-son qarori, 1-ilova",
+            "enabled": True,
+        },
+        {
+            "id": "delivery_overdue_transit",
+            "title": "Yukni kech yetkazish",
+            "amount": "412 000 so'm / kun",
+            "condition": "Har bir kechikkan kun uchun",
+            "basis": "VMning 31.12.2022 y. 737-son qarori",
+            "enabled": True,
+        },
+    ],
 }
 
 
@@ -116,6 +190,50 @@ def _rule_payload(data: dict[str, Any], rules_data: dict[str, Any]) -> dict[str,
     }
 
 
+def _country_uz_name(data: dict[str, Any], code: str, fallback: str) -> str:
+    labels = data.get("country_labels", {}).get(code, {})
+    if isinstance(labels, dict) and labels.get("uz"):
+        return str(labels["uz"])
+    builtin = COUNTRY_LABELS.get(code, {})
+    if builtin.get("uz"):
+        return str(builtin["uz"])
+    latin = transliterate_cyrillic_to_latin(fallback)
+    if latin and latin != fallback.lower():
+        return latin.title()
+    return fallback.title() if fallback.isupper() else fallback
+
+
+def _fee_items(fees_data: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
+    items = fees_data.setdefault("admin_fee_items", {})
+    for direction, defaults in DEFAULT_FEE_ITEMS.items():
+        items.setdefault(direction, defaults)
+    return items
+
+
+def _fee_direction(value: object) -> str:
+    direction = str(value or "").strip().lower()
+    if direction not in {"import", "export", "transit"}:
+        raise web.HTTPBadRequest(text="Yig'im yo'nalishi noto'g'ri.")
+    return direction
+
+
+def _fee_item_payload(data: dict[str, Any]) -> dict[str, Any]:
+    item_id = str(data.get("id") or "").strip()
+    if not item_id:
+        item_id = secrets.token_urlsafe(8)
+    title = str(data.get("title") or "").strip()
+    if len(title) < 2:
+        raise web.HTTPBadRequest(text="Yig'im nomi kiritilmadi.")
+    return {
+        "id": item_id,
+        "title": title,
+        "amount": str(data.get("amount") or "").strip(),
+        "condition": str(data.get("condition") or "").strip(),
+        "basis": str(data.get("basis") or "").strip(),
+        "enabled": bool(data.get("enabled", True)),
+    }
+
+
 def _login_page() -> str:
     return """<!doctype html>
 <html lang="uz">
@@ -161,6 +279,7 @@ def _login_page() -> str:
 
 
 def _admin_page() -> str:
+    return _admin_page_v2()
     return """<!doctype html>
 <html lang="uz">
 <head>
@@ -337,11 +456,161 @@ initVid();loadAll().catch(e=>toast(e.message));
 </script></body></html>"""
 
 
+def _admin_page_v2() -> str:
+    return """<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NazoratBot Web Admin</title>
+  <style>
+    :root{--ink:#102033;--muted:#64748b;--line:rgba(15,23,42,.12);--blue:#1064b0;--green:#0f8f70;--red:#c43b32;--amber:#b7791f;--glass:rgba(255,255,255,.74)}
+    *{box-sizing:border-box}body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;color:var(--ink);background:linear-gradient(135deg,#eef8ff,#fff 48%,#effcf7);min-height:100vh}
+    body:before{content:"";position:fixed;inset:0;background:radial-gradient(circle at 10% 5%,rgba(16,100,176,.18),transparent 30%),radial-gradient(circle at 92% 18%,rgba(15,143,112,.17),transparent 30%);pointer-events:none}
+    button,input,select,textarea{font:inherit}button{cursor:pointer}.app{position:relative;display:grid;grid-template-columns:280px 1fr;gap:18px;min-height:100vh;padding:18px}
+    .glass{background:var(--glass);border:1px solid var(--line);border-radius:26px;box-shadow:0 24px 80px rgba(15,23,42,.10),inset 0 1px 0 rgba(255,255,255,.88);backdrop-filter:blur(18px)}
+    .side{padding:18px;position:sticky;top:18px;height:calc(100vh - 36px)}.brand{display:flex;gap:12px;align-items:center;margin-bottom:18px}.logo{width:50px;height:50px;border-radius:18px;display:grid;place-items:center;background:linear-gradient(145deg,#fff,#e0f2ff);box-shadow:10px 12px 24px rgba(16,100,176,.14),inset -5px -5px 12px rgba(16,100,176,.08);font-size:25px}
+    h1{font-size:20px;margin:0}.hint{color:var(--muted);font-size:12px;line-height:1.45}.nav{display:grid;gap:8px;margin-top:20px}.nav button{border:1px solid var(--line);background:rgba(255,255,255,.7);border-radius:18px;padding:13px;text-align:left;font-weight:900}.nav button.active{background:linear-gradient(135deg,var(--blue),var(--green));color:white;box-shadow:0 12px 28px rgba(16,100,176,.18)}
+    .main{display:grid;gap:16px}.top{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:18px}.top h2{margin:0;font-size:28px}.actions{display:flex;gap:9px;flex-wrap:wrap}
+    .btn{border:0;border-radius:16px;padding:11px 14px;font-weight:900;background:white;border:1px solid var(--line)}.btn.primary{background:linear-gradient(135deg,var(--blue),var(--green));color:white;border:0}.btn.danger{background:#fff0ef;color:var(--red);border-color:rgba(196,59,50,.18)}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.stat{padding:16px}.stat b{display:block;font-size:26px}.stat span{font-size:12px;color:var(--muted);font-weight:800}
+    .screen{display:none}.screen.active{display:grid;gap:16px}.toolbar{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:14px}.search{width:min(420px,100%);border:1px solid var(--line);border-radius:18px;padding:13px 14px;background:rgba(255,255,255,.84);outline:none}
+    .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}.card{padding:16px}.card h3{margin:0 0 6px;font-size:17px}.muted{color:var(--muted);font-size:13px}.pill{display:inline-flex;padding:6px 9px;border-radius:999px;font-size:12px;font-weight:900;margin:4px 4px 0 0}.ok{background:#e8f8ef;color:var(--green)}.warn{background:#fff7df;color:var(--amber)}.bad{background:#fff0ef;color:var(--red)}.info{background:#eaf4ff;color:var(--blue)}
+    .fee-tabs{display:flex;gap:8px;flex-wrap:wrap}.fee-tab{border:1px solid var(--line);background:white;border-radius:16px;padding:11px 14px;font-weight:900}.fee-tab.active{background:var(--ink);color:white}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{display:grid;gap:6px;margin-bottom:10px}.field.full{grid-column:1/-1}label{font-size:12px;color:#52627a;font-weight:900}input,select,textarea{border:1px solid var(--line);border-radius:16px;padding:12px;background:rgba(255,255,255,.88);outline:none}textarea{min-height:90px}
+    .modal{position:fixed;inset:0;background:rgba(16,32,51,.28);display:none;place-items:center;padding:20px;z-index:50}.modal.show{display:grid}.dialog{width:min(980px,100%);max-height:92vh;overflow:auto;padding:20px}.dialog-head{display:flex;justify-content:space-between;gap:12px;align-items:center;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:14px}.dialog h3{font-size:24px;margin:0}
+    table{width:100%;border-collapse:separate;border-spacing:0 8px}td,th{text-align:left;padding:10px;background:rgba(255,255,255,.72);font-size:13px}th{color:#52627a;background:transparent}.toast{position:fixed;right:20px;bottom:20px;padding:14px 16px;border-radius:16px;background:#102033;color:white;display:none;z-index:80}
+    @media(max-width:900px){.app{grid-template-columns:1fr}.side{position:relative;height:auto}.stats{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr}.top{align-items:flex-start;flex-direction:column}}
+  </style>
+</head>
+<body>
+<div class="app">
+  <aside class="side glass">
+    <div class="brand"><div class="logo">🛃</div><div><h1>NazoratBot Admin</h1><div class="hint">Web dashboard</div></div></div>
+    <div class="hint">Texnik sozlamalar yashirilgan. Qoidalar oddiy forma, karta va modal oynalar orqali boshqariladi.</div>
+    <nav class="nav">
+      <button class="active" data-screen="home">🏠 Bosh sahifa</button>
+      <button data-screen="dazvol">📄 Dazvol</button>
+      <button data-screen="fees">💰 Chegaradagi yig'imlar</button>
+      <button data-screen="countries">🌍 Davlatlar</button>
+    </nav>
+  </aside>
+  <main class="main">
+    <header class="top glass">
+      <div><h2 id="pageTitle">Bosh sahifa</h2><div class="muted">Qoidalarni sodda tahrirlash paneli</div></div>
+      <div class="actions"><button class="btn" onclick="loadAll()">Yangilash</button><button class="btn danger" onclick="logout()">Chiqish</button></div>
+    </header>
+    <section class="stats">
+      <div class="stat glass"><b id="countryCount">0</b><span>Davlatlar</span></div>
+      <div class="stat glass"><b id="ruleCount">0</b><span>Dazvol qoidalari</span></div>
+      <div class="stat glass"><b id="exceptionCount">0</b><span>Istisnolar</span></div>
+      <div class="stat glass"><b id="bhmValue">0</b><span>BHM</span></div>
+    </section>
+
+    <section id="home" class="screen active">
+      <div class="cards">
+        <div class="card glass"><h3>📄 Dazvol</h3><p class="muted">Davlatni tanlang, modal oynada barcha tashuv turlari, ruxsatnoma va yig'im holatlarini ko'ring yoki o'zgartiring.</p></div>
+        <div class="card glass"><h3>💰 Chegaradagi yig'imlar</h3><p class="muted">Import, eksport va tranzit yo'nalishlari bo'yicha yig'imlarni alohida ro'yxatlarda boshqaring.</p></div>
+        <div class="card glass"><h3>🌍 Davlatlar</h3><p class="muted">Davlat kodi, ruscha nomi va o'zbekcha nomini saqlang. Qidiruv o'zbekcha nom bilan ham ishlaydi.</p></div>
+      </div>
+    </section>
+
+    <section id="dazvol" class="screen">
+      <div class="toolbar glass"><input id="dazvolSearch" class="search" placeholder="Davlat nomi yoki kodi: Qirg'iziston, 417..." oninput="loadDazvol()" /><button class="btn primary" onclick="openCountryModal()">+ Davlat qo'shish</button></div>
+      <div id="dazvolCards" class="cards"></div>
+    </section>
+
+    <section id="fees" class="screen">
+      <div class="toolbar glass">
+        <div class="fee-tabs">
+          <button class="fee-tab active" data-direction="import">Import</button>
+          <button class="fee-tab" data-direction="export">Eksport</button>
+          <button class="fee-tab" data-direction="transit">Tranzit</button>
+        </div>
+        <button class="btn primary" onclick="openFeeModal()">+ Yig'im qo'shish</button>
+      </div>
+      <div id="feeCards" class="cards"></div>
+    </section>
+
+    <section id="countries" class="screen">
+      <div class="toolbar glass"><input id="countrySearch" class="search" placeholder="Davlatni qidiring..." oninput="loadCountries()" /><button class="btn primary" onclick="openCountryModal()">+ Davlat qo'shish</button></div>
+      <div id="countryCards" class="cards"></div>
+    </section>
+  </main>
+</div>
+
+<div id="countryModal" class="modal">
+  <div class="dialog glass">
+    <div class="dialog-head"><h3 id="countryModalTitle">Davlat</h3><button class="btn" onclick="closeModal('countryModal')">Yopish</button></div>
+    <div class="form-grid">
+      <div class="field"><label>Kod</label><input id="countryCode" /></div>
+      <div class="field"><label>O'zbekcha nom</label><input id="countryNameUz" /></div>
+      <div class="field full"><label>Asosiy/Ruscha nom</label><input id="countryName" /></div>
+    </div>
+    <div class="actions"><button class="btn primary" onclick="saveCountry()">Davlatni saqlash</button><button class="btn danger" onclick="deleteCountry()">Davlatni o'chirish</button></div>
+    <h3 style="margin-top:20px">Dazvol qoidalari</h3>
+    <table><thead><tr><th>Tashuv</th><th>Ruxsatnoma</th><th>Kirish/tranzit yig'imi</th><th>Izoh</th><th></th></tr></thead><tbody id="rulesTable"></tbody></table>
+    <h3>Istisnolar</h3><div id="exceptionsBox" class="cards"></div>
+  </div>
+</div>
+
+<div id="feeModal" class="modal">
+  <div class="dialog glass">
+    <div class="dialog-head"><h3 id="feeModalTitle">Yig'im</h3><button class="btn" onclick="closeModal('feeModal')">Yopish</button></div>
+    <input id="feeId" type="hidden" />
+    <div class="form-grid">
+      <div class="field"><label>Yo'nalish</label><select id="feeDirection"><option value="import">Import</option><option value="export">Eksport</option><option value="transit">Tranzit</option></select></div>
+      <div class="field"><label>Yig'im nomi</label><input id="feeTitle" /></div>
+      <div class="field"><label>Miqdor</label><input id="feeAmount" placeholder="103 000 so'm / 1 BHM / tarif bo'yicha" /></div>
+      <div class="field"><label>Holati</label><select id="feeEnabled"><option value="true">Faol</option><option value="false">O'chirilgan</option></select></div>
+      <div class="field full"><label>Qaysi holatda qo'llaniladi</label><textarea id="feeCondition"></textarea></div>
+      <div class="field full"><label>Huquqiy asosi</label><textarea id="feeBasis"></textarea></div>
+    </div>
+    <div class="actions"><button class="btn primary" onclick="saveFeeItem()">Yig'imni saqlash</button><button class="btn danger" onclick="deleteFeeItem()">Yig'imni o'chirish</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+const vidLabels={"1":"Ikki tomonlama: O'zbekistondan","2":"Ikki tomonlama: O'zbekistonga","3":"Tranzit","4":"Uchinchi davlatga","5":"Uchinchi davlatdan","6":"Ichki tashuv","7":"Yuksiz kirish","8":"Yuksiz tranzit"};
+let permissionData={countries:[]}; let countryCache={}; let activeDirection='import'; let feeItems=[]; let selectedCountry=null;
+const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+function toast(t){const el=document.getElementById('toast');el.textContent=t;el.style.display='block';setTimeout(()=>el.style.display='none',2500)}
+async function api(path,opts={}){const r=await fetch(path,{headers:{'Content-Type':'application/json'},...opts}); if(r.status===401){location.href='/admin';return} const text=await r.text(); let d; try{d=JSON.parse(text)}catch(e){d={ok:false,error:text||'Server javobi xato'}} if(!r.ok||d.ok===false) throw new Error(d.error||'Xatolik'); return d}
+document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(b.dataset.screen).classList.add('active');pageTitle.textContent=b.textContent.trim(); if(b.dataset.screen==='fees')loadFeeItems();});
+document.querySelectorAll('.fee-tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.fee-tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');activeDirection=b.dataset.direction;loadFeeItems();});
+function closeModal(id){document.getElementById(id).classList.remove('show')}
+function pill(text,kind){return `<span class="pill ${kind}">${esc(text)}</span>`}
+function rulePills(rules){return Object.entries(rules||{}).map(([vid,r])=>pill(`${vid}: R${r.permission_cd}`,r.permission_cd==='1'?'warn':r.permission_cd==='3'?'bad':'ok')+pill(`Y${r.dues_cd}`,r.dues_cd==='1'?'warn':r.dues_cd==='2'?'ok':'info')).join('')}
+function rememberCountries(rows){(rows||[]).forEach(c=>{countryCache[c.code]=c})}
+async function loadSummary(){const d=await api('/admin/api/summary');countryCount.textContent=d.countries;ruleCount.textContent=d.rules;exceptionCount.textContent=d.exceptions;bhmValue.textContent=d.bhm}
+async function loadDazvol(){const q=encodeURIComponent(dazvolSearch.value||'');permissionData=await api('/admin/api/permission?q='+q);rememberCountries(permissionData.countries);dazvolCards.innerHTML=permissionData.countries.map(countryCard).join('')||'<div class="card glass">Maʼlumot topilmadi</div>'}
+function countryCard(c){return `<button class="card glass" style="text-align:left" onclick="openCountryModal('${esc(c.code)}')"><h3>${esc(c.name_uz)} <span class="muted">(${esc(c.code)})</span></h3><div class="muted">${esc(c.name)}</div><div>${rulePills(c.rules)}</div></button>`}
+function openCountryModal(code=''){selectedCountry=countryCache[code]||permissionData.countries.find(c=>c.code===code)||{code:'',name:'',name_uz:'',rules:{},exceptions:[]};countryCode.value=selectedCountry.code;countryName.value=selectedCountry.name;countryNameUz.value=selectedCountry.name_uz;countryModalTitle.textContent=selectedCountry.code?`${selectedCountry.name_uz} (${selectedCountry.code})`:'Yangi davlat';renderRulesTable();renderExceptions();countryModal.classList.add('show')}
+function renderRulesTable(){const rules=selectedCountry.rules||{};rulesTable.innerHTML=Object.keys(vidLabels).map(vid=>{const r=rules[vid]||{};return `<tr><td><b>${vid}</b> ${esc(vidLabels[vid])}</td><td>${selectHtml('p'+vid,r.permission_cd||'2',{1:'Majburiy',2:'Kerak emas',3:'Taqiqlangan'})}</td><td>${selectHtml('d'+vid,r.dues_cd||'2',{1:'Undiriladi',2:'Undirilmaydi',3:'Ruxsat turiga qarab',0:'Belgilanmagan'})}</td><td><input id="n${vid}" value="${esc(r.admin_note||r.exception_name_ru||'')}" /></td><td><button class="btn primary" onclick="saveRule('${vid}')">Saqlash</button></td></tr>`}).join('')}
+function selectHtml(id,val,opts){return `<select id="${id}">`+Object.entries(opts).map(([k,v])=>`<option value="${k}" ${String(val)===String(k)?'selected':''}>${v}</option>`).join('')+'</select>'}
+function renderExceptions(){const list=selectedCountry.exceptions||[];exceptionsBox.innerHTML=list.length?list.slice(0,12).map(x=>`<div class="card glass"><b>${esc(x.exception_cd||'')}</b><p class="muted">${esc(x.exception_desc||'')}</p></div>`).join(''):'<div class="card glass muted">Istisno kiritilmagan</div>'}
+async function saveRule(vid){await api('/admin/api/rule',{method:'POST',body:JSON.stringify({country_code:countryCode.value,vid_cd:vid,permission_cd:document.getElementById('p'+vid).value,dues_cd:document.getElementById('d'+vid).value,exception_cd:'0',exception_name_ru:document.getElementById('n'+vid).value,admin_note:document.getElementById('n'+vid).value})});toast('Qoida saqlandi');await loadAll();openCountryModal(countryCode.value)}
+async function saveCountry(){await api('/admin/api/country',{method:'POST',body:JSON.stringify({code:countryCode.value,name:countryName.value,name_uz:countryNameUz.value})});toast('Davlat saqlandi');await loadAll();openCountryModal(countryCode.value)}
+async function deleteCountry(){if(!countryCode.value||!confirm('Davlatni o‘chirasizmi?'))return;await api('/admin/api/country/'+countryCode.value,{method:'DELETE'});closeModal('countryModal');toast('Davlat o‘chirildi');await loadAll()}
+async function loadCountries(){const q=encodeURIComponent(countrySearch.value||'');const d=await api('/admin/api/permission?q='+q);rememberCountries(d.countries);countryCards.innerHTML=d.countries.map(countryCard).join('')||'<div class="card glass">Maʼlumot topilmadi</div>'}
+async function loadFeeItems(){const d=await api('/admin/api/fee-items?direction='+activeDirection);feeItems=d.items;feeCards.innerHTML=feeItems.map(feeCard).join('')||'<div class="card glass">Bu yo‘nalishda yig‘im yo‘q</div>'}
+function feeCard(f){return `<button class="card glass" style="text-align:left" onclick="openFeeModal('${esc(f.id)}')"><h3>${esc(f.title)}</h3><div>${pill(f.enabled?'Faol':'O‘chirilgan',f.enabled?'ok':'bad')} ${pill(activeDirection,'info')}</div><p><b>${esc(f.amount)}</b></p><p class="muted">${esc(f.condition)}</p><p class="muted">${esc(f.basis)}</p></button>`}
+function openFeeModal(id=''){const f=feeItems.find(x=>x.id===id)||{id:'',title:'',amount:'',condition:'',basis:'',enabled:true};feeId.value=f.id;feeDirection.value=activeDirection;feeTitle.value=f.title;feeAmount.value=f.amount;feeCondition.value=f.condition;feeBasis.value=f.basis;feeEnabled.value=String(f.enabled!==false);feeModalTitle.textContent=f.id?'Yig‘imni tahrirlash':'Yangi yig‘im';feeModal.classList.add('show')}
+async function saveFeeItem(){await api('/admin/api/fee-item',{method:'POST',body:JSON.stringify({id:feeId.value,direction:feeDirection.value,title:feeTitle.value,amount:feeAmount.value,condition:feeCondition.value,basis:feeBasis.value,enabled:feeEnabled.value==='true'})});activeDirection=feeDirection.value;closeModal('feeModal');toast('Yig‘im saqlandi');await loadFeeItems()}
+async function deleteFeeItem(){if(!feeId.value||!confirm('Yig‘imni o‘chirasizmi?'))return;await api(`/admin/api/fee-item/${feeDirection.value}/${feeId.value}`,{method:'DELETE'});closeModal('feeModal');toast('Yig‘im o‘chirildi');await loadFeeItems()}
+async function logout(){await fetch('/admin/logout',{method:'POST'});location.href='/admin'}
+async function loadAll(){await loadSummary();await loadDazvol();await loadCountries();await loadFeeItems()}
+loadAll().catch(e=>toast(e.message));
+</script>
+</body></html>"""
+
+
 def setup_admin_routes(app: web.Application, settings: Settings) -> None:
     async def admin_index(request: web.Request) -> web.Response:
         if not _is_authenticated(request, settings):
             return web.Response(text=_login_page(), content_type="text/html")
-        return web.Response(text=_admin_page(), content_type="text/html")
+        return web.Response(text=_admin_page_v2(), content_type="text/html")
 
     async def login(request: web.Request) -> web.Response:
         form = await request.post()
@@ -390,10 +659,20 @@ def setup_admin_routes(app: web.Application, settings: Settings) -> None:
         query = str(request.query.get("q") or "").strip().lower()
         countries = []
         for code, name in sorted(data.get("countries", {}).items()):
-            haystack = f"{code} {name}".lower()
+            name_uz = _country_uz_name(data, code, name)
+            name_latin = transliterate_cyrillic_to_latin(str(name))
+            haystack = f"{code} {name} {name_uz} {name_latin}".lower()
             if query and query not in haystack:
                 continue
-            countries.append({"code": code, "name": name, "rules": data.get("rules", {}).get(code, {})})
+            countries.append(
+                {
+                    "code": code,
+                    "name": name,
+                    "name_uz": name_uz,
+                    "rules": data.get("rules", {}).get(code, {}),
+                    "exceptions": data.get("exceptions", {}).get(code, []),
+                }
+            )
             if len(countries) >= 80:
                 break
         return web.json_response({"ok": True, "countries": countries, "vid_types": data.get("vid_types", {})})
@@ -417,10 +696,13 @@ def setup_admin_routes(app: web.Application, settings: Settings) -> None:
         body = await request.json()
         code = _code(body.get("code"))
         name = str(body.get("name") or "").strip()
+        name_uz = str(body.get("name_uz") or "").strip()
         if len(name) < 2:
             return _json_error("Davlat nomi kiritilmadi.")
         data = _read_json(settings.permission_rules_path)
         data.setdefault("countries", {})[code] = name
+        if name_uz:
+            data.setdefault("country_labels", {}).setdefault(code, {})["uz"] = name_uz
         data.setdefault("rules", {}).setdefault(code, {})
         data.setdefault("source", {})["last_admin_update"] = int(time.time())
         _write_json(settings.permission_rules_path, data)
@@ -474,6 +756,41 @@ def setup_admin_routes(app: web.Application, settings: Settings) -> None:
         _write_json(settings.fees_rules_path, fees_data)
         return web.json_response({"ok": True})
 
+    async def fee_items(request: web.Request) -> web.Response:
+        _require_admin(request, settings)
+        direction = _fee_direction(request.query.get("direction") or "import")
+        fees_data = _read_json(settings.fees_rules_path)
+        before = json.dumps(fees_data, ensure_ascii=False, sort_keys=True)
+        items = _fee_items(fees_data)
+        if json.dumps(fees_data, ensure_ascii=False, sort_keys=True) != before:
+            _write_json(settings.fees_rules_path, fees_data)
+        return web.json_response({"ok": True, "direction": direction, "items": items[direction]})
+
+    async def save_fee_item(request: web.Request) -> web.Response:
+        _require_admin(request, settings)
+        body = await request.json()
+        direction = _fee_direction(body.get("direction"))
+        item = _fee_item_payload(body)
+        fees_data = _read_json(settings.fees_rules_path)
+        items = _fee_items(fees_data)
+        current = [row for row in items[direction] if row.get("id") != item["id"]]
+        current.append(item)
+        items[direction] = current
+        fees_data.setdefault("source", {})["last_admin_update"] = int(time.time())
+        _write_json(settings.fees_rules_path, fees_data)
+        return web.json_response({"ok": True, "item": item})
+
+    async def delete_fee_item(request: web.Request) -> web.Response:
+        _require_admin(request, settings)
+        direction = _fee_direction(request.match_info["direction"])
+        item_id = str(request.match_info["item_id"])
+        fees_data = _read_json(settings.fees_rules_path)
+        items = _fee_items(fees_data)
+        items[direction] = [row for row in items[direction] if str(row.get("id")) != item_id]
+        fees_data.setdefault("source", {})["last_admin_update"] = int(time.time())
+        _write_json(settings.fees_rules_path, fees_data)
+        return web.json_response({"ok": True})
+
     app.router.add_get("/admin", admin_index)
     app.router.add_get("/admin/dashboard", admin_index)
     app.router.add_post("/admin/login", login)
@@ -488,3 +805,6 @@ def setup_admin_routes(app: web.Application, settings: Settings) -> None:
     app.router.add_delete("/admin/api/rule/{code}/{vid}", delete_rule)
     app.router.add_get("/admin/api/fees", fees)
     app.router.add_post("/admin/api/fees", save_fees)
+    app.router.add_get("/admin/api/fee-items", fee_items)
+    app.router.add_post("/admin/api/fee-item", save_fee_item)
+    app.router.add_delete("/admin/api/fee-item/{direction}/{item_id}", delete_fee_item)
