@@ -122,27 +122,42 @@ def _login_page() -> str:
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>NazoratBot Admin</title>
+  <title>NazoratBot Admin Login</title>
   <style>
-    :root{--ink:#102033;--muted:#64748b;--line:rgba(15,23,42,.12);--blue:#0e61b6;--green:#0f8f64;--glass:rgba(255,255,255,.72)}
-    *{box-sizing:border-box} body{margin:0;min-height:100vh;font-family:Inter,Segoe UI,Arial,sans-serif;color:var(--ink);background:radial-gradient(circle at top left,#dff3ff 0,#f7fbff 36%,#fff 70%)}
-    .shell{min-height:100vh;display:grid;place-items:center;padding:24px}
-    .login{width:min(440px,100%);padding:28px;border:1px solid var(--line);border-radius:26px;background:var(--glass);box-shadow:0 28px 80px rgba(14,97,182,.16),inset 0 1px 0 rgba(255,255,255,.9);backdrop-filter:blur(18px)}
-    h1{font-size:28px;margin:0 0 8px}.lead{color:var(--muted);margin:0 0 22px;line-height:1.5}.field{display:grid;gap:8px;margin:14px 0}
-    label{font-weight:700;font-size:13px}input{border:1px solid var(--line);border-radius:16px;padding:13px 14px;font-size:15px;background:rgba(255,255,255,.9);outline:none}
-    button{width:100%;border:0;border-radius:16px;padding:14px 16px;font-weight:800;background:linear-gradient(135deg,var(--blue),var(--green));color:white;box-shadow:0 12px 28px rgba(14,97,182,.24);cursor:pointer}
-    .hint{font-size:12px;color:var(--muted);margin-top:14px}.badge{display:inline-flex;gap:8px;align-items:center;padding:8px 12px;border-radius:999px;background:white;border:1px solid var(--line);font-weight:800;color:var(--green);margin-bottom:16px}
+    :root{--ink:#112033;--muted:#64748b;--line:rgba(15,23,42,.12);--blue:#0e63b6;--green:#0f8d69;--glass:rgba(255,255,255,.70)}
+    *{box-sizing:border-box} body{margin:0;min-height:100vh;font-family:Inter,Segoe UI,Arial,sans-serif;color:var(--ink);background:linear-gradient(135deg,#edf8ff,#ffffff 54%,#f0fff8);overflow:hidden}
+    body:before,body:after{content:"";position:fixed;border-radius:50%;filter:blur(10px);pointer-events:none}
+    body:before{width:460px;height:460px;left:-140px;top:-120px;background:radial-gradient(circle,rgba(14,99,182,.24),transparent 68%)}
+    body:after{width:420px;height:420px;right:-120px;bottom:-140px;background:radial-gradient(circle,rgba(15,141,105,.20),transparent 68%)}
+    .shell{position:relative;min-height:100vh;display:grid;grid-template-columns:1.1fr .9fr;align-items:center;gap:36px;padding:46px;max-width:1180px;margin:auto}
+    .hero{padding:36px}.badge{display:inline-flex;align-items:center;gap:10px;padding:10px 14px;border-radius:999px;background:rgba(255,255,255,.76);border:1px solid var(--line);box-shadow:inset 0 1px 0 rgba(255,255,255,.9);font-weight:900;color:var(--green);backdrop-filter:blur(16px)}
+    h1{font-size:54px;line-height:1.02;margin:22px 0 14px;letter-spacing:0}.lead{font-size:18px;color:var(--muted);line-height:1.6;max-width:560px;margin:0}.chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}.chip{padding:10px 13px;border-radius:16px;background:rgba(255,255,255,.72);border:1px solid var(--line);box-shadow:8px 10px 22px rgba(15,23,42,.06)}
+    .card{padding:30px;border:1px solid var(--line);border-radius:30px;background:var(--glass);box-shadow:0 34px 90px rgba(14,99,182,.16),inset 0 1px 0 rgba(255,255,255,.95);backdrop-filter:blur(22px)}
+    .logo{width:70px;height:70px;border-radius:24px;display:grid;place-items:center;font-size:34px;background:linear-gradient(145deg,#fff,#dff1ff);box-shadow:12px 16px 28px rgba(14,99,182,.15),inset -6px -6px 14px rgba(14,99,182,.09);margin-bottom:16px}
+    h2{font-size:28px;margin:0 0 8px}.sub{color:var(--muted);margin:0 0 20px}.field{display:grid;gap:8px;margin:15px 0}label{font-size:13px;font-weight:900;color:#334155}
+    input{border:1px solid var(--line);border-radius:18px;padding:14px 15px;font-size:15px;background:rgba(255,255,255,.86);outline:none;box-shadow:inset 4px 5px 10px rgba(15,23,42,.035)}
+    button{width:100%;border:0;border-radius:18px;padding:15px 16px;font-weight:950;background:linear-gradient(135deg,var(--blue),var(--green));color:white;box-shadow:0 14px 32px rgba(14,99,182,.24);cursor:pointer;margin-top:8px}
+    .hint{font-size:12px;color:var(--muted);line-height:1.5;margin-top:14px;padding:12px;border-radius:16px;background:rgba(255,255,255,.58);border:1px solid var(--line)}
+    @media(max-width:900px){body{overflow:auto}.shell{grid-template-columns:1fr;padding:24px}.hero{padding:0}h1{font-size:38px}}
   </style>
 </head>
-<body><main class="shell"><form class="login" method="post" action="/admin/login">
-  <div class="badge">● NazoratBot Admin</div>
-  <h1>Web admin panel</h1>
-  <p class="lead">Dazvol, davlatlar va chegaradagi yig'im qoidalarini boshqarish.</p>
-  <div class="field"><label>Login</label><input name="username" autocomplete="username" required /></div>
-  <div class="field"><label>Parol</label><input name="password" type="password" autocomplete="current-password" required /></div>
-  <button type="submit">Kirish</button>
-  <p class="hint">Render Environment Variables ichida ADMIN_USERNAME va ADMIN_PASSWORD ni albatta o'zgartiring.</p>
-</form></main></body></html>"""
+<body><main class="shell">
+  <section class="hero">
+    <div class="badge">● Browser admin dashboard</div>
+    <h1>NazoratBot qoidalar markazi</h1>
+    <p class="lead">Dazvol bitimlari, davlatlar, kirish-tranzit yig'imlari, BHM va huquqiy asoslarni Render orqali web paneldan boshqaring.</p>
+    <div class="chips"><span class="chip">📄 Dazvol</span><span class="chip">💰 Chegaradagi yig'imlar</span><span class="chip">🌍 Davlatlar</span><span class="chip">⚖️ Huquqiy asoslar</span></div>
+  </section>
+  <form class="card" method="post" action="/admin/login">
+    <div class="logo">🛃</div>
+    <h2>Admin login</h2>
+    <p class="sub">Dashboardga kirish uchun login va parolni kiriting.</p>
+    <div class="field"><label>Login</label><input name="username" autocomplete="username" required /></div>
+    <div class="field"><label>Parol</label><input name="password" type="password" autocomplete="current-password" required /></div>
+    <button type="submit">Dashboardga kirish</button>
+    <p class="hint">Xavfsizlik uchun Render Environment Variables ichida <b>ADMIN_USERNAME</b>, <b>ADMIN_PASSWORD</b> va <b>ADMIN_SESSION_SECRET</b> qiymatlarini o'zgartiring.</p>
+  </form>
+</main></body></html>"""
 
 
 def _admin_page() -> str:
@@ -183,13 +198,30 @@ def _admin_page() -> str:
   </section>
 
   <nav class="tabs">
-    <button class="tab active" data-tab="rules">Dazvol qoidalari</button>
+    <button class="tab active" data-tab="overview">Bosh sahifa</button>
+    <button class="tab" data-tab="rules">Dazvol qoidalari</button>
     <button class="tab" data-tab="countries">Davlatlar</button>
     <button class="tab" data-tab="fees">Chegaradagi yig'imlar</button>
     <button class="tab" data-tab="raw">Raw JSON</button>
   </nav>
 
-  <section id="rules" class="screen grid">
+  <section id="overview" class="screen grid">
+    <div class="panel glass">
+      <h2>Admin panel ishlash tartibi</h2>
+      <p class="small">1. Dazvol qoidalari bo'limida davlatni toping.</p>
+      <p class="small">2. Tashuv turini tanlab, ruxsatnoma va kirish/tranzit yig'imi holatini belgilang.</p>
+      <p class="small">3. Chegaradagi yig'imlar bo'limida BHM, aniq stavkalar va huquqiy asoslarni yangilang.</p>
+      <p class="small">4. Saqlangan o'zgarishlar botga avtomatik qo'llanadi.</p>
+    </div>
+    <div class="panel glass">
+      <h2>Botga ta'siri</h2>
+      <div class="item"><div><strong>📄 Dazvol</strong><span class="small">Davlatlar kesimidagi bitimlar va tashuv turi qoidalari</span></div></div>
+      <div class="item"><div><strong>💰 Chegaradagi yig'imlar</strong><span class="small">BHM, tranzit deklaratsiyasi, muddat, OSAGO va boshqa to'lovlar</span></div></div>
+      <div class="item"><div><strong>⚡ Avtomatik reload</strong><span class="small">JSON o'zgarsa, bot keyingi so'rovda yangi qoidani o'qiydi</span></div></div>
+    </div>
+  </section>
+
+  <section id="rules" class="screen grid hidden">
     <div class="panel glass">
       <h2>Qidirish</h2>
       <div class="field"><label>Davlat nomi yoki kodi</label><input id="ruleSearch" placeholder="Masalan: Xitoy, 156" oninput="loadRules()" /></div>
@@ -233,8 +265,15 @@ def _admin_page() -> str:
     <div class="panel glass">
       <h2>Tez sozlamalar</h2>
       <div class="field"><label>BHM qiymati</label><input id="feeBhm" type="number" /></div>
+      <div class="row">
+        <div class="field"><label>Tranzit deklaratsiyasi BHM</label><input id="transitDeclBhm" type="number" step="0.01" /></div>
+        <div class="field"><label>TD o'zgartirish BHM</label><input id="transitChangeBhm" type="number" step="0.01" /></div>
+      </div>
+      <div class="field"><label>Yuk kechikishi BHM / kun</label><input id="deliveryOverdueBhm" type="number" step="0.01" /></div>
       <div class="field"><label>Default xorijiy transport yig'imi USD</label><input id="defaultForeignUsd" type="number" /></div>
       <div class="field"><label>Turkmaniston qo'shimcha yig'imi USD</label><input id="turkmenExtraUsd" type="number" /></div>
+      <div class="field"><label>Kirish/tranzit yig'imi huquqiy asosi</label><input id="basisEntry" /></div>
+      <div class="field"><label>Tranzit deklaratsiyasi huquqiy asosi</label><input id="basisTransit" /></div>
       <button class="primary" onclick="saveFeeQuick()">Tez sozlamalarni saqlash</button>
       <p class="small">Murakkab stavkalar va huquqiy asoslar o'ng tomondagi JSON orqali to'liq tahrirlanadi.</p>
     </div>
@@ -269,7 +308,7 @@ const vidLabels = {
 let currentPermission = null;
 
 function toast(text){const el=document.getElementById('toast');el.textContent=text;el.style.display='block';setTimeout(()=>el.style.display='none',2600)}
-async function api(path, opts={}){const r=await fetch(path,{headers:{'Content-Type':'application/json'},...opts}); if(r.status===401){location.href='/admin';return} const data=await r.json(); if(!r.ok||data.ok===false) throw new Error(data.error||'Xatolik'); return data}
+async function api(path, opts={}){const r=await fetch(path,{headers:{'Content-Type':'application/json'},...opts}); if(r.status===401){location.href='/admin';return} const text=await r.text(); let data; try{data=JSON.parse(text)}catch(e){data={ok:false,error:text||'Server javobi noto‘g‘ri'}} if(!r.ok||data.ok===false) throw new Error(data.error||'Xatolik'); return data}
 function setTab(name){document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('hidden',s.id!==name))}
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
 function initVid(){const sel=document.getElementById('ruleVid');sel.innerHTML=Object.entries(vidLabels).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}
@@ -287,9 +326,9 @@ async function loadCountries(){const q=encodeURIComponent(countrySearch.value||'
 async function saveCountry(){await api('/admin/api/country',{method:'POST',body:JSON.stringify({code:countryCode.value,name:countryName.value})});toast('Davlat saqlandi');await loadAll()}
 async function deleteCountry(){if(!confirm('Davlat, qoidalar va istisnolar o‘chiriladi. Davom etasizmi?'))return;await api(`/admin/api/country/${countryCode.value}`,{method:'DELETE'});toast('Davlat o‘chirildi');await loadAll()}
 
-async function loadFees(){const d=await api('/admin/api/fees');feesJson.value=JSON.stringify(d.fees,null,2);feeBhm.value=d.fees.bhm?.value||'';defaultForeignUsd.value=d.fees.entry_fee?.default_foreign_usd||'';turkmenExtraUsd.value=d.fees.entry_fee?.turkmenistan_extra_usd||''}
+async function loadFees(){const d=await api('/admin/api/fees');feesJson.value=JSON.stringify(d.fees,null,2);feeBhm.value=d.fees.bhm?.value||'';transitDeclBhm.value=d.fees.fixed?.transit_declaration_bhm||'';transitChangeBhm.value=d.fees.fixed?.transit_declaration_change_bhm||'';deliveryOverdueBhm.value=d.fees.fixed?.delivery_overdue_bhm_per_day||'';defaultForeignUsd.value=d.fees.entry_fee?.default_foreign_usd||'';turkmenExtraUsd.value=d.fees.entry_fee?.turkmenistan_extra_usd||'';basisEntry.value=d.fees.legal_basis?.entry_transit_fee||'';basisTransit.value=d.fees.legal_basis?.transit_declaration||''}
 async function saveFees(){let parsed;try{parsed=JSON.parse(feesJson.value)}catch(e){toast('JSON xato: '+e.message);return}await api('/admin/api/fees',{method:'POST',body:JSON.stringify({fees:parsed})});toast('Yig‘imlar saqlandi');await loadAll()}
-async function saveFeeQuick(){const d=JSON.parse(feesJson.value||'{}');d.bhm=d.bhm||{};d.entry_fee=d.entry_fee||{};d.bhm.value=Number(feeBhm.value);d.entry_fee.default_foreign_usd=Number(defaultForeignUsd.value);d.entry_fee.turkmenistan_extra_usd=Number(turkmenExtraUsd.value);feesJson.value=JSON.stringify(d,null,2);await saveFees()}
+async function saveFeeQuick(){const d=JSON.parse(feesJson.value||'{}');d.bhm=d.bhm||{};d.fixed=d.fixed||{};d.entry_fee=d.entry_fee||{};d.legal_basis=d.legal_basis||{};d.bhm.value=Number(feeBhm.value);d.fixed.transit_declaration_bhm=Number(transitDeclBhm.value);d.fixed.transit_declaration_change_bhm=Number(transitChangeBhm.value);d.fixed.delivery_overdue_bhm_per_day=Number(deliveryOverdueBhm.value);d.entry_fee.default_foreign_usd=Number(defaultForeignUsd.value);d.entry_fee.turkmenistan_extra_usd=Number(turkmenExtraUsd.value);d.legal_basis.entry_transit_fee=basisEntry.value;d.legal_basis.transit_declaration=basisTransit.value;feesJson.value=JSON.stringify(d,null,2);await saveFees()}
 async function loadRaw(){const d=await api('/admin/api/permission/full');permissionJson.value=JSON.stringify(d.permission,null,2)}
 async function savePermissionJson(){let parsed;try{parsed=JSON.parse(permissionJson.value)}catch(e){toast('JSON xato: '+e.message);return}await api('/admin/api/permission/full',{method:'POST',body:JSON.stringify({permission:parsed})});toast('Permission JSON saqlandi');await loadAll()}
 async function logout(){await fetch('/admin/logout',{method:'POST'});location.href='/admin'}
@@ -313,7 +352,7 @@ def setup_admin_routes(app: web.Application, settings: Settings) -> None:
             and hmac.compare_digest(password, settings.admin_password)
         ):
             return web.Response(text=_login_page(), content_type="text/html", status=403)
-        response = web.HTTPFound("/admin")
+        response = web.HTTPFound("/admin/dashboard")
         response.set_cookie(
             SESSION_COOKIE,
             _signed_token(settings),
@@ -436,6 +475,7 @@ def setup_admin_routes(app: web.Application, settings: Settings) -> None:
         return web.json_response({"ok": True})
 
     app.router.add_get("/admin", admin_index)
+    app.router.add_get("/admin/dashboard", admin_index)
     app.router.add_post("/admin/login", login)
     app.router.add_post("/admin/logout", logout)
     app.router.add_get("/admin/api/summary", summary)
