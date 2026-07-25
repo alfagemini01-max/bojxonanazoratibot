@@ -11,6 +11,7 @@ Bot oqimi:
 5. Foydalanuvchi `Shartlarga roziman` tugmasini bosadi.
 6. Rozilik vaqti foydalanuvchi bazasida saqlanadi. Render uchun tashqi Postgres ishlatish tavsiya etiladi.
 7. Asosiy menyuda `Tekshirish` tugmasi orqali tashuv boshlangan davlat, tashuv tugaydigan davlat va avtotransport ro'yxatdan o'tgan davlat ketma-ket kiritiladi.
+8. Asosiy menyudagi `To'lovlarni hisoblash` tugmasi orqali chegara bojxona postida undirilishi mumkin bo'lgan to'lovlar kalkulyatori ishga tushadi.
 8. Har bir davlat nomi yozilganda bot 75 foizdan yuqori mos kelgan davlatlarni kod va nomi bilan tugma ko'rinishida chiqaradi.
 9. Foydalanuvchi ro'yxatdan kerakli davlatni tanlagandan keyin bot tashuv turini avtomatik aniqlaydi va ruxsatnoma talab etilishi hamda yig'im undirilishi bo'yicha xabar qaytaradi.
 
@@ -41,6 +42,9 @@ WEBHOOK_URL=https://bojxonanazoratibot.onrender.com
 WEBHOOK_PATH=/webhook
 PERMISSION_RULES_PATH=data/permission_rules.json
 TZ=Asia/Tashkent
+FEES_RULES_PATH=data/fees_2026.json
+BHM_VALUE=412000
+USD_FALLBACK_RATE=12600
 ```
 
 Tavsiya qilingan servis turi: `Web Service`.
@@ -103,6 +107,26 @@ Kerak bo'lsa Render Environment Variables orqali boshqa JSON yo'lini ko'rsatish 
 ```text
 PERMISSION_RULES_PATH=data/permission_rules.json
 ```
+
+## Chegara to'lovlari kalkulyatori
+
+Yangi `To'lovlarni hisoblash` bo'limi quyidagi ma'lumotlar asosida taxminiy hisob-kitob beradi:
+
+1. Transport turi.
+2. Avtotransport ro'yxatdan o'tgan davlat.
+3. Yo'nalish: O'zbekistonga kirish, tranzit o'tish yoki O'zbekistondan chiqish.
+4. Yuk transporti bo'lsa, tashuv boshlangan va tugaydigan davlat.
+5. Deklaratsiya, tranzit deklaratsiyasi, qoraytirilgan oyna, OSAGO, og'ir/yirik gabarit, gumanitar yuk, veterinariya nazorati, muddatdan o'tish va yukni kech yetkazish bo'yicha kerakli savollar.
+
+Hisoblash qoidalari `data/fees_2026.json` faylida saqlanadi. BHM va USD zaxira kursi Render Environment Variables orqali yangilanishi mumkin:
+
+```text
+BHM_VALUE=412000
+USD_FALLBACK_RATE=12600
+FEES_RULES_PATH=data/fees_2026.json
+```
+
+Kalkulyator natijasi axborot-tavsiyaviy xususiyatga ega. Yakuniy summa chegara bojxona postida amaldagi Markaziy bank kursi va vakolatli tizimlardagi ma'lumotlar asosida aniqlanadi.
 
 ## Tekshiruv mantiqi
 
