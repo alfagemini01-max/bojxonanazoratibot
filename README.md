@@ -10,8 +10,8 @@ Bot oqimi:
 4. Foydalanish shartlari rasm ko'rinishida yuboriladi. Rasm hali bo'lmasa, bot PDF fallback yoki matnli ogohlantirish beradi.
 5. Foydalanuvchi `Shartlarga roziman` tugmasini bosadi.
 6. Rozilik vaqti foydalanuvchi bazasida saqlanadi. Render uchun tashqi Postgres ishlatish tavsiya etiladi.
-7. Asosiy menyuda `Tekshirish` tugmasi orqali tashuv boshlangan davlat, tashuv tugaydigan davlat va avtotransport ro'yxatdan o'tgan davlat ketma-ket kiritiladi.
-8. Asosiy menyudagi `To'lovlarni hisoblash` tugmasi orqali chegara bojxona postida undirilishi mumkin bo'lgan to'lovlar kalkulyatori ishga tushadi.
+7. Asosiy menyuda `Dazvol` tugmasi orqali tashuv boshlangan davlat, tashuv tugaydigan davlat va avtotransport ro'yxatdan o'tgan davlat ketma-ket kiritiladi.
+8. Asosiy menyudagi `Chegaradagi yig'imlar` tugmasi orqali chegara bojxona postida undirilishi mumkin bo'lgan to'lovlar kalkulyatori ishga tushadi.
 8. Har bir davlat nomi yozilganda bot 75 foizdan yuqori mos kelgan davlatlarni kod va nomi bilan tugma ko'rinishida chiqaradi.
 9. Foydalanuvchi ro'yxatdan kerakli davlatni tanlagandan keyin bot tashuv turini avtomatik aniqlaydi va ruxsatnoma talab etilishi hamda yig'im undirilishi bo'yicha xabar qaytaradi.
 
@@ -45,6 +45,9 @@ TZ=Asia/Tashkent
 FEES_RULES_PATH=data/fees_2026.json
 BHM_VALUE=412000
 USD_FALLBACK_RATE=12600
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=kuchli_parol_kiriting
+ADMIN_SESSION_SECRET=uzun_tasodifiy_secret_kiriting
 ```
 
 Tavsiya qilingan servis turi: `Web Service`.
@@ -56,6 +59,7 @@ Render uchun kichik HTTP tekshiruv endpointlari ham ochiladi:
 ```text
 /
 /health
+/admin
 ```
 
 Render Free Web Service 15 daqiqa kiruvchi trafik bo'lmasa uxlab qoladi. Botni uyg'oq saqlash uchun UptimeRobot orqali quyidagi URLga 5 daqiqada bir marta HTTP GET so'rov yuborish mumkin:
@@ -110,7 +114,7 @@ PERMISSION_RULES_PATH=data/permission_rules.json
 
 ## Chegara to'lovlari kalkulyatori
 
-Yangi `To'lovlarni hisoblash` bo'limi quyidagi ma'lumotlar asosida taxminiy hisob-kitob beradi:
+Yangi `Chegaradagi yig'imlar` bo'limi quyidagi ma'lumotlar asosida taxminiy hisob-kitob beradi:
 
 1. Transport turi.
 2. Avtotransport ro'yxatdan o'tgan davlat.
@@ -127,6 +131,34 @@ FEES_RULES_PATH=data/fees_2026.json
 ```
 
 Kalkulyator natijasi axborot-tavsiyaviy xususiyatga ega. Yakuniy summa chegara bojxona postida amaldagi Markaziy bank kursi va vakolatli tizimlardagi ma'lumotlar asosida aniqlanadi.
+
+## Web admin panel
+
+Admin panel Renderdagi shu Web Service ichida ishlaydi:
+
+```text
+https://SIZNING-RENDER-NOMINGIZ.onrender.com/admin
+https://SIZNING-RENDER-NOMINGIZ.onrender.com/admin/dashboard
+```
+
+Panel orqali quyidagilar boshqariladi:
+
+1. Davlat qo'shish, nomini o'zgartirish yoki o'chirish.
+2. Har bir davlat bo'yicha 1-8 tashuv turi uchun Dazvol qoidasi.
+3. Ruxsatnoma kerak/kerak emas/taqiqlangan holati.
+4. Kirish yoki tranzit yig'imi undiriladi/undirilmaydi/ruxsat turiga qarab holati.
+5. Chegaradagi yig'imlar, BHM, stavkalar va huquqiy asoslar.
+6. Raw JSON tahriri orqali murakkab qoidalarni tez o'zgartirish.
+
+Render Environment Variables ichida admin login va parolni albatta o'zgartiring:
+
+```text
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=faqat_siz_biladigan_kuchli_parol
+ADMIN_SESSION_SECRET=kamida_32_belgili_tasodifiy_secret
+```
+
+Muhim: Render Free Web Service local fayl tizimidagi admin o'zgarishlarini redeploy/restartdan keyin yo'qotishi mumkin. Doimiy saqlash uchun keyingi bosqichda qoidalarni Postgres jadvaliga ko'chirish tavsiya etiladi.
 
 ## Tekshiruv mantiqi
 
