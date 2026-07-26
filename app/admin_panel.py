@@ -481,17 +481,18 @@ def _admin_page_v2() -> str:
     .screen{display:none}.screen.active{display:grid;gap:16px}.toolbar{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:14px}.search{width:min(420px,100%);border:1px solid var(--line);border-radius:18px;padding:13px 14px;background:rgba(255,255,255,.84);outline:none}
     .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}.card{padding:16px}.card h3{margin:0 0 6px;font-size:17px}.muted{color:var(--muted);font-size:13px}.pill{display:inline-flex;padding:6px 9px;border-radius:999px;font-size:12px;font-weight:900;margin:4px 4px 0 0}.ok{background:#e8f8ef;color:var(--green)}.warn{background:#fff7df;color:var(--amber)}.bad{background:#fff0ef;color:var(--red)}.info{background:#eaf4ff;color:var(--blue)}
     .fee-tabs{display:flex;gap:8px;flex-wrap:wrap}.fee-tab{border:1px solid var(--line);background:white;border-radius:16px;padding:11px 14px;font-weight:900}.fee-tab.active{background:var(--ink);color:white}
-    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{display:grid;gap:6px;margin-bottom:10px}.field.full{grid-column:1/-1}label{font-size:12px;color:#52627a;font-weight:900}input,select,textarea{border:1px solid var(--line);border-radius:16px;padding:12px;background:rgba(255,255,255,.88);outline:none}textarea{min-height:90px}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{display:grid;gap:6px;margin-bottom:10px}.field.full{grid-column:1/-1}label{font-size:12px;color:#52627a;font-weight:900}input,select,textarea{width:100%;border:1px solid var(--line);border-radius:16px;padding:12px;background:rgba(255,255,255,.88);outline:none}textarea{min-height:90px}
+    .detail-head{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;padding:16px}.detail-head h2{margin:0;font-size:25px}.detail-block{padding:16px}.section-title{display:flex;justify-content:space-between;gap:12px;align-items:end;padding:4px 2px}.section-title h3{font-size:22px;margin:0}.rule-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:14px}.rule-card{padding:16px}.rule-card-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:12px}.rule-card h4{margin:0;font-size:17px}.rule-card .mini{font-size:12px;color:var(--muted);font-weight:900}.note-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.back-link{white-space:nowrap}
     .modal{position:fixed;inset:0;background:rgba(16,32,51,.28);display:none;place-items:center;padding:20px;z-index:50}.modal.show{display:grid}.dialog{width:min(980px,100%);max-height:92vh;overflow:auto;padding:20px}.dialog-head{display:flex;justify-content:space-between;gap:12px;align-items:center;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:14px}.dialog h3{font-size:24px;margin:0}
     table{width:100%;border-collapse:separate;border-spacing:0 8px}td,th{text-align:left;padding:10px;background:rgba(255,255,255,.72);font-size:13px}th{color:#52627a;background:transparent}.toast{position:fixed;right:20px;bottom:20px;padding:14px 16px;border-radius:16px;background:#102033;color:white;display:none;z-index:80}
-    @media(max-width:900px){.app{grid-template-columns:1fr}.side{position:relative;height:auto}.stats{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr}.top{align-items:flex-start;flex-direction:column}}
+    @media(max-width:900px){.app{grid-template-columns:1fr}.side{position:relative;height:auto}.stats{grid-template-columns:1fr 1fr}.form-grid,.detail-head,.note-grid{grid-template-columns:1fr}.top{align-items:flex-start;flex-direction:column}}
   </style>
 </head>
 <body>
 <div class="app">
   <aside class="side glass">
     <div class="brand"><div class="logo">🛃</div><div><h1>NazoratBot Admin</h1><div class="hint">Web dashboard</div></div></div>
-    <div class="hint">Texnik sozlamalar yashirilgan. Qoidalar oddiy forma, karta va modal oynalar orqali boshqariladi.</div>
+    <div class="hint">Texnik sozlamalar yashirilgan. Qoidalar oddiy forma, karta va alohida sahifalar orqali boshqariladi.</div>
     <nav class="nav">
       <button class="active" data-screen="home">🏠 Bosh sahifa</button>
       <button data-screen="dazvol">📄 Dazvol</button>
@@ -513,14 +514,14 @@ def _admin_page_v2() -> str:
 
     <section id="home" class="screen active">
       <div class="cards">
-        <div class="card glass"><h3>📄 Dazvol</h3><p class="muted">Davlatni tanlang, modal oynada barcha tashuv turlari, ruxsatnoma va yig'im holatlarini ko'ring yoki o'zgartiring.</p></div>
+        <div class="card glass"><h3>📄 Dazvol</h3><p class="muted">Davlatni tanlang, alohida sahifada barcha tashuv turlari, ruxsatnoma va yig'im holatlarini ko'ring yoki o'zgartiring.</p></div>
         <div class="card glass"><h3>💰 Chegaradagi yig'imlar</h3><p class="muted">Import, eksport va tranzit yo'nalishlari bo'yicha yig'imlarni alohida ro'yxatlarda boshqaring.</p></div>
         <div class="card glass"><h3>🌍 Davlatlar</h3><p class="muted">Davlat kodi, ruscha nomi va o'zbekcha nomini saqlang. Qidiruv o'zbekcha nom bilan ham ishlaydi.</p></div>
       </div>
     </section>
 
     <section id="dazvol" class="screen">
-      <div class="toolbar glass"><input id="dazvolSearch" class="search" placeholder="Davlat nomi yoki kodi: Qirg'iziston, 417..." oninput="loadDazvol()" /><button class="btn primary" onclick="openCountryModal()">+ Davlat qo'shish</button></div>
+      <div class="toolbar glass"><input id="dazvolSearch" class="search" placeholder="Davlat nomi yoki kodi: Qirg'iziston, 417..." oninput="loadDazvol()" /><button class="btn primary" onclick="openCountryPage()">+ Davlat qo'shish</button></div>
       <div id="dazvolCards" class="cards"></div>
     </section>
 
@@ -537,25 +538,29 @@ def _admin_page_v2() -> str:
     </section>
 
     <section id="countries" class="screen">
-      <div class="toolbar glass"><input id="countrySearch" class="search" placeholder="Davlatni qidiring..." oninput="loadCountries()" /><button class="btn primary" onclick="openCountryModal()">+ Davlat qo'shish</button></div>
+      <div class="toolbar glass"><input id="countrySearch" class="search" placeholder="Davlatni qidiring..." oninput="loadCountries()" /><button class="btn primary" onclick="openCountryPage()">+ Davlat qo'shish</button></div>
       <div id="countryCards" class="cards"></div>
     </section>
-  </main>
-</div>
 
-<div id="countryModal" class="modal">
-  <div class="dialog glass">
-    <div class="dialog-head"><h3 id="countryModalTitle">Davlat</h3><button class="btn" onclick="closeModal('countryModal')">Yopish</button></div>
-    <div class="form-grid">
-      <div class="field"><label>Kod</label><input id="countryCode" /></div>
-      <div class="field"><label>O'zbekcha nom</label><input id="countryNameUz" /></div>
-      <div class="field full"><label>Asosiy/Ruscha nom</label><input id="countryName" /></div>
-    </div>
-    <div class="actions"><button class="btn primary" onclick="saveCountry()">Davlatni saqlash</button><button class="btn danger" onclick="deleteCountry()">Davlatni o'chirish</button></div>
-    <h3 style="margin-top:20px">Dazvol qoidalari</h3>
-    <table><thead><tr><th>Tashuv</th><th>Ruxsatnoma</th><th>Yig'im</th><th>USD stavka</th><th>Admin izoh</th><th>Foydalanuvchi izohi</th><th></th></tr></thead><tbody id="rulesTable"></tbody></table>
-    <h3>Istisnolar</h3><div id="exceptionsBox" class="cards"></div>
-  </div>
+    <section id="countryDetail" class="screen">
+      <div class="detail-head glass">
+        <button class="btn" onclick="backToCountryList()">← Ro'yxatga qaytish</button>
+        <div><h2 id="countryPageTitle">Davlat</h2><div class="muted">Dazvol qoidalarini alohida kartalar orqali tahrirlash</div></div>
+        <div class="actions"><button class="btn primary" onclick="saveCountry()">Davlatni saqlash</button><button class="btn danger" onclick="deleteCountry()">Davlatni o'chirish</button></div>
+      </div>
+      <div class="glass detail-block">
+        <div class="form-grid">
+          <div class="field"><label>Kod</label><input id="countryCode" /></div>
+          <div class="field"><label>O'zbekcha nom</label><input id="countryNameUz" /></div>
+          <div class="field full"><label>Asosiy/Ruscha nom</label><input id="countryName" /></div>
+        </div>
+      </div>
+      <div class="section-title"><h3>Dazvol qoidalari</h3><span class="muted">Har bir tashuv turi alohida saqlanadi</span></div>
+      <div id="rulesTable" class="rule-grid"></div>
+      <div class="section-title"><h3>Istisnolar</h3><span class="muted">Spravochnikdan olingan istisno holatlar</span></div>
+      <div id="exceptionsBox" class="cards"></div>
+    </section>
+  </main>
 </div>
 
 <div id="feeModal" class="modal">
@@ -577,27 +582,30 @@ def _admin_page_v2() -> str:
 <div class="toast" id="toast"></div>
 <script>
 const vidLabels={"1":"Ikki tomonlama: O'zbekistondan","2":"Ikki tomonlama: O'zbekistonga","3":"Tranzit","4":"Uchinchi davlatga","5":"Uchinchi davlatdan","6":"Ichki tashuv","7":"Yuksiz kirish","8":"Yuksiz tranzit"};
-let permissionData={countries:[]}; let countryCache={}; let activeDirection='import'; let feeItems=[]; let selectedCountry=null;
+let permissionData={countries:[]}; let countryCache={}; let activeDirection='import'; let feeItems=[]; let selectedCountry=null; let lastCountryListScreen='dazvol';
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 function toast(t){const el=document.getElementById('toast');el.textContent=t;el.style.display='block';setTimeout(()=>el.style.display='none',2500)}
 async function api(path,opts={}){const r=await fetch(path,{headers:{'Content-Type':'application/json'},...opts}); if(r.status===401){location.href='/admin';return} const text=await r.text(); let d; try{d=JSON.parse(text)}catch(e){d={ok:false,error:text||'Server javobi xato'}} if(!r.ok||d.ok===false) throw new Error(d.error||'Xatolik'); return d}
-document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(b.dataset.screen).classList.add('active');pageTitle.textContent=b.textContent.trim(); if(b.dataset.screen==='fees')loadFeeItems();});
+function showScreen(name,title=''){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(name).classList.add('active');pageTitle.textContent=title||document.querySelector(`.nav button[data-screen="${name}"]`)?.textContent.trim()||'Davlat';document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('active',x.dataset.screen===name)); if(name==='fees')loadFeeItems();}
+document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>showScreen(b.dataset.screen,b.textContent.trim()));
 document.querySelectorAll('.fee-tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.fee-tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');activeDirection=b.dataset.direction;loadFeeItems();});
 function closeModal(id){document.getElementById(id).classList.remove('show')}
+function backToCountryList(){showScreen(lastCountryListScreen,lastCountryListScreen==='dazvol'?'📄 Dazvol':'🌍 Davlatlar')}
 function pill(text,kind){return `<span class="pill ${kind}">${esc(text)}</span>`}
 function rulePills(rules){return Object.entries(rules||{}).map(([vid,r])=>pill(`${vid}: R${r.permission_cd}`,r.permission_cd==='1'?'warn':r.permission_cd==='3'?'bad':'ok')+pill(`Y${r.dues_cd}`,r.dues_cd==='1'?'warn':r.dues_cd==='2'?'ok':'info')).join('')}
 function rememberCountries(rows){(rows||[]).forEach(c=>{countryCache[c.code]=c})}
 async function loadSummary(){const d=await api('/admin/api/summary');countryCount.textContent=d.countries;ruleCount.textContent=d.rules;exceptionCount.textContent=d.exceptions;bhmValue.textContent=d.bhm}
 async function loadDazvol(){const q=encodeURIComponent(dazvolSearch.value||'');permissionData=await api('/admin/api/permission?q='+q);rememberCountries(permissionData.countries);dazvolCards.innerHTML=permissionData.countries.map(countryCard).join('')||'<div class="card glass">Maʼlumot topilmadi</div>'}
-function countryCard(c){return `<button class="card glass" style="text-align:left" onclick="openCountryModal('${esc(c.code)}')"><h3>${esc(c.name_uz)} <span class="muted">(${esc(c.code)})</span></h3><div class="muted">${esc(c.name)}</div><div>${rulePills(c.rules)}</div></button>`}
-function openCountryModal(code=''){selectedCountry=countryCache[code]||permissionData.countries.find(c=>c.code===code)||{code:'',name:'',name_uz:'',rules:{},exceptions:[]};countryCode.value=selectedCountry.code;countryName.value=selectedCountry.name;countryNameUz.value=selectedCountry.name_uz;countryModalTitle.textContent=selectedCountry.code?`${selectedCountry.name_uz} (${selectedCountry.code})`:'Yangi davlat';renderRulesTable();renderExceptions();countryModal.classList.add('show')}
-function renderRulesTable(){const rules=selectedCountry.rules||{};rulesTable.innerHTML=Object.keys(vidLabels).map(vid=>{const r=rules[vid]||{};return `<tr><td><b>${vid}</b> ${esc(vidLabels[vid])}</td><td>${selectHtml('p'+vid,r.permission_cd||'2',{1:'Majburiy',2:'Kerak emas',3:'Taqiqlangan'})}</td><td>${selectHtml('d'+vid,r.dues_cd||'2',{1:'Undiriladi',2:'Undirilmaydi',3:'Ruxsat turiga qarab',0:'Belgilanmagan'},`toggleFeeFields('${vid}')`)}</td><td><input id="a${vid}" value="${esc(r.dues_amount_usd||'')}" placeholder="400 / 100/150/200" /></td><td><input id="n${vid}" value="${esc(r.admin_note||'')}" /></td><td><input id="uz${vid}" value="${esc(r.dues_amount_note_uz||'')}" placeholder="UZ" /><input id="ru${vid}" value="${esc(r.dues_amount_note_ru||'')}" placeholder="RU" /><input id="en${vid}" value="${esc(r.dues_amount_note_en||'')}" placeholder="EN" /></td><td><button class="btn primary" onclick="saveRule('${vid}')">Saqlash</button></td></tr>`}).join('');Object.keys(vidLabels).forEach(toggleFeeFields)}
+function countryCard(c){return `<button class="card glass" style="text-align:left" onclick="openCountryPage('${esc(c.code)}')"><h3>${esc(c.name_uz)} <span class="muted">(${esc(c.code)})</span></h3><div class="muted">${esc(c.name)}</div><div>${rulePills(c.rules)}</div></button>`}
+function openCountryPage(code=''){const active=document.querySelector('.screen.active');if(active&&active.id!=='countryDetail')lastCountryListScreen=active.id;selectedCountry=countryCache[code]||permissionData.countries.find(c=>c.code===code)||{code:'',name:'',name_uz:'',rules:{},exceptions:[]};countryCode.value=selectedCountry.code;countryName.value=selectedCountry.name;countryNameUz.value=selectedCountry.name_uz;countryPageTitle.textContent=selectedCountry.code?`${selectedCountry.name_uz} (${selectedCountry.code})`:'Yangi davlat';renderRulesTable();renderExceptions();showScreen('countryDetail',selectedCountry.code?'Davlat tafsiloti':'Yangi davlat');window.scrollTo({top:0,behavior:'smooth'});}
+function renderRulesTable(){const rules=selectedCountry.rules||{};rulesTable.innerHTML=Object.keys(vidLabels).map(vid=>{const r=rules[vid]||{};return `<div class="rule-card glass"><div class="rule-card-head"><div><span class="mini">Tashuv turi ${vid}</span><h4>${esc(vidLabels[vid])}</h4></div><button class="btn primary" onclick="saveRule('${vid}')">Saqlash</button></div><div class="form-grid"><div class="field"><label>Ruxsatnoma</label>${selectHtml('p'+vid,r.permission_cd||'2',{1:'Majburiy',2:'Kerak emas',3:'Taqiqlangan'})}</div><div class="field"><label>Yig'im</label>${selectHtml('d'+vid,r.dues_cd||'2',{1:'Undiriladi',2:'Undirilmaydi',3:'Ruxsat turiga qarab',0:'Belgilanmagan'},`toggleFeeFields('${vid}')`)}</div><div class="field"><label>USD stavka</label><input id="a${vid}" value="${esc(r.dues_amount_usd||'')}" placeholder="400 / 100/150/200" /></div><div class="field"><label>Admin izoh</label><input id="n${vid}" value="${esc(r.admin_note||'')}" /></div><div class="field full"><label>Foydalanuvchiga chiqadigan izohlar</label><div class="note-grid"><input id="uz${vid}" value="${esc(r.dues_amount_note_uz||'')}" placeholder="UZ" /><input id="ru${vid}" value="${esc(r.dues_amount_note_ru||'')}" placeholder="RU" /><input id="en${vid}" value="${esc(r.dues_amount_note_en||'')}" placeholder="EN" /></div></div></div></div>`}).join('');Object.keys(vidLabels).forEach(toggleFeeFields)}
 function selectHtml(id,val,opts,onchange=''){return `<select id="${id}" ${onchange?`onchange="${onchange}"`:''}>`+Object.entries(opts).map(([k,v])=>`<option value="${k}" ${String(val)===String(k)?'selected':''}>${v}</option>`).join('')+'</select>'}
 function toggleFeeFields(vid){const show=document.getElementById('d'+vid)?.value==='1';['a','uz','ru','en'].forEach(prefix=>{const el=document.getElementById(prefix+vid);if(el)el.style.display=show?'block':'none'});}
 function renderExceptions(){const list=selectedCountry.exceptions||[];exceptionsBox.innerHTML=list.length?list.slice(0,12).map(x=>`<div class="card glass"><b>${esc(x.exception_cd||'')}</b><p class="muted">${esc(x.exception_desc||'')}</p></div>`).join(''):'<div class="card glass muted">Istisno kiritilmagan</div>'}
-async function saveRule(vid){await api('/admin/api/rule',{method:'POST',body:JSON.stringify({country_code:countryCode.value,vid_cd:vid,permission_cd:document.getElementById('p'+vid).value,dues_cd:document.getElementById('d'+vid).value,dues_amount_usd:document.getElementById('a'+vid).value,dues_amount_note_uz:document.getElementById('uz'+vid).value,dues_amount_note_ru:document.getElementById('ru'+vid).value,dues_amount_note_en:document.getElementById('en'+vid).value,exception_cd:'0',exception_name_ru:'',admin_note:document.getElementById('n'+vid).value})});toast('Qoida saqlandi');await loadAll();openCountryModal(countryCode.value)}
-async function saveCountry(){await api('/admin/api/country',{method:'POST',body:JSON.stringify({code:countryCode.value,name:countryName.value,name_uz:countryNameUz.value})});toast('Davlat saqlandi');await loadAll();openCountryModal(countryCode.value)}
-async function deleteCountry(){if(!countryCode.value||!confirm('Davlatni o‘chirasizmi?'))return;await api('/admin/api/country/'+countryCode.value,{method:'DELETE'});closeModal('countryModal');toast('Davlat o‘chirildi');await loadAll()}
+async function refreshCountry(code){const d=await api('/admin/api/permission?q='+encodeURIComponent(code));rememberCountries(d.countries);return countryCache[code]||d.countries[0]}
+async function saveRule(vid){await api('/admin/api/rule',{method:'POST',body:JSON.stringify({country_code:countryCode.value,vid_cd:vid,permission_cd:document.getElementById('p'+vid).value,dues_cd:document.getElementById('d'+vid).value,dues_amount_usd:document.getElementById('a'+vid).value,dues_amount_note_uz:document.getElementById('uz'+vid).value,dues_amount_note_ru:document.getElementById('ru'+vid).value,dues_amount_note_en:document.getElementById('en'+vid).value,exception_cd:'0',exception_name_ru:'',admin_note:document.getElementById('n'+vid).value})});toast('Qoida saqlandi');await loadAll();const c=await refreshCountry(countryCode.value);if(c)openCountryPage(countryCode.value)}
+async function saveCountry(){await api('/admin/api/country',{method:'POST',body:JSON.stringify({code:countryCode.value,name:countryName.value,name_uz:countryNameUz.value})});toast('Davlat saqlandi');await loadAll();const c=await refreshCountry(countryCode.value);if(c)openCountryPage(countryCode.value)}
+async function deleteCountry(){if(!countryCode.value||!confirm('Davlatni o‘chirasizmi?'))return;await api('/admin/api/country/'+countryCode.value,{method:'DELETE'});toast('Davlat o‘chirildi');await loadAll();backToCountryList()}
 async function loadCountries(){const q=encodeURIComponent(countrySearch.value||'');const d=await api('/admin/api/permission?q='+q);rememberCountries(d.countries);countryCards.innerHTML=d.countries.map(countryCard).join('')||'<div class="card glass">Maʼlumot topilmadi</div>'}
 async function loadFeeItems(){const d=await api('/admin/api/fee-items?direction='+activeDirection);feeItems=d.items;feeCards.innerHTML=feeItems.map(feeCard).join('')||'<div class="card glass">Bu yo‘nalishda yig‘im yo‘q</div>'}
 function feeCard(f){return `<button class="card glass" style="text-align:left" onclick="openFeeModal('${esc(f.id)}')"><h3>${esc(f.title)}</h3><div>${pill(f.enabled?'Faol':'O‘chirilgan',f.enabled?'ok':'bad')} ${pill(activeDirection,'info')}</div><p><b>${esc(f.amount)}</b></p><p class="muted">${esc(f.condition)}</p><p class="muted">${esc(f.basis)}</p></button>`}
