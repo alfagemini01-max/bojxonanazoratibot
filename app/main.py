@@ -14,7 +14,7 @@ from app.handlers import build_router
 from app.storage import UserStorage, create_user_storage
 
 logger = logging.getLogger(__name__)
-APP_VERSION = "2026-07-25-admin-dashboard-v3"
+APP_VERSION = "2026-07-26-permission-dues-i18n-v4"
 
 
 def create_bot(settings: Settings) -> Bot:

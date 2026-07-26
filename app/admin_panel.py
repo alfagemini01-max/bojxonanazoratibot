@@ -18,7 +18,7 @@ SESSION_COOKIE = "nazorat_admin"
 SESSION_TTL_SECONDS = 12 * 60 * 60
 
 PERMISSION_NAMES = {
-    "1": "Обязателно",
+    "1": "Обязательно",
     "2": "Не обязательно",
     "3": "Запрещен",
 }
@@ -185,6 +185,10 @@ def _rule_payload(data: dict[str, Any], rules_data: dict[str, Any]) -> dict[str,
         "exception_name_ru": str(data.get("exception_name_ru") or "-не выбрано-").strip(),
         "dues_cd": dues_cd,
         "dues_name_ru": DUES_NAMES[dues_cd],
+        "dues_amount_usd": str(data.get("dues_amount_usd") or "").strip() if dues_cd == "1" else "",
+        "dues_amount_note_uz": str(data.get("dues_amount_note_uz") or "").strip(),
+        "dues_amount_note_ru": str(data.get("dues_amount_note_ru") or "").strip(),
+        "dues_amount_note_en": str(data.get("dues_amount_note_en") or "").strip(),
         "source": "web-admin-panel",
         "admin_note": str(data.get("admin_note") or "").strip(),
     }
@@ -549,7 +553,7 @@ def _admin_page_v2() -> str:
     </div>
     <div class="actions"><button class="btn primary" onclick="saveCountry()">Davlatni saqlash</button><button class="btn danger" onclick="deleteCountry()">Davlatni o'chirish</button></div>
     <h3 style="margin-top:20px">Dazvol qoidalari</h3>
-    <table><thead><tr><th>Tashuv</th><th>Ruxsatnoma</th><th>Kirish/tranzit yig'imi</th><th>Izoh</th><th></th></tr></thead><tbody id="rulesTable"></tbody></table>
+    <table><thead><tr><th>Tashuv</th><th>Ruxsatnoma</th><th>Yig'im</th><th>USD stavka</th><th>Admin izoh</th><th>Foydalanuvchi izohi</th><th></th></tr></thead><tbody id="rulesTable"></tbody></table>
     <h3>Istisnolar</h3><div id="exceptionsBox" class="cards"></div>
   </div>
 </div>
@@ -587,10 +591,11 @@ async function loadSummary(){const d=await api('/admin/api/summary');countryCoun
 async function loadDazvol(){const q=encodeURIComponent(dazvolSearch.value||'');permissionData=await api('/admin/api/permission?q='+q);rememberCountries(permissionData.countries);dazvolCards.innerHTML=permissionData.countries.map(countryCard).join('')||'<div class="card glass">Maʼlumot topilmadi</div>'}
 function countryCard(c){return `<button class="card glass" style="text-align:left" onclick="openCountryModal('${esc(c.code)}')"><h3>${esc(c.name_uz)} <span class="muted">(${esc(c.code)})</span></h3><div class="muted">${esc(c.name)}</div><div>${rulePills(c.rules)}</div></button>`}
 function openCountryModal(code=''){selectedCountry=countryCache[code]||permissionData.countries.find(c=>c.code===code)||{code:'',name:'',name_uz:'',rules:{},exceptions:[]};countryCode.value=selectedCountry.code;countryName.value=selectedCountry.name;countryNameUz.value=selectedCountry.name_uz;countryModalTitle.textContent=selectedCountry.code?`${selectedCountry.name_uz} (${selectedCountry.code})`:'Yangi davlat';renderRulesTable();renderExceptions();countryModal.classList.add('show')}
-function renderRulesTable(){const rules=selectedCountry.rules||{};rulesTable.innerHTML=Object.keys(vidLabels).map(vid=>{const r=rules[vid]||{};return `<tr><td><b>${vid}</b> ${esc(vidLabels[vid])}</td><td>${selectHtml('p'+vid,r.permission_cd||'2',{1:'Majburiy',2:'Kerak emas',3:'Taqiqlangan'})}</td><td>${selectHtml('d'+vid,r.dues_cd||'2',{1:'Undiriladi',2:'Undirilmaydi',3:'Ruxsat turiga qarab',0:'Belgilanmagan'})}</td><td><input id="n${vid}" value="${esc(r.admin_note||r.exception_name_ru||'')}" /></td><td><button class="btn primary" onclick="saveRule('${vid}')">Saqlash</button></td></tr>`}).join('')}
-function selectHtml(id,val,opts){return `<select id="${id}">`+Object.entries(opts).map(([k,v])=>`<option value="${k}" ${String(val)===String(k)?'selected':''}>${v}</option>`).join('')+'</select>'}
+function renderRulesTable(){const rules=selectedCountry.rules||{};rulesTable.innerHTML=Object.keys(vidLabels).map(vid=>{const r=rules[vid]||{};return `<tr><td><b>${vid}</b> ${esc(vidLabels[vid])}</td><td>${selectHtml('p'+vid,r.permission_cd||'2',{1:'Majburiy',2:'Kerak emas',3:'Taqiqlangan'})}</td><td>${selectHtml('d'+vid,r.dues_cd||'2',{1:'Undiriladi',2:'Undirilmaydi',3:'Ruxsat turiga qarab',0:'Belgilanmagan'},`toggleFeeFields('${vid}')`)}</td><td><input id="a${vid}" value="${esc(r.dues_amount_usd||'')}" placeholder="400 / 100/150/200" /></td><td><input id="n${vid}" value="${esc(r.admin_note||'')}" /></td><td><input id="uz${vid}" value="${esc(r.dues_amount_note_uz||'')}" placeholder="UZ" /><input id="ru${vid}" value="${esc(r.dues_amount_note_ru||'')}" placeholder="RU" /><input id="en${vid}" value="${esc(r.dues_amount_note_en||'')}" placeholder="EN" /></td><td><button class="btn primary" onclick="saveRule('${vid}')">Saqlash</button></td></tr>`}).join('');Object.keys(vidLabels).forEach(toggleFeeFields)}
+function selectHtml(id,val,opts,onchange=''){return `<select id="${id}" ${onchange?`onchange="${onchange}"`:''}>`+Object.entries(opts).map(([k,v])=>`<option value="${k}" ${String(val)===String(k)?'selected':''}>${v}</option>`).join('')+'</select>'}
+function toggleFeeFields(vid){const show=document.getElementById('d'+vid)?.value==='1';['a','uz','ru','en'].forEach(prefix=>{const el=document.getElementById(prefix+vid);if(el)el.style.display=show?'block':'none'});}
 function renderExceptions(){const list=selectedCountry.exceptions||[];exceptionsBox.innerHTML=list.length?list.slice(0,12).map(x=>`<div class="card glass"><b>${esc(x.exception_cd||'')}</b><p class="muted">${esc(x.exception_desc||'')}</p></div>`).join(''):'<div class="card glass muted">Istisno kiritilmagan</div>'}
-async function saveRule(vid){await api('/admin/api/rule',{method:'POST',body:JSON.stringify({country_code:countryCode.value,vid_cd:vid,permission_cd:document.getElementById('p'+vid).value,dues_cd:document.getElementById('d'+vid).value,exception_cd:'0',exception_name_ru:document.getElementById('n'+vid).value,admin_note:document.getElementById('n'+vid).value})});toast('Qoida saqlandi');await loadAll();openCountryModal(countryCode.value)}
+async function saveRule(vid){await api('/admin/api/rule',{method:'POST',body:JSON.stringify({country_code:countryCode.value,vid_cd:vid,permission_cd:document.getElementById('p'+vid).value,dues_cd:document.getElementById('d'+vid).value,dues_amount_usd:document.getElementById('a'+vid).value,dues_amount_note_uz:document.getElementById('uz'+vid).value,dues_amount_note_ru:document.getElementById('ru'+vid).value,dues_amount_note_en:document.getElementById('en'+vid).value,exception_cd:'0',exception_name_ru:'',admin_note:document.getElementById('n'+vid).value})});toast('Qoida saqlandi');await loadAll();openCountryModal(countryCode.value)}
 async function saveCountry(){await api('/admin/api/country',{method:'POST',body:JSON.stringify({code:countryCode.value,name:countryName.value,name_uz:countryNameUz.value})});toast('Davlat saqlandi');await loadAll();openCountryModal(countryCode.value)}
 async function deleteCountry(){if(!countryCode.value||!confirm('Davlatni o‘chirasizmi?'))return;await api('/admin/api/country/'+countryCode.value,{method:'DELETE'});closeModal('countryModal');toast('Davlat o‘chirildi');await loadAll()}
 async function loadCountries(){const q=encodeURIComponent(countrySearch.value||'');const d=await api('/admin/api/permission?q='+q);rememberCountries(d.countries);countryCards.innerHTML=d.countries.map(countryCard).join('')||'<div class="card glass">Maʼlumot topilmadi</div>'}
