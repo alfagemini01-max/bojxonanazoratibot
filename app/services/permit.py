@@ -345,7 +345,7 @@ class PermitRuleService:
         if dues_cd != "1":
             return "⚪ Yig'im qo'llanmaydi", "Yig'im bo'yicha majburiy belgi yo'q."
 
-        fee = self._fee_rate(vehicle_country_code)
+        fee = _format_rule_amount(str(rule.get("dues_amount_usd", "")), vehicle_country_code)
         return f"💵 Yig'im undiriladi: {fee}", "Excel spravochnikda yig'im majburiy deb belgilanganligi sababli stavka qo'llanadi."
 
     @staticmethod
@@ -472,6 +472,38 @@ def is_eu_or_azerbaijan(country_code: str) -> bool:
     }
 
 
+def _localized_rule_note(rule: dict[str, str], lang: str | None = "uz") -> str:
+    code = _lang(lang)
+    return str(
+        rule.get(f"dues_amount_note_{code}")
+        or rule.get("dues_amount_note_uz")
+        or ""
+    ).strip()
+
+
+def _format_rule_amount(raw_amount: str, vehicle_country_code: str, lang: str | None = "uz") -> str:
+    amount = str(raw_amount or "").strip()
+    if not amount:
+        return PermitRuleService._fee_rate(vehicle_country_code, lang)
+    if amount in {"100/150/200", "130/180/250", "80/280"}:
+        return PermitRuleService._fee_rate(vehicle_country_code, lang)
+    normalized = amount.replace(" ", "").replace(",", ".")
+    try:
+        value = float(normalized)
+    except ValueError:
+        return amount
+    if value.is_integer():
+        return f"{int(value)} USD"
+    return f"{value:.2f} USD"
+
+
+def _with_rule_note(text: str, note: str, lang: str | None = "uz") -> str:
+    if not note:
+        return text
+    label = {"uz": "📝 Izoh", "ru": "📝 Примечание", "en": "📝 Note"}[_lang(lang)]
+    return f"{text}\n{label}: {_html(note)}"
+
+
 def fee_status_lines(result: PermitResult, lang: str | None = "uz") -> tuple[str, str]:
     code = _lang(lang)
     rule = result.rule
@@ -520,13 +552,14 @@ def fee_status_lines(result: PermitResult, lang: str | None = "uz") -> tuple[str
             "en": ("⚪ Fee is not applied", "There is no mandatory fee mark in the reference data."),
         }[code]
 
-    rate = PermitRuleService._fee_rate(result.vehicle_country.code, code)
+    rate = _format_rule_amount(str(rule.get("dues_amount_usd", "")), result.vehicle_country.code, code)
     if turkmenistan_extra_fee_applies(result):
         rate = f"{rate}; {turkmenistan_extra_fee_text(code)}"
+    user_note = _localized_rule_note(rule, code)
     return {
-        "uz": (f"💵 Kirish/tranzit yig'imi: <b>{rate}</b>", "Excel spravochnikda yig'im majburiy deb belgilanganligi sababli stavka qo'llanadi."),
-        "ru": (f"💵 Сбор взимается: <b>{rate}</b>", "Так как в Excel-справочнике сбор указан как обязательный, применяется ставка сбора."),
-        "en": (f"💵 Fee is charged: <b>{rate}</b>", "Because the Excel reference data marks the fee as mandatory, the fee rate is applied."),
+        "uz": (_with_rule_note(f"💵 Kirish/tranzit yig'imi: <b>{rate}</b>", user_note, code), "Excel spravochnikda yig'im majburiy deb belgilanganligi sababli stavka qo'llanadi."),
+        "ru": (_with_rule_note(f"💵 Сбор взимается: <b>{rate}</b>", user_note, code), "Так как в Excel-справочнике сбор указан как обязательный, применяется ставка сбора."),
+        "en": (_with_rule_note(f"💵 Fee is charged: <b>{rate}</b>", user_note, code), "Because the Excel reference data marks the fee as mandatory, the fee rate is applied."),
     }[code]
 
 

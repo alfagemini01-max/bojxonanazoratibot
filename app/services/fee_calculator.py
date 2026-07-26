@@ -128,6 +128,21 @@ class FeeCalculator:
             return float(fees["eu_azerbaijan_by_stay_usd"].get(stay_duration or "up_to_14", 80))
         return float(fees["default_foreign_usd"])
 
+    def entry_fee_usd_for_rule(
+        self,
+        rule: dict[str, str],
+        vehicle_country_code: str,
+        weight_category: str | None,
+        stay_duration: str | None,
+    ) -> float:
+        custom_amount = str(rule.get("dues_amount_usd") or "").strip()
+        if custom_amount and custom_amount not in {"100/150/200", "130/180/250", "80/280"}:
+            try:
+                return float(custom_amount.replace(" ", "").replace(",", "."))
+            except ValueError:
+                pass
+        return self.base_entry_fee_usd(vehicle_country_code, weight_category, stay_duration)
+
     def build_message(
         self,
         payload: dict[str, object],
@@ -163,7 +178,8 @@ class FeeCalculator:
             dues_cd = str(rule.get("dues_cd", "0"))
             entry_fee_usd = 0.0
             if dues_cd == "1":
-                entry_fee_usd = self.base_entry_fee_usd(
+                entry_fee_usd = self.entry_fee_usd_for_rule(
+                    rule,
                     vehicle_country.code,
                     str(payload.get("weight_category") or ""),
                     str(payload.get("stay_duration") or ""),
