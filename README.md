@@ -147,8 +147,9 @@ Panel orqali quyidagilar boshqariladi:
 2. Har bir davlat bo'yicha 1-8 tashuv turi uchun Dazvol qoidasi.
 3. Ruxsatnoma kerak/kerak emas/taqiqlangan holati.
 4. Kirish yoki tranzit yig'imi undiriladi/undirilmaydi/ruxsat turiga qarab holati.
-5. Chegaradagi yig'imlar import, eksport va tranzit yo'nalishlari bo'yicha alohida boshqariladi.
-6. Yig'im turi, miqdori, qo'llanish sharti va huquqiy asosi oddiy forma orqali qo'shiladi, o'zgartiriladi yoki o'chiriladi.
+5. Dazvol qoidasi bo'yicha yig'im undirilsa, USD stavka va foydalanuvchiga chiqadigan UZ/RU/EN izoh kiritish.
+6. Chegaradagi yig'imlar import, eksport va tranzit yo'nalishlari bo'yicha alohida boshqariladi.
+7. Yig'im turi, miqdori, qo'llanish sharti va huquqiy asosi oddiy forma orqali qo'shiladi, o'zgartiriladi yoki o'chiriladi.
 
 Render Environment Variables ichida admin login va parolni albatta o'zgartiring:
 
