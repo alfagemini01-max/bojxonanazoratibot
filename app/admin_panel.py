@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import hmac
 import json
+import logging
 import secrets
 import time
 import uuid
@@ -14,6 +15,8 @@ from typing import Any
 from aiohttp import web
 
 from app.config import Settings
+from app.metrics import metrics
+from app.rule_versions import RuleVersionStore
 from app.services.permission_import import (
     PermissionImportError,
     apply_permission_import_changes,
@@ -29,6 +32,7 @@ IMPORT_JOB_TTL_SECONDS = 60 * 60
 MAX_IMPORT_JOBS = 10
 IMPORT_JOBS: dict[str, dict[str, Any]] = {}
 IMPORT_TASKS: set[asyncio.Task[Any]] = set()
+logger = logging.getLogger(__name__)
 
 PERMISSION_NAMES = {
     "1": "Обязательно",
@@ -129,6 +133,17 @@ def _read_json(path: Path) -> dict[str, Any]:
     return deepcopy(data)
 
 
+def _read_json_view(path: Path) -> dict[str, Any]:
+    """Returns the cached object for read-only handlers without a large deepcopy."""
+    stat = path.stat()
+    cached = _JSON_CACHE.get(path)
+    if cached and cached[0] == stat.st_mtime_ns and cached[1] == stat.st_size:
+        return cached[2]
+    data = json.loads(path.read_text(encoding="utf-8"))
+    _JSON_CACHE[path] = (stat.st_mtime_ns, stat.st_size, data)
+    return data
+
+
 def _write_json(path: Path, data: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp_path = path.with_suffix(path.suffix + ".tmp")
@@ -139,6 +154,17 @@ def _write_json(path: Path, data: dict[str, Any]) -> None:
     tmp_path.replace(path)
     stat = path.stat()
     _JSON_CACHE[path] = (stat.st_mtime_ns, stat.st_size, deepcopy(data))
+
+
+def _draft_path(path: Path) -> Path:
+    return path.with_name(path.stem + ".draft" + path.suffix)
+
+
+def _ensure_draft(path: Path) -> Path:
+    draft = _draft_path(path)
+    if not draft.exists():
+        _write_json(draft, _read_json(path))
+    return draft
 
 
 def _code(value: object) -> str:
@@ -558,18 +584,25 @@ def _admin_page_v2() -> str:
       <button data-screen="importRules">📥 Qoidalarni import qilish</button>
       <button data-screen="fees">💰 Chegaradagi yig'imlar</button>
       <button data-screen="countries">🌍 Davlatlar</button>
+      <button data-screen="governance">🕘 Versiyalar va audit</button>
     </nav>
   </aside>
   <main class="main">
     <header class="top glass">
       <div><h2 id="pageTitle">Bosh sahifa</h2><div class="muted">Qoidalarni sodda tahrirlash paneli</div></div>
-      <div class="actions"><button class="btn" onclick="loadAll()">🔄 Yangilash</button><button class="btn danger" onclick="logout()">🚪 Chiqish</button></div>
+      <div class="actions"><span id="draftBadge" class="pill info">Tekshirilmoqda</span><button class="btn primary" onclick="publishDraft()">🚀 E'lon qilish</button><button class="btn" onclick="discardDraft()">↩️ Qoralamani bekor qilish</button><button class="btn" onclick="loadAll()">🔄 Yangilash</button><button class="btn danger" onclick="logout()">🚪 Chiqish</button></div>
     </header>
     <section class="stats">
       <div class="stat glass"><b id="countryCount">0</b><span>Davlatlar</span></div>
       <div class="stat glass"><b id="ruleCount">0</b><span>Dazvol qoidalari</span></div>
       <div class="stat glass"><b id="exceptionCount">0</b><span>Istisnolar</span></div>
       <div class="stat glass"><b id="bhmValue">0</b><span>BHM</span></div>
+    </section>
+    <section class="stats">
+      <div class="stat glass"><b id="startCount">0</b><span>Botni ishga tushirish</span></div>
+      <div class="stat glass"><b id="permitCheckCount">0</b><span>Dazvol tekshiruvi</span></div>
+      <div class="stat glass"><b id="feeCheckCount">0</b><span>Yig'im hisobi</span></div>
+      <div class="stat glass"><b id="errorCount">0</b><span>Texnik xatolar</span></div>
     </section>
 
     <section id="home" class="screen active">
@@ -640,6 +673,14 @@ def _admin_page_v2() -> str:
           </table>
         </div>
       </div>
+    </section>
+
+    <section id="governance" class="screen">
+      <div class="toolbar glass"><div><h3 style="margin:0">🕘 Qoidalar tarixi</h3><div class="muted">Faol versiyani kuzatish va oldingi versiyani qayta e'lon qilish</div></div><button class="btn" onclick="loadGovernance()">🔄 Yangilash</button></div>
+      <div class="section-title"><h3>📚 Versiyalar</h3><span class="muted">Rollback yangi faol versiya yaratadi</span></div>
+      <div id="versionsBox" class="cards"></div>
+      <div class="section-title"><h3>🧾 Audit jurnali</h3><span class="muted">Admin amallari</span></div>
+      <div class="glass detail-block"><table><thead><tr><th>Vaqt</th><th>Amal</th><th>Admin</th><th>Tafsilot</th></tr></thead><tbody id="auditBody"></tbody></table></div>
     </section>
 
     <section id="countryDetail" class="screen">
@@ -721,7 +762,7 @@ function queueSearch(section){clearTimeout(searchTimers[section]);searchTimers[s
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 function toast(t){const el=document.getElementById('toast');el.textContent=t;el.style.display='block';setTimeout(()=>el.style.display='none',2500)}
 async function api(path,opts={}){const r=await fetch(path,{headers:{'Content-Type':'application/json'},...opts}); if(r.status===401){location.href='/admin';return} const text=await r.text(); let d; try{d=JSON.parse(text)}catch(e){d={ok:false,error:text||'Server javobi xato'}} if(!r.ok||d.ok===false) throw new Error(d.error||'Xatolik'); return d}
-function showScreen(name,title=''){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(name).classList.add('active');pageTitle.textContent=title||document.querySelector(`.nav button[data-screen="${name}"]`)?.textContent.trim()||'Davlat';document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('active',x.dataset.screen===name)); if(name==='fees')loadFeeItems();}
+function showScreen(name,title=''){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(name).classList.add('active');pageTitle.textContent=title||document.querySelector(`.nav button[data-screen="${name}"]`)?.textContent.trim()||'Davlat';document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('active',x.dataset.screen===name));if(name==='fees')loadFeeItems();if(name==='governance')loadGovernance();}
 document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>showScreen(b.dataset.screen,b.textContent.trim()));
 document.querySelectorAll('.fee-tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.fee-tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');activeDirection=b.dataset.direction;loadFeeItems();});
 function closeModal(id){document.getElementById(id).classList.remove('show')}
@@ -729,11 +770,11 @@ function backToCountryList(){showScreen(lastCountryListScreen,lastCountryListScr
 function pill(text,kind){return `<span class="pill ${kind}">${esc(text)}</span>`}
 function rulePills(rules){return Object.entries(rules||{}).map(([vid,r])=>pill(`${vid}: R${r.permission_cd}`,r.permission_cd==='1'?'warn':r.permission_cd==='3'?'bad':'ok')+pill(`Y${r.dues_cd}`,r.dues_cd==='1'?'warn':r.dues_cd==='2'?'ok':'info')).join('')}
 function rememberCountries(rows){(rows||[]).forEach(c=>{countryCache[c.code]=c})}
-async function loadSummary(){const d=await api('/admin/api/summary');countryCount.textContent=d.countries;ruleCount.textContent=d.rules;exceptionCount.textContent=d.exceptions;bhmValue.textContent=d.bhm}
+async function loadSummary(){const d=await api('/admin/api/summary');countryCount.textContent=d.countries;ruleCount.textContent=d.rules;exceptionCount.textContent=d.exceptions;bhmValue.textContent=d.bhm;const c=d.metrics?.counters||{};startCount.textContent=c.starts||0;permitCheckCount.textContent=c.permit_checks||0;feeCheckCount.textContent=c.fee_checks||0;errorCount.textContent=c.errors||0}
 async function loadDazvol(){const q=encodeURIComponent(dazvolSearch.value||'');permissionData=await api('/admin/api/permission?q='+q);rememberCountries(permissionData.countries);dazvolCards.innerHTML=permissionData.countries.map(countryCard).join('')||'<div class="card glass">Maʼlumot topilmadi</div>'}
 async function loadCountrySections(){const dq=dazvolSearch.value||'',cq=countrySearch.value||'';if(dq!==cq){await Promise.all([loadDazvol(),loadCountries()]);return}const d=await api('/admin/api/permission?q='+encodeURIComponent(dq));permissionData=d;rememberCountries(d.countries);const cards=d.countries.map(countryCard).join('')||'<div class="card glass">Maʼlumot topilmadi</div>';dazvolCards.innerHTML=cards;countryCards.innerHTML=cards}
 function countryCard(c){return `<button class="card glass" style="text-align:left" onclick="openCountryPage('${esc(c.code)}')"><h3>${esc(c.name_uz)} <span class="muted">(${esc(c.code)})</span></h3><div class="muted">${esc(c.name)}</div><div>${rulePills(c.rules)}</div></button>`}
-function openCountryPage(code=''){const active=document.querySelector('.screen.active');if(active&&active.id!=='countryDetail')lastCountryListScreen=active.id;selectedCountry=countryCache[code]||permissionData.countries.find(c=>c.code===code)||{code:'',name:'',name_uz:'',rules:{},exceptions:[]};countryCode.value=selectedCountry.code;countryName.value=selectedCountry.name;countryNameUz.value=selectedCountry.name_uz;countryPageTitle.textContent=selectedCountry.code?`${selectedCountry.name_uz} (${selectedCountry.code})`:'Yangi davlat';renderRulesTable();renderExceptions();showScreen('countryDetail',selectedCountry.code?'Davlat tafsiloti':'Yangi davlat');window.scrollTo({top:0,behavior:'smooth'});}
+async function openCountryPage(code=''){const active=document.querySelector('.screen.active');if(active&&active.id!=='countryDetail')lastCountryListScreen=active.id;if(code&&!(countryCache[code]&&countryCache[code]._detail)){try{const d=await api('/admin/api/country/'+encodeURIComponent(code));countryCache[code]=d.country}catch(e){toast(e.message);return}}selectedCountry=countryCache[code]||permissionData.countries.find(c=>c.code===code)||{code:'',name:'',name_uz:'',rules:{},exceptions:[],_detail:true};countryCode.value=selectedCountry.code;countryName.value=selectedCountry.name;countryNameUz.value=selectedCountry.name_uz;countryPageTitle.textContent=selectedCountry.code?`${selectedCountry.name_uz} (${selectedCountry.code})`:'Yangi davlat';renderRulesTable();renderExceptions();showScreen('countryDetail',selectedCountry.code?'Davlat tafsiloti':'Yangi davlat');window.scrollTo({top:0,behavior:'smooth'});}
 function textButton(fieldId,label,value){const has=String(value||'').trim().length>0;return `<button type="button" class="text-edit-btn ${has?'has-text':'empty'}" data-target="${esc(fieldId)}" data-label="${esc(label)}">${has?'📝':'✍️'} ${esc(label)}${has?'':' yozish'}</button>`}
 function bindTextButtons(){document.querySelectorAll('.text-edit-btn').forEach(btn=>{btn.onclick=()=>openTextEditor(btn.dataset.target,btn.dataset.label)})}
 function openTextEditor(fieldId,title){editingTextFieldId=fieldId;textModalTitle.textContent=title||'Izoh matni';const el=document.getElementById(fieldId);textModalValue.value=el?el.value:'';textModal.classList.add('show');setTimeout(()=>textModalValue.focus(),60)}
@@ -743,15 +784,15 @@ function renderRulesTable(){const rules=selectedCountry.rules||{};rulesTable.inn
 function selectHtml(id,val,opts,onchange=''){return `<select id="${id}" ${onchange?`onchange="${onchange}"`:''}>`+Object.entries(opts).map(([k,v])=>`<option value="${k}" ${String(val)===String(k)?'selected':''}>${v}</option>`).join('')+'</select>'}
 function toggleFeeFields(vid){const show=document.getElementById('d'+vid)?.value==='1';const amount=document.getElementById('a'+vid);if(amount)amount.closest('.field').style.display=show?'grid':'none';}
 function renderExceptions(){const list=selectedCountry.exceptions||[];exceptionsBox.innerHTML=list.length?list.slice(0,12).map(x=>`<div class="card glass"><b>${esc(x.exception_cd||'')}</b><p class="muted">${esc(x.exception_desc||'')}</p></div>`).join(''):'<div class="card glass muted">Istisno kiritilmagan</div>'}
-async function refreshCountry(code){const d=await api('/admin/api/permission?q='+encodeURIComponent(code));rememberCountries(d.countries);return countryCache[code]||d.countries[0]}
-async function saveRule(vid){await api('/admin/api/rule',{method:'POST',body:JSON.stringify({country_code:countryCode.value,vid_cd:vid,permission_cd:document.getElementById('p'+vid).value,dues_cd:document.getElementById('d'+vid).value,dues_amount_usd:document.getElementById('a'+vid).value,dues_amount_note_uz:document.getElementById('uz'+vid).value,dues_amount_note_ru:document.getElementById('ru'+vid).value,dues_amount_note_en:document.getElementById('en'+vid).value,exception_cd:'0',exception_name_ru:'',admin_note:document.getElementById('n'+vid).value})});toast('Qoida saqlandi');const [c]=await Promise.all([refreshCountry(countryCode.value),loadSummary()]);if(c)openCountryPage(countryCode.value)}
-async function saveCountry(){await api('/admin/api/country',{method:'POST',body:JSON.stringify({code:countryCode.value,name:countryName.value,name_uz:countryNameUz.value})});toast('Davlat saqlandi');const [c]=await Promise.all([refreshCountry(countryCode.value),loadSummary()]);if(c)openCountryPage(countryCode.value)}
+async function refreshCountry(code){const d=await api('/admin/api/country/'+encodeURIComponent(code));countryCache[code]=d.country;return d.country}
+async function saveRule(vid){await api('/admin/api/rule',{method:'POST',body:JSON.stringify({country_code:countryCode.value,vid_cd:vid,permission_cd:document.getElementById('p'+vid).value,dues_cd:document.getElementById('d'+vid).value,dues_amount_usd:document.getElementById('a'+vid).value,dues_amount_note_uz:document.getElementById('uz'+vid).value,dues_amount_note_ru:document.getElementById('ru'+vid).value,dues_amount_note_en:document.getElementById('en'+vid).value,exception_cd:'0',exception_name_ru:'',admin_note:document.getElementById('n'+vid).value})});toast('Qoida qoralamaga saqlandi');const [c]=await Promise.all([refreshCountry(countryCode.value),loadSummary(),loadVersionStatus()]);if(c)openCountryPage(countryCode.value)}
+async function saveCountry(){await api('/admin/api/country',{method:'POST',body:JSON.stringify({code:countryCode.value,name:countryName.value,name_uz:countryNameUz.value})});toast('Davlat qoralamaga saqlandi');const [c]=await Promise.all([refreshCountry(countryCode.value),loadSummary(),loadVersionStatus()]);if(c)openCountryPage(countryCode.value)}
 async function deleteCountry(){if(!countryCode.value||!confirm('Davlatni o‘chirasizmi?'))return;await api('/admin/api/country/'+countryCode.value,{method:'DELETE'});toast('Davlat o‘chirildi');await loadAll();backToCountryList()}
 async function loadCountries(){const q=encodeURIComponent(countrySearch.value||'');const d=await api('/admin/api/permission?q='+q);rememberCountries(d.countries);countryCards.innerHTML=d.countries.map(countryCard).join('')||'<div class="card glass">Maʼlumot topilmadi</div>'}
 async function loadFeeItems(){const d=await api('/admin/api/fee-items?direction='+activeDirection);feeItems=d.items;feeCards.innerHTML=feeItems.map(feeCard).join('')||'<div class="card glass">Bu yo‘nalishda yig‘im yo‘q</div>'}
 function feeCard(f){return `<button class="card glass" style="text-align:left" onclick="openFeeModal('${esc(f.id)}')"><h3>${esc(f.title)}</h3><div>${pill(f.enabled?'Faol':'O‘chirilgan',f.enabled?'ok':'bad')} ${pill(activeDirection,'info')}</div><p><b>${esc(f.amount)}</b></p><p class="muted">${esc(f.condition)}</p><p class="muted">${esc(f.basis)}</p></button>`}
 function openFeeModal(id=''){const f=feeItems.find(x=>x.id===id)||{id:'',title:'',amount:'',condition:'',basis:'',enabled:true};feeId.value=f.id;feeDirection.value=activeDirection;feeTitle.value=f.title;feeAmount.value=f.amount;feeCondition.value=f.condition;feeBasis.value=f.basis;feeEnabled.value=String(f.enabled!==false);feeModalTitle.textContent=f.id?'Yig‘imni tahrirlash':'Yangi yig‘im';feeModal.classList.add('show')}
-async function saveFeeItem(){await api('/admin/api/fee-item',{method:'POST',body:JSON.stringify({id:feeId.value,direction:feeDirection.value,title:feeTitle.value,amount:feeAmount.value,condition:feeCondition.value,basis:feeBasis.value,enabled:feeEnabled.value==='true'})});activeDirection=feeDirection.value;closeModal('feeModal');toast('Yig‘im saqlandi');await loadFeeItems()}
+async function saveFeeItem(){await api('/admin/api/fee-item',{method:'POST',body:JSON.stringify({id:feeId.value,direction:feeDirection.value,title:feeTitle.value,amount:feeAmount.value,condition:feeCondition.value,basis:feeBasis.value,enabled:feeEnabled.value==='true'})});activeDirection=feeDirection.value;closeModal('feeModal');toast('Yig‘im qoralamaga saqlandi');await Promise.all([loadFeeItems(),loadVersionStatus()])}
 async function deleteFeeItem(){if(!feeId.value||!confirm('Yig‘imni o‘chirasizmi?'))return;await api(`/admin/api/fee-item/${feeDirection.value}/${feeId.value}`,{method:'DELETE'});closeModal('feeModal');toast('Yig‘im o‘chirildi');await loadFeeItems()}
 function setImportProgress(percent,message){const value=Math.max(0,Math.min(100,Math.round(percent)));importProgress.classList.add('show');importProgressBar.style.width=value+'%';importProgressPercent.textContent=value+'%';importProgressText.textContent=message||'Tahlil qilinmoqda'}
 function importActionLabel(action){return action==='add'?'➕ Qo\'shiladi':action==='delete'?'🗑️ O\'chiriladi':'🔄 Yangilanadi'}
@@ -768,8 +809,13 @@ function saveImportEdit(){const change=importChanges.find(item=>item.id===import
 function startPermissionImport(){const file=permissionImportFile.files?.[0];if(!file){toast('Avval .xlsx faylni tanlang');return}if(!file.name.toLowerCase().endsWith('.xlsx')){toast('Faqat .xlsx fayl tanlang');return}if(file.size>10*1024*1024){toast('Fayl 10 MB dan oshmasligi kerak');return}clearTimeout(importPollTimer);importPreview.style.display='none';startImportButton.disabled=true;setImportProgress(1,'Excel serverga yuklanmoqda');const form=new FormData();form.append('file',file);const xhr=new XMLHttpRequest();xhr.open('POST','/admin/api/permission-import');xhr.upload.onprogress=event=>{if(event.lengthComputable)setImportProgress(Math.max(1,event.loaded/event.total*20),'Excel serverga yuklanmoqda')};xhr.onerror=()=>{startImportButton.disabled=false;setImportProgress(0,'Faylni yuborib bo\'lmadi');toast('Server bilan aloqa xatosi')};xhr.onload=()=>{let data;try{data=JSON.parse(xhr.responseText)}catch(e){data={ok:false,error:xhr.responseText||'Server javobi xato'}}if(xhr.status===401){location.href='/admin';return}if(xhr.status<200||xhr.status>=300||data.ok===false){startImportButton.disabled=false;setImportProgress(0,data.error||'Import boshlanmadi');toast(data.error||'Import boshlanmadi');return}importJobId=data.job_id;setImportProgress(20,'Excel qoidalari o\'qilmoqda');pollPermissionImport()};xhr.send(form)}
 async function pollPermissionImport(){try{const job=await api('/admin/api/permission-import/'+importJobId);if(job.status==='queued'||job.status==='processing'){setImportProgress(20+(job.progress||0)*.8,job.message);importPollTimer=setTimeout(pollPermissionImport,500);return}startImportButton.disabled=false;if(job.status==='error'){setImportProgress(0,job.error||job.message);toast(job.error||'Import tahlilida xatolik');return}setImportProgress(100,job.message||'Taqqoslash tayyor');renderImportPreview(job)}catch(e){startImportButton.disabled=false;setImportProgress(0,e.message);toast(e.message)}}
 async function applyPermissionImport(){const selected=importChanges.filter(change=>change.selected);if(!selected.length){toast('Kamida bitta o\'zgarishni tanlang');return}const deletes=selected.filter(change=>change.action==='delete').length;if(deletes&&!confirm(`${deletes} ta qoida o'chiriladi. Davom etasizmi?`))return;applyImportButton.disabled=true;try{const result=await api('/admin/api/permission-import/'+importJobId+'/apply',{method:'POST',body:JSON.stringify({changes:selected.map(change=>({id:change.id,after:change.after}))})});setImportProgress(100,`${result.applied_count} ta o'zgarish qo'llandi`);toast(`${result.applied_count} ta o'zgarish muvaffaqiyatli qo'llandi`);importChanges.forEach(change=>change.selected=false);renderImportChanges();await loadAll()}catch(e){toast(e.message)}finally{applyImportButton.disabled=false}}
+async function loadVersionStatus(){const d=await api('/admin/api/rule-version/status');const storage=d.persistent?'':' · mahalliy saqlash';draftBadge.textContent=(d.dirty?`🟡 Qoralama · faol v${d.active_version||0}`:`🟢 E'lon qilingan · v${d.active_version||0}`)+storage;draftBadge.className='pill '+(d.dirty||!d.persistent?'warn':'ok');return d}
+async function publishDraft(){const status=await loadVersionStatus();if(!status.dirty){toast('E\'lon qilinmagan o\'zgarish yo\'q');return}if(!confirm('Qoralamadagi barcha o\'zgarishlar bot foydalanuvchilariga e\'lon qilinsinmi?'))return;const d=await api('/admin/api/rule-version/publish',{method:'POST',body:JSON.stringify({source:'admin-panel'})});toast(`v${d.version_no} faol qoida sifatida e'lon qilindi`);await Promise.all([loadVersionStatus(),loadGovernance()])}
+async function discardDraft(){const status=await loadVersionStatus();if(!status.dirty){toast('Bekor qilinadigan qoralama yo\'q');return}if(!confirm('Qoralamadagi barcha e\'lon qilinmagan o\'zgarishlar bekor qilinsinmi?'))return;await api('/admin/api/rule-version/discard',{method:'POST',body:'{}'});toast('Qoralama bekor qilindi');countryCache={};await loadAll()}
+async function loadGovernance(){const [versions,audit]=await Promise.all([api('/admin/api/rule-versions'),api('/admin/api/audit')]);versionsBox.innerHTML=versions.versions.map(v=>`<div class="card glass"><h3>${v.status==='active'?'🟢':'⚪'} Versiya ${esc(v.version_no)}</h3><div class="muted">${esc(v.created_at||'')} · ${esc(v.created_by||'')}</div><p>${esc(v.source||'')}</p>${v.status==='active'?pill('Faol','ok'):`<button class="btn" onclick="rollbackVersion(${Number(v.version_no)})">↩️ Qayta e'lon qilish</button>`}</div>`).join('')||'<div class="card glass muted">Versiya topilmadi</div>';auditBody.innerHTML=audit.items.map(item=>`<tr><td>${esc(item.created_at||'')}</td><td>${esc(item.action||'')}</td><td>${esc(item.actor||'')}</td><td><code>${esc(JSON.stringify(item.details||{}))}</code></td></tr>`).join('')||'<tr><td colspan="4">Audit yozuvi yo\'q</td></tr>'}
+async function rollbackVersion(version){if(!confirm(`Versiya ${version} qoidalarini qayta faol qilishni tasdiqlaysizmi?`))return;const d=await api('/admin/api/rule-versions/'+version+'/rollback',{method:'POST',body:'{}'});toast(`Rollback bajarildi. Yangi faol versiya: ${d.version_no}`);countryCache={};await loadAll();await loadGovernance()}
 async function logout(){await fetch('/admin/logout',{method:'POST'});location.href='/admin'}
-async function loadAll(){await Promise.all([loadSummary(),loadCountrySections(),loadFeeItems()])}
+async function loadAll(){await Promise.all([loadSummary(),loadCountrySections(),loadFeeItems(),loadVersionStatus()])}
 loadAll().catch(e=>toast(e.message));
 </script>
 </body></html>"""
@@ -777,6 +823,34 @@ loadAll().catch(e=>toast(e.message));
 
 def setup_admin_routes(app: web.Application, settings: Settings) -> None:
     permission_write_lock = asyncio.Lock()
+    version_store = RuleVersionStore(settings.user_database_url, settings.permission_rules_path.parent)
+
+    def permission_admin_path() -> Path:
+        return _ensure_draft(settings.permission_rules_path)
+
+    def fees_admin_path() -> Path:
+        return _ensure_draft(settings.fees_rules_path)
+
+    async def initialize_rule_versions(_: web.Application) -> None:
+        try:
+            await version_store.initialize(settings.permission_rules_path, settings.fees_rules_path)
+        except Exception:
+            logger.exception("PostgreSQL rule version storage failed; local version storage will be used")
+            await version_store.close()
+            version_store.database_url = ""
+            version_store.pool = None
+            await version_store.initialize(settings.permission_rules_path, settings.fees_rules_path)
+        permission_admin_path()
+        fees_admin_path()
+
+    async def close_rule_versions(_: web.Application) -> None:
+        await version_store.close()
+
+    async def audit(action: str, details: dict[str, Any]) -> None:
+        try:
+            await version_store.audit(action, settings.admin_username, details)
+        except Exception:
+            logger.exception("Admin audit could not be saved: %s", action)
 
     async def admin_index(request: web.Request) -> web.Response:
         if not _is_authenticated(request, settings):
@@ -810,8 +884,8 @@ def setup_admin_routes(app: web.Application, settings: Settings) -> None:
 
     async def summary(request: web.Request) -> web.Response:
         _require_admin(request, settings)
-        permission = _read_json(settings.permission_rules_path)
-        fees = _read_json(settings.fees_rules_path)
+        permission = _read_json_view(permission_admin_path())
+        fees = _read_json_view(fees_admin_path())
         rule_count = sum(len(v) for v in permission.get("rules", {}).values())
         exception_count = sum(len(v) for v in permission.get("exceptions", {}).values())
         return web.json_response(
@@ -821,12 +895,13 @@ def setup_admin_routes(app: web.Application, settings: Settings) -> None:
                 "rules": rule_count,
                 "exceptions": exception_count,
                 "bhm": fees.get("bhm", {}).get("value", settings.bhm_value),
+                "metrics": metrics.snapshot(),
             }
         )
 
     async def permission_list(request: web.Request) -> web.Response:
         _require_admin(request, settings)
-        data = _read_json(settings.permission_rules_path)
+        data = _read_json_view(permission_admin_path())
         query = str(request.query.get("q") or "").strip().lower()
         countries = []
         for code, name in sorted(data.get("countries", {}).items()):
@@ -840,17 +915,45 @@ def setup_admin_routes(app: web.Application, settings: Settings) -> None:
                     "code": code,
                     "name": name,
                     "name_uz": name_uz,
-                    "rules": data.get("rules", {}).get(code, {}),
-                    "exceptions": data.get("exceptions", {}).get(code, []),
+                    "rules": {
+                        vid: {
+                            "permission_cd": rule.get("permission_cd", "2"),
+                            "dues_cd": rule.get("dues_cd", "2"),
+                            "dues_amount_usd": rule.get("dues_amount_usd", ""),
+                        }
+                        for vid, rule in data.get("rules", {}).get(code, {}).items()
+                    },
+                    "_detail": False,
                 }
             )
             if len(countries) >= 80:
                 break
         return web.json_response({"ok": True, "countries": countries, "vid_types": data.get("vid_types", {})})
 
+    async def country_detail(request: web.Request) -> web.Response:
+        _require_admin(request, settings)
+        code = _code(request.match_info["code"])
+        data = _read_json_view(permission_admin_path())
+        name = data.get("countries", {}).get(code)
+        if not name:
+            return _json_error("Davlat topilmadi.", 404)
+        return web.json_response(
+            {
+                "ok": True,
+                "country": {
+                    "code": code,
+                    "name": name,
+                    "name_uz": _country_uz_name(data, code, name),
+                    "rules": data.get("rules", {}).get(code, {}),
+                    "exceptions": data.get("exceptions", {}).get(code, []),
+                    "_detail": True,
+                },
+            }
+        )
+
     async def permission_full(request: web.Request) -> web.Response:
         _require_admin(request, settings)
-        return web.json_response({"ok": True, "permission": _read_json(settings.permission_rules_path)})
+        return web.json_response({"ok": True, "permission": _read_json_view(permission_admin_path())})
 
     async def save_permission_full(request: web.Request) -> web.Response:
         _require_admin(request, settings)
@@ -859,7 +962,8 @@ def setup_admin_routes(app: web.Application, settings: Settings) -> None:
         if not isinstance(permission, dict) or "countries" not in permission or "rules" not in permission:
             return _json_error("Permission JSON tuzilmasi noto'g'ri.")
         permission.setdefault("source", {})["last_admin_update"] = int(time.time())
-        _write_json(settings.permission_rules_path, permission)
+        _write_json(permission_admin_path(), permission)
+        await audit("draft_permission_full", {})
         return web.json_response({"ok": True})
 
     async def save_country(request: web.Request) -> web.Response:
@@ -870,52 +974,56 @@ def setup_admin_routes(app: web.Application, settings: Settings) -> None:
         name_uz = str(body.get("name_uz") or "").strip()
         if len(name) < 2:
             return _json_error("Davlat nomi kiritilmadi.")
-        data = _read_json(settings.permission_rules_path)
+        data = _read_json(permission_admin_path())
         data.setdefault("countries", {})[code] = name
         if name_uz:
             data.setdefault("country_labels", {}).setdefault(code, {})["uz"] = name_uz
         data.setdefault("rules", {}).setdefault(code, {})
         data.setdefault("source", {})["last_admin_update"] = int(time.time())
-        _write_json(settings.permission_rules_path, data)
+        _write_json(permission_admin_path(), data)
+        await audit("draft_country_save", {"country_code": code})
         return web.json_response({"ok": True, "code": code})
 
     async def delete_country(request: web.Request) -> web.Response:
         _require_admin(request, settings)
         code = _code(request.match_info["code"])
-        data = _read_json(settings.permission_rules_path)
+        data = _read_json(permission_admin_path())
         data.get("countries", {}).pop(code, None)
         data.get("rules", {}).pop(code, None)
         data.get("exceptions", {}).pop(code, None)
         data.setdefault("source", {})["last_admin_update"] = int(time.time())
-        _write_json(settings.permission_rules_path, data)
+        _write_json(permission_admin_path(), data)
+        await audit("draft_country_delete", {"country_code": code})
         return web.json_response({"ok": True})
 
     async def save_rule(request: web.Request) -> web.Response:
         _require_admin(request, settings)
         body = await request.json()
         code = _code(body.get("country_code"))
-        data = _read_json(settings.permission_rules_path)
+        data = _read_json(permission_admin_path())
         if code not in data.get("countries", {}):
             return _json_error("Avval davlatni qo'shing.")
         rule = _rule_payload(body, data)
         data.setdefault("rules", {}).setdefault(code, {})[rule["vid_cd"]] = rule
         data.setdefault("source", {})["last_admin_update"] = int(time.time())
-        _write_json(settings.permission_rules_path, data)
+        _write_json(permission_admin_path(), data)
+        await audit("draft_rule_save", {"country_code": code, "vid_cd": rule["vid_cd"]})
         return web.json_response({"ok": True, "rule": rule})
 
     async def delete_rule(request: web.Request) -> web.Response:
         _require_admin(request, settings)
         code = _code(request.match_info["code"])
         vid_cd = _vid(request.match_info["vid"])
-        data = _read_json(settings.permission_rules_path)
+        data = _read_json(permission_admin_path())
         data.setdefault("rules", {}).setdefault(code, {}).pop(vid_cd, None)
         data.setdefault("source", {})["last_admin_update"] = int(time.time())
-        _write_json(settings.permission_rules_path, data)
+        _write_json(permission_admin_path(), data)
+        await audit("draft_rule_delete", {"country_code": code, "vid_cd": vid_cd})
         return web.json_response({"ok": True})
 
     async def fees(request: web.Request) -> web.Response:
         _require_admin(request, settings)
-        return web.json_response({"ok": True, "fees": _read_json(settings.fees_rules_path)})
+        return web.json_response({"ok": True, "fees": _read_json_view(fees_admin_path())})
 
     async def save_fees(request: web.Request) -> web.Response:
         _require_admin(request, settings)
@@ -924,17 +1032,18 @@ def setup_admin_routes(app: web.Application, settings: Settings) -> None:
         if not isinstance(fees_data, dict) or "entry_fee" not in fees_data:
             return _json_error("Yig'im JSON tuzilmasi noto'g'ri.")
         fees_data.setdefault("source", {})["last_admin_update"] = int(time.time())
-        _write_json(settings.fees_rules_path, fees_data)
+        _write_json(fees_admin_path(), fees_data)
+        await audit("draft_fees_full", {})
         return web.json_response({"ok": True})
 
     async def fee_items(request: web.Request) -> web.Response:
         _require_admin(request, settings)
         direction = _fee_direction(request.query.get("direction") or "import")
-        fees_data = _read_json(settings.fees_rules_path)
+        fees_data = _read_json(fees_admin_path())
         before = json.dumps(fees_data, ensure_ascii=False, sort_keys=True)
         items = _fee_items(fees_data)
         if json.dumps(fees_data, ensure_ascii=False, sort_keys=True) != before:
-            _write_json(settings.fees_rules_path, fees_data)
+            _write_json(fees_admin_path(), fees_data)
         return web.json_response({"ok": True, "direction": direction, "items": items[direction]})
 
     async def save_fee_item(request: web.Request) -> web.Response:
@@ -942,29 +1051,109 @@ def setup_admin_routes(app: web.Application, settings: Settings) -> None:
         body = await request.json()
         direction = _fee_direction(body.get("direction"))
         item = _fee_item_payload(body)
-        fees_data = _read_json(settings.fees_rules_path)
+        fees_data = _read_json(fees_admin_path())
         items = _fee_items(fees_data)
         current = [row for row in items[direction] if row.get("id") != item["id"]]
         current.append(item)
         items[direction] = current
         fees_data.setdefault("source", {})["last_admin_update"] = int(time.time())
-        _write_json(settings.fees_rules_path, fees_data)
+        _write_json(fees_admin_path(), fees_data)
+        await audit("draft_fee_save", {"direction": direction, "item_id": item["id"]})
         return web.json_response({"ok": True, "item": item})
 
     async def delete_fee_item(request: web.Request) -> web.Response:
         _require_admin(request, settings)
         direction = _fee_direction(request.match_info["direction"])
         item_id = str(request.match_info["item_id"])
-        fees_data = _read_json(settings.fees_rules_path)
+        fees_data = _read_json(fees_admin_path())
         items = _fee_items(fees_data)
         items[direction] = [row for row in items[direction] if str(row.get("id")) != item_id]
         fees_data.setdefault("source", {})["last_admin_update"] = int(time.time())
-        _write_json(settings.fees_rules_path, fees_data)
+        _write_json(fees_admin_path(), fees_data)
+        await audit("draft_fee_delete", {"direction": direction, "item_id": item_id})
         return web.json_response({"ok": True})
+
+    async def rule_version_status(request: web.Request) -> web.Response:
+        _require_admin(request, settings)
+        active = await version_store.get_active()
+        draft_permission = _read_json_view(permission_admin_path())
+        draft_fees = _read_json_view(fees_admin_path())
+        dirty = not active or (
+            draft_permission != active.get("permission")
+            or draft_fees != active.get("fees")
+        )
+        return web.json_response(
+            {
+                "ok": True,
+                "dirty": dirty,
+                "active_version": active.get("version_no") if active else None,
+                "active_source": active.get("source") if active else "",
+                "active_at": active.get("created_at") if active else "",
+                "persistent": version_store.pool is not None,
+            }
+        )
+
+    async def publish_rule_draft(request: web.Request) -> web.Response:
+        _require_admin(request, settings)
+        body = await request.json() if request.can_read_body else {}
+        source = str(body.get("source") or "admin-panel").strip()[:200]
+        async with permission_write_lock:
+            permission = _read_json(permission_admin_path())
+            fees_data = _read_json(fees_admin_path())
+            summary = {
+                "countries": len(permission.get("countries", {})),
+                "rules": sum(len(item) for item in permission.get("rules", {}).values()),
+                "fee_items": sum(len(item) for item in fees_data.get("admin_fee_items", {}).values()),
+            }
+            snapshot = await version_store.publish(
+                permission,
+                fees_data,
+                actor=settings.admin_username,
+                source=source,
+                summary=summary,
+            )
+        return web.json_response(
+            {"ok": True, "version_no": snapshot["version_no"], "message": "Qoidalar e'lon qilindi."}
+        )
+
+    async def discard_rule_draft(request: web.Request) -> web.Response:
+        _require_admin(request, settings)
+        async with permission_write_lock:
+            active = await version_store.get_active()
+            if not active:
+                return _json_error("Faol qoida versiyasi topilmadi.", 404)
+            _write_json(permission_admin_path(), active["permission"])
+            _write_json(fees_admin_path(), active["fees"])
+            await audit("discard_draft", {"active_version": active.get("version_no")})
+        return web.json_response({"ok": True})
+
+    async def rule_versions(request: web.Request) -> web.Response:
+        _require_admin(request, settings)
+        return web.json_response({"ok": True, "versions": await version_store.list_versions(30)})
+
+    async def rollback_rule_version(request: web.Request) -> web.Response:
+        _require_admin(request, settings)
+        try:
+            version_no = int(request.match_info["version_no"])
+        except ValueError:
+            return _json_error("Versiya raqami noto'g'ri.")
+        async with permission_write_lock:
+            try:
+                snapshot = await version_store.rollback(version_no, settings.admin_username)
+            except ValueError as exc:
+                return _json_error(str(exc), 404)
+            _write_json(permission_admin_path(), snapshot["permission"])
+            _write_json(fees_admin_path(), snapshot["fees"])
+        return web.json_response({"ok": True, "version_no": snapshot["version_no"]})
+
+    async def admin_audit(request: web.Request) -> web.Response:
+        _require_admin(request, settings)
+        return web.json_response({"ok": True, "items": await version_store.list_audit(80)})
 
     async def start_permission_import(request: web.Request) -> web.Response:
         _require_admin(request, settings)
         _cleanup_import_jobs()
+        draft_path = permission_admin_path()
         if not request.content_type.startswith("multipart/"):
             return _json_error("Excel fayli multipart shaklida yuborilishi kerak.")
 
@@ -1007,7 +1196,7 @@ def setup_admin_routes(app: web.Application, settings: Settings) -> None:
             "message": "Import navbatga qo'yildi",
             "filename": filename,
             "created_at": time.time(),
-            "base_mtime_ns": settings.permission_rules_path.stat().st_mtime_ns,
+            "base_mtime_ns": draft_path.stat().st_mtime_ns,
             "changes": [],
             "summary": {},
             "error": "",
@@ -1025,7 +1214,7 @@ def setup_admin_routes(app: web.Application, settings: Settings) -> None:
                 preview = await asyncio.to_thread(
                     build_permission_import_preview,
                     temp_path,
-                    settings.permission_rules_path,
+                    draft_path,
                     filename,
                     update_progress,
                 )
@@ -1069,15 +1258,16 @@ def setup_admin_routes(app: web.Application, settings: Settings) -> None:
             return _json_error("Tanlangan o'zgarishlar soni noto'g'ri.")
 
         async with permission_write_lock:
-            current_mtime_ns = settings.permission_rules_path.stat().st_mtime_ns
+            draft_path = permission_admin_path()
+            current_mtime_ns = draft_path.stat().st_mtime_ns
             if current_mtime_ns != job.get("base_mtime_ns"):
                 return _json_error(
                     "Taqqoslashdan keyin qoidalar o'zgargan. Excelni qayta tahlil qiling.",
                     409,
                 )
-            data = _read_json(settings.permission_rules_path)
-            backup_path = settings.permission_rules_path.with_name(
-                settings.permission_rules_path.stem + ".before-import.json"
+            data = _read_json(draft_path)
+            backup_path = draft_path.with_name(
+                draft_path.stem + ".before-import.json"
             )
             _write_json(backup_path, data)
             try:
@@ -1090,11 +1280,15 @@ def setup_admin_routes(app: web.Application, settings: Settings) -> None:
             except PermissionImportError as exc:
                 return _json_error(str(exc))
             data.setdefault("source", {})["last_admin_update"] = int(time.time())
-            _write_json(settings.permission_rules_path, data)
+            _write_json(draft_path, data)
+            await audit(
+                "draft_excel_import",
+                {"filename": job.get("filename"), "applied_count": applied_count},
+            )
             job["status"] = "applied"
             job["message"] = "Tanlangan o'zgarishlar qo'llandi"
             job["applied_count"] = applied_count
-            job["base_mtime_ns"] = settings.permission_rules_path.stat().st_mtime_ns
+            job["base_mtime_ns"] = draft_path.stat().st_mtime_ns
         return web.json_response(_import_job_response(job))
 
     app.router.add_get("/admin", admin_index)
@@ -1103,6 +1297,7 @@ def setup_admin_routes(app: web.Application, settings: Settings) -> None:
     app.router.add_post("/admin/logout", logout)
     app.router.add_get("/admin/api/summary", summary)
     app.router.add_get("/admin/api/permission", permission_list)
+    app.router.add_get("/admin/api/country/{code}", country_detail)
     app.router.add_get("/admin/api/permission/full", permission_full)
     app.router.add_post("/admin/api/permission/full", save_permission_full)
     app.router.add_post("/admin/api/country", save_country)
@@ -1117,3 +1312,11 @@ def setup_admin_routes(app: web.Application, settings: Settings) -> None:
     app.router.add_post("/admin/api/permission-import", start_permission_import)
     app.router.add_get("/admin/api/permission-import/{job_id}", permission_import_status)
     app.router.add_post("/admin/api/permission-import/{job_id}/apply", apply_permission_import)
+    app.router.add_get("/admin/api/rule-version/status", rule_version_status)
+    app.router.add_post("/admin/api/rule-version/publish", publish_rule_draft)
+    app.router.add_post("/admin/api/rule-version/discard", discard_rule_draft)
+    app.router.add_get("/admin/api/rule-versions", rule_versions)
+    app.router.add_post("/admin/api/rule-versions/{version_no}/rollback", rollback_rule_version)
+    app.router.add_get("/admin/api/audit", admin_audit)
+    app.on_startup.append(initialize_rule_versions)
+    app.on_cleanup.append(close_rule_versions)

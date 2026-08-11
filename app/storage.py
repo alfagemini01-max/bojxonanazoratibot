@@ -2,12 +2,16 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone as datetime_timezone
+import logging
 from pathlib import Path
 from time import monotonic
 from typing import Protocol
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import aiosqlite
+
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -107,6 +111,49 @@ class CachedUserStorage:
         self._trim()
         self._profiles[user_id] = (now + self.ttl_seconds, profile)
         return profile
+
+
+class ResilientUserStorage:
+    """Uses PostgreSQL normally and keeps the bot available if it is unreachable at startup."""
+
+    def __init__(self, primary: UserStorage, fallback: UserStorage) -> None:
+        self.primary = primary
+        self.fallback = fallback
+        self.active: UserStorage = primary
+
+    async def init(self) -> None:
+        try:
+            await self.primary.init()
+            self.active = self.primary
+        except Exception:
+            logger.exception("PostgreSQL user storage is unavailable; SQLite fallback is enabled")
+            try:
+                await self.primary.close()
+            except Exception:
+                pass
+            await self.fallback.init()
+            self.active = self.fallback
+
+    async def close(self) -> None:
+        await self.active.close()
+
+    async def upsert_telegram_user(self, user_id: int, username: str | None, telegram_full_name: str | None) -> None:
+        await self.active.upsert_telegram_user(user_id, username, telegram_full_name)
+
+    async def set_full_name(self, user_id: int, full_name: str) -> None:
+        await self.active.set_full_name(user_id, full_name)
+
+    async def set_phone(self, user_id: int, phone: str) -> None:
+        await self.active.set_phone(user_id, phone)
+
+    async def set_language(self, user_id: int, language_code: str) -> None:
+        await self.active.set_language(user_id, language_code)
+
+    async def accept_terms(self, user_id: int) -> str:
+        return await self.active.accept_terms(user_id)
+
+    async def get_profile(self, user_id: int) -> UserProfile | None:
+        return await self.active.get_profile(user_id)
 
 
 class TimezoneMixin:
@@ -266,9 +313,9 @@ class PostgresUserStorage(TimezoneMixin):
 
         self.pool = await asyncpg.create_pool(
             self.database_url,
-            min_size=1,
-            max_size=2,
-            max_inactive_connection_lifetime=300,
+            min_size=0,
+            max_size=1,
+            max_inactive_connection_lifetime=180,
             command_timeout=15,
         )
         async with self.pool.acquire() as connection:
@@ -400,7 +447,10 @@ class PostgresUserStorage(TimezoneMixin):
 
 def create_user_storage(database_path: Path, timezone: str = "Asia/Tashkent", database_url: str = "") -> UserStorage:
     if database_url:
-        backend: UserStorage = PostgresUserStorage(database_url, timezone)
+        backend: UserStorage = ResilientUserStorage(
+            PostgresUserStorage(database_url, timezone),
+            SQLiteUserStorage(database_path, timezone),
+        )
     else:
         backend = SQLiteUserStorage(database_path, timezone)
     return CachedUserStorage(backend)

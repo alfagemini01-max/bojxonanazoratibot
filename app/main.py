@@ -14,7 +14,7 @@ from app.handlers import build_router
 from app.storage import UserStorage, create_user_storage
 
 logger = logging.getLogger(__name__)
-APP_VERSION = "2026-08-11-simple-onboarding-v10"
+APP_VERSION = "2026-08-11-governed-fast-v11"
 
 
 def create_bot(settings: Settings) -> Bot:

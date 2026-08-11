@@ -3,6 +3,7 @@ from __future__ import annotations
 import html
 import logging
 import re
+from time import perf_counter
 
 from aiogram import F, Router
 from aiogram.filters import Command, StateFilter
@@ -18,6 +19,8 @@ from aiogram.types import (
 
 from app.config import Settings
 from app.i18n import LANGUAGES, button_texts, normalize_lang, t
+from app.metrics import metrics
+from app.middleware import UserRateLimitMiddleware
 from app.services.fee_calculator import FeeCalculator, TAJIKISTAN_CODE
 from app.services.permit import PermitRuleService, UZBEKISTAN_CODE, build_permit_message, country_label, turkmenistan_extra_fee_applies
 from app.services.permit import TURKMENISTAN_CODE, is_eu_or_azerbaijan
@@ -31,6 +34,12 @@ CHECK_BUTTONS = button_texts("button_check")
 FEE_BUTTONS = button_texts("button_fees")
 LANGUAGE_BUTTONS = button_texts("button_language")
 CANCEL_BUTTONS = button_texts("button_cancel")
+
+QUICK_COUNTRIES = {
+    "uz": [("860", "🇺🇿 O'zbekiston"), ("398", "🇰🇿 Qozog'iston"), ("417", "🇰🇬 Qirg'iziston"), ("643", "🇷🇺 Rossiya"), ("156", "🇨🇳 Xitoy"), ("795", "🇹🇲 Turkmaniston"), ("762", "🇹🇯 Tojikiston"), ("004", "🇦🇫 Afg'oniston")],
+    "ru": [("860", "🇺🇿 Узбекистан"), ("398", "🇰🇿 Казахстан"), ("417", "🇰🇬 Кыргызстан"), ("643", "🇷🇺 Россия"), ("156", "🇨🇳 Китай"), ("795", "🇹🇲 Туркменистан"), ("762", "🇹🇯 Таджикистан"), ("004", "🇦🇫 Афганистан")],
+    "en": [("860", "🇺🇿 Uzbekistan"), ("398", "🇰🇿 Kazakhstan"), ("417", "🇰🇬 Kyrgyzstan"), ("643", "🇷🇺 Russia"), ("156", "🇨🇳 China"), ("795", "🇹🇲 Turkmenistan"), ("762", "🇹🇯 Tajikistan"), ("004", "🇦🇫 Afghanistan")],
+}
 
 
 def language_keyboard() -> InlineKeyboardMarkup:
@@ -122,6 +131,19 @@ def other_country_keyboard(slot: str, lang: str = "uz") -> InlineKeyboardMarkup:
     )
 
 
+def quick_country_keyboard(slot: str, lang: str = "uz") -> InlineKeyboardMarkup:
+    choices = QUICK_COUNTRIES.get(normalize_lang(lang), QUICK_COUNTRIES["uz"])
+    rows = [
+        [
+            InlineKeyboardButton(text=label, callback_data=f"pick_country:{slot}:{code}")
+            for code, label in choices[index : index + 2]
+        ]
+        for index in range(0, len(choices), 2)
+    ]
+    rows.append([InlineKeyboardButton(text=t(lang, "button_cancel"), callback_data="cancel_flow")])
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
 def split_telegram_text(text: str, limit: int = MAX_TELEGRAM_TEXT_LENGTH) -> list[str]:
     if len(text) <= limit:
         return [text]
@@ -148,6 +170,9 @@ def split_telegram_text(text: str, limit: int = MAX_TELEGRAM_TEXT_LENGTH) -> lis
 
 def build_router(user_storage: UserStorage, settings: Settings) -> Router:
     router = Router(name="nazoratbot")
+    limiter = UserRateLimitMiddleware()
+    router.message.middleware(limiter)
+    router.callback_query.middleware(limiter)
     permit_service = PermitRuleService(settings.permission_rules_path)
     fee_calculator = FeeCalculator(settings.fees_rules_path, settings.bhm_value, settings.usd_fallback_rate)
 
@@ -215,6 +240,7 @@ def build_router(user_storage: UserStorage, settings: Settings) -> Router:
             )
 
     async def evaluate_route(message: Message, state: FSMContext, lang: str, vehicle_country_code: str, user_id: int | None = None) -> None:
+        started = perf_counter()
         data = await state.get_data()
         origin = permit_service.find_country(str(data.get("origin_country_code", "")))
         destination = permit_service.find_country(str(data.get("destination_country_code", "")))
@@ -233,6 +259,7 @@ def build_router(user_storage: UserStorage, settings: Settings) -> Router:
 
         try:
             result = permit_service.evaluate(origin, destination, vehicle_country)
+            metrics.increment("permit_checks")
             logger.info(
                 "Permit check requested user_id=%s origin=%s destination=%s vehicle_country=%s vid=%s permission=%s dues=%s",
                 user_id or (message.from_user.id if message.from_user else None),
@@ -250,6 +277,7 @@ def build_router(user_storage: UserStorage, settings: Settings) -> Router:
                 reply_markup=main_menu_keyboard(lang),
             )
         except Exception:
+            metrics.increment("errors")
             logger.exception(
                 "Permit check failed user_id=%s origin=%s destination=%s vehicle_country=%s",
                 user_id or (message.from_user.id if message.from_user else None),
@@ -259,6 +287,8 @@ def build_router(user_storage: UserStorage, settings: Settings) -> Router:
             )
             await state.clear()
             await message.answer(t(lang, "technical_error"), reply_markup=main_menu_keyboard(lang))
+        finally:
+            metrics.observe("permit_check", perf_counter() - started)
 
     def is_cargo_vehicle(data: dict[str, object]) -> bool:
         return str(data.get("fee_vehicle_type", "")) in {"truck", "truck_trailer"}
@@ -281,6 +311,7 @@ def build_router(user_storage: UserStorage, settings: Settings) -> Router:
         return str(rule.get("dues_cd", "0")) == "1" or turkmenistan_extra_fee_applies(result)
 
     async def finish_fee_calculation(message: Message, state: FSMContext, lang: str) -> None:
+        started = perf_counter()
         data = await state.get_data()
         payload = {
             "vehicle_type": data.get("fee_vehicle_type"),
@@ -301,13 +332,19 @@ def build_router(user_storage: UserStorage, settings: Settings) -> Router:
             "animal": data.get("fee_animal"),
             "temp_overstay_days": data.get("fee_temp_overstay_days"),
             "delivery_overdue_days": data.get("fee_delivery_overdue_days"),
+            "calculation_mode": data.get("fee_mode", "detailed"),
         }
         await state.clear()
-        await answer_long(
-            message,
-            fee_calculator.build_message(payload, permit_service, settings.timezone, lang),
-            reply_markup=main_menu_keyboard(lang),
-        )
+        try:
+            result_text = fee_calculator.build_message(payload, permit_service, settings.timezone, lang)
+            metrics.increment("fee_checks")
+            await answer_long(message, result_text, reply_markup=main_menu_keyboard(lang))
+        except Exception:
+            metrics.increment("errors")
+            logger.exception("Fee calculation failed user_id=%s", message.from_user.id if message.from_user else None)
+            await message.answer(t(lang, "technical_error"), reply_markup=main_menu_keyboard(lang))
+        finally:
+            metrics.observe("fee_check", perf_counter() - started)
 
     async def continue_fee_questions(message: Message, state: FSMContext, lang: str) -> None:
         data = await state.get_data()
@@ -344,6 +381,21 @@ def build_router(user_storage: UserStorage, settings: Settings) -> Router:
                 t(lang, "ask_fee_stay_duration"),
                 reply_markup=simple_options_keyboard(lang, ["button_stay_up_to_14", "button_stay_over_14"], columns=1),
             )
+            return
+
+        if data.get("fee_mode") == "quick":
+            await state.update_data(
+                fee_declared="no",
+                fee_transit_declaration="yes" if is_cargo_vehicle(data) and direction in {"entry", "transit"} else "no",
+                fee_tinted="no",
+                fee_osago="yes",
+                fee_heavy="no",
+                fee_humanitarian="no",
+                fee_animal="no",
+                fee_temp_overstay="no",
+                fee_delivery_overdue="no",
+            )
+            await finish_fee_calculation(message, state, lang)
             return
 
         if is_cargo_vehicle(data) and not data.get("fee_declared"):
@@ -426,6 +478,7 @@ def build_router(user_storage: UserStorage, settings: Settings) -> Router:
 
     @router.message(Command("start"))
     async def start(message: Message, state: FSMContext) -> None:
+        metrics.increment("starts")
         await continue_registration(message, state)
 
     @router.message(Command("language"))
@@ -459,6 +512,14 @@ def build_router(user_storage: UserStorage, settings: Settings) -> Router:
             reply_markup=main_menu_keyboard(lang),
         )
 
+    @router.callback_query(F.data == "cancel_flow")
+    async def cancel_flow(callback: CallbackQuery, state: FSMContext) -> None:
+        lang = await profile_lang(callback.from_user.id if callback.from_user else None)
+        await state.clear()
+        await callback.answer()
+        if callback.message:
+            await callback.message.answer(t(lang, "cancelled"), reply_markup=main_menu_keyboard(lang))
+
     @router.message(Command("fees"))
     @router.message(F.text.in_(FEE_BUTTONS))
     async def ask_fee_vehicle_type(message: Message, state: FSMContext) -> None:
@@ -472,6 +533,20 @@ def build_router(user_storage: UserStorage, settings: Settings) -> Router:
             return
 
         await state.clear()
+        await state.set_state(FeeCalcState.waiting_for_mode)
+        await message.answer(
+            t(lang, "ask_fee_mode"),
+            reply_markup=simple_options_keyboard(lang, ["button_fee_quick", "button_fee_detailed"], columns=1),
+        )
+
+    @router.message(StateFilter(FeeCalcState.waiting_for_mode))
+    async def receive_fee_mode(message: Message, state: FSMContext) -> None:
+        lang = await profile_lang(message.from_user.id if message.from_user else None)
+        mode = button_value(lang, {"button_fee_quick": "quick", "button_fee_detailed": "detailed"}, message.text)
+        if not mode:
+            await message.answer(t(lang, "ask_fee_mode"))
+            return
+        await state.update_data(fee_mode=mode)
         await state.set_state(FeeCalcState.waiting_for_vehicle_type)
         await message.answer(
             t(lang, "ask_fee_vehicle_type"),
@@ -500,7 +575,7 @@ def build_router(user_storage: UserStorage, settings: Settings) -> Router:
             return
         await state.update_data(fee_vehicle_type=vehicle_type)
         await state.set_state(FeeCalcState.waiting_for_vehicle_country)
-        await message.answer(t(lang, "ask_fee_vehicle_country"), reply_markup=cancel_keyboard(lang))
+        await message.answer(t(lang, "ask_fee_vehicle_country"), reply_markup=quick_country_keyboard("fee_vehicle", lang))
 
     @router.message(StateFilter(FeeCalcState.waiting_for_vehicle_country))
     async def receive_fee_vehicle_country(message: Message, state: FSMContext) -> None:
@@ -526,7 +601,7 @@ def build_router(user_storage: UserStorage, settings: Settings) -> Router:
         data = await state.get_data()
         if is_cargo_vehicle(data):
             await state.set_state(FeeCalcState.waiting_for_origin_country)
-            await message.answer(t(lang, "ask_fee_origin"), reply_markup=cancel_keyboard(lang))
+            await message.answer(t(lang, "ask_fee_origin"), reply_markup=quick_country_keyboard("fee_origin", lang))
             return
         await continue_fee_questions(message, state, lang)
 
@@ -726,7 +801,7 @@ def build_router(user_storage: UserStorage, settings: Settings) -> Router:
         await state.set_state(CheckState.waiting_for_origin_country)
         await message.answer(
             t(lang, "ask_origin_country"),
-            reply_markup=cancel_keyboard(lang),
+            reply_markup=quick_country_keyboard("origin", lang),
         )
 
     @router.message(StateFilter(CheckState.waiting_for_origin_country))
@@ -765,12 +840,12 @@ def build_router(user_storage: UserStorage, settings: Settings) -> Router:
         if slot == "origin":
             await state.update_data(origin_country_code=country.code)
             await state.set_state(CheckState.waiting_for_destination_country)
-            await callback.message.answer(t(lang, "ask_destination_country"), reply_markup=cancel_keyboard(lang))
+            await callback.message.answer(t(lang, "ask_destination_country"), reply_markup=quick_country_keyboard("destination", lang))
             return
         if slot == "destination":
             await state.update_data(destination_country_code=country.code)
             await state.set_state(CheckState.waiting_for_vehicle_country)
-            await callback.message.answer(t(lang, "ask_vehicle_country"), reply_markup=cancel_keyboard(lang))
+            await callback.message.answer(t(lang, "ask_vehicle_country"), reply_markup=quick_country_keyboard("vehicle", lang))
             return
         if slot == "vehicle":
             await evaluate_route(callback.message, state, lang, country.code, user_id=callback.from_user.id)
@@ -790,7 +865,7 @@ def build_router(user_storage: UserStorage, settings: Settings) -> Router:
         if slot == "fee_origin":
             await state.update_data(fee_origin_country_code=country.code)
             await state.set_state(FeeCalcState.waiting_for_destination_country)
-            await callback.message.answer(t(lang, "ask_fee_destination"), reply_markup=cancel_keyboard(lang))
+            await callback.message.answer(t(lang, "ask_fee_destination"), reply_markup=quick_country_keyboard("fee_destination", lang))
             return
         if slot == "fee_destination":
             await state.update_data(fee_destination_country_code=country.code)

@@ -8,6 +8,7 @@ class CheckState(StatesGroup):
 
 
 class FeeCalcState(StatesGroup):
+    waiting_for_mode = State()
     waiting_for_vehicle_type = State()
     waiting_for_vehicle_country = State()
     waiting_for_direction = State()
