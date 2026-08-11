@@ -175,6 +175,14 @@ class FeeCalculator:
         warnings: list[str] = []
         summaries: list[str] = []
 
+        if str(payload.get("calculation_mode")) == "quick":
+            quick_notes = {
+                "uz": "⚡ Tezkor hisob: faqat asosiy majburiy to'lovlar hisoblandi. Maxsus holatlar uchun batafsil hisoblashni tanlang.",
+                "ru": "⚡ Быстрый расчет: учтены только основные обязательные платежи. Для особых условий выберите подробный расчет.",
+                "en": "⚡ Quick calculation: only core mandatory payments are included. Select detailed calculation for special conditions.",
+            }
+            warnings.append(quick_notes[code])
+
         foreign_vehicle = bool(vehicle_country and vehicle_country.code != UZBEKISTAN_CODE)
         cargo_vehicle = vehicle_type in {"truck", "truck_trailer"}
         entry_or_transit = direction in {"entry", "transit"}
