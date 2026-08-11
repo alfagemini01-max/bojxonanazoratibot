@@ -4,6 +4,7 @@ import hmac
 import json
 import secrets
 import time
+from copy import deepcopy
 from hashlib import sha256
 from pathlib import Path
 from typing import Any
@@ -103,9 +104,17 @@ DEFAULT_FEE_ITEMS = {
     ],
 }
 
+_JSON_CACHE: dict[Path, tuple[int, int, dict[str, Any]]] = {}
+
 
 def _read_json(path: Path) -> dict[str, Any]:
-    return json.loads(path.read_text(encoding="utf-8"))
+    stat = path.stat()
+    cached = _JSON_CACHE.get(path)
+    if cached and cached[0] == stat.st_mtime_ns and cached[1] == stat.st_size:
+        return deepcopy(cached[2])
+    data = json.loads(path.read_text(encoding="utf-8"))
+    _JSON_CACHE[path] = (stat.st_mtime_ns, stat.st_size, data)
+    return deepcopy(data)
 
 
 def _write_json(path: Path, data: dict[str, Any]) -> None:
@@ -116,6 +125,8 @@ def _write_json(path: Path, data: dict[str, Any]) -> None:
         encoding="utf-8",
     )
     tmp_path.replace(path)
+    stat = path.stat()
+    _JSON_CACHE[path] = (stat.st_mtime_ns, stat.st_size, deepcopy(data))
 
 
 def _code(value: object) -> str:
@@ -521,7 +532,7 @@ def _admin_page_v2() -> str:
     </section>
 
     <section id="dazvol" class="screen">
-      <div class="toolbar glass"><input id="dazvolSearch" class="search" placeholder="Davlat nomi yoki kodi: Qirg'iziston, 417..." oninput="loadDazvol()" /><button class="btn primary" onclick="openCountryPage()">➕ Davlat qo'shish</button></div>
+      <div class="toolbar glass"><input id="dazvolSearch" class="search" placeholder="Davlat nomi yoki kodi: Qirg'iziston, 417..." oninput="queueSearch('dazvol')" /><button class="btn primary" onclick="openCountryPage()">➕ Davlat qo'shish</button></div>
       <div id="dazvolCards" class="cards"></div>
     </section>
 
@@ -538,7 +549,7 @@ def _admin_page_v2() -> str:
     </section>
 
     <section id="countries" class="screen">
-      <div class="toolbar glass"><input id="countrySearch" class="search" placeholder="Davlatni qidiring..." oninput="loadCountries()" /><button class="btn primary" onclick="openCountryPage()">➕ Davlat qo'shish</button></div>
+      <div class="toolbar glass"><input id="countrySearch" class="search" placeholder="Davlatni qidiring..." oninput="queueSearch('countries')" /><button class="btn primary" onclick="openCountryPage()">➕ Davlat qo'shish</button></div>
       <div id="countryCards" class="cards"></div>
     </section>
 
@@ -594,6 +605,8 @@ const vidIcons={"1":"🚚🇺🇿","2":"🏁🇺🇿","3":"🔁🚛","4":"🌍�
 const permissionText={"1":"⚠️ ruxsat kerak","2":"✅ ruxsat kerak emas","3":"⛔ taqiqlangan"};
 const duesText={"0":"⚪ belgilanmagan","1":"💵 yig'im bor","2":"✅ yig'im yo'q","3":"🔎 ruxsat turiga bog'liq"};
 let permissionData={countries:[]}; let countryCache={}; let activeDirection='import'; let feeItems=[]; let selectedCountry=null; let lastCountryListScreen='dazvol'; let editingTextFieldId='';
+const searchTimers={dazvol:null,countries:null};
+function queueSearch(section){clearTimeout(searchTimers[section]);searchTimers[section]=setTimeout(()=>{(section==='dazvol'?loadDazvol():loadCountries()).catch(e=>toast(e.message))},300)}
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 function toast(t){const el=document.getElementById('toast');el.textContent=t;el.style.display='block';setTimeout(()=>el.style.display='none',2500)}
 async function api(path,opts={}){const r=await fetch(path,{headers:{'Content-Type':'application/json'},...opts}); if(r.status===401){location.href='/admin';return} const text=await r.text(); let d; try{d=JSON.parse(text)}catch(e){d={ok:false,error:text||'Server javobi xato'}} if(!r.ok||d.ok===false) throw new Error(d.error||'Xatolik'); return d}
@@ -607,6 +620,7 @@ function rulePills(rules){return Object.entries(rules||{}).map(([vid,r])=>pill(`
 function rememberCountries(rows){(rows||[]).forEach(c=>{countryCache[c.code]=c})}
 async function loadSummary(){const d=await api('/admin/api/summary');countryCount.textContent=d.countries;ruleCount.textContent=d.rules;exceptionCount.textContent=d.exceptions;bhmValue.textContent=d.bhm}
 async function loadDazvol(){const q=encodeURIComponent(dazvolSearch.value||'');permissionData=await api('/admin/api/permission?q='+q);rememberCountries(permissionData.countries);dazvolCards.innerHTML=permissionData.countries.map(countryCard).join('')||'<div class="card glass">Maʼlumot topilmadi</div>'}
+async function loadCountrySections(){const dq=dazvolSearch.value||'',cq=countrySearch.value||'';if(dq!==cq){await Promise.all([loadDazvol(),loadCountries()]);return}const d=await api('/admin/api/permission?q='+encodeURIComponent(dq));permissionData=d;rememberCountries(d.countries);const cards=d.countries.map(countryCard).join('')||'<div class="card glass">Maʼlumot topilmadi</div>';dazvolCards.innerHTML=cards;countryCards.innerHTML=cards}
 function countryCard(c){return `<button class="card glass" style="text-align:left" onclick="openCountryPage('${esc(c.code)}')"><h3>${esc(c.name_uz)} <span class="muted">(${esc(c.code)})</span></h3><div class="muted">${esc(c.name)}</div><div>${rulePills(c.rules)}</div></button>`}
 function openCountryPage(code=''){const active=document.querySelector('.screen.active');if(active&&active.id!=='countryDetail')lastCountryListScreen=active.id;selectedCountry=countryCache[code]||permissionData.countries.find(c=>c.code===code)||{code:'',name:'',name_uz:'',rules:{},exceptions:[]};countryCode.value=selectedCountry.code;countryName.value=selectedCountry.name;countryNameUz.value=selectedCountry.name_uz;countryPageTitle.textContent=selectedCountry.code?`${selectedCountry.name_uz} (${selectedCountry.code})`:'Yangi davlat';renderRulesTable();renderExceptions();showScreen('countryDetail',selectedCountry.code?'Davlat tafsiloti':'Yangi davlat');window.scrollTo({top:0,behavior:'smooth'});}
 function textButton(fieldId,label,value){const has=String(value||'').trim().length>0;return `<button type="button" class="text-edit-btn ${has?'has-text':'empty'}" data-target="${esc(fieldId)}" data-label="${esc(label)}">${has?'📝':'✍️'} ${esc(label)}${has?'':' yozish'}</button>`}
@@ -629,7 +643,7 @@ function openFeeModal(id=''){const f=feeItems.find(x=>x.id===id)||{id:'',title:'
 async function saveFeeItem(){await api('/admin/api/fee-item',{method:'POST',body:JSON.stringify({id:feeId.value,direction:feeDirection.value,title:feeTitle.value,amount:feeAmount.value,condition:feeCondition.value,basis:feeBasis.value,enabled:feeEnabled.value==='true'})});activeDirection=feeDirection.value;closeModal('feeModal');toast('Yig‘im saqlandi');await loadFeeItems()}
 async function deleteFeeItem(){if(!feeId.value||!confirm('Yig‘imni o‘chirasizmi?'))return;await api(`/admin/api/fee-item/${feeDirection.value}/${feeId.value}`,{method:'DELETE'});closeModal('feeModal');toast('Yig‘im o‘chirildi');await loadFeeItems()}
 async function logout(){await fetch('/admin/logout',{method:'POST'});location.href='/admin'}
-async function loadAll(){await loadSummary();await loadDazvol();await loadCountries();await loadFeeItems()}
+async function loadAll(){await Promise.all([loadSummary(),loadCountrySections(),loadFeeItems()])}
 loadAll().catch(e=>toast(e.message));
 </script>
 </body></html>"""

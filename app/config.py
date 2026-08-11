@@ -57,7 +57,12 @@ class Settings:
 
 def get_settings() -> Settings:
     webhook_url = _normalize_webhook_url(os.getenv("WEBHOOK_URL") or os.getenv("RENDER_EXTERNAL_URL") or "")
-    bot_mode = os.getenv("BOT_MODE", "polling").strip().lower()
+    configured_bot_mode = os.getenv("BOT_MODE", "").strip().lower()
+    bot_mode = (
+        configured_bot_mode
+        if configured_bot_mode in {"webhook", "polling"}
+        else ("webhook" if webhook_url else "polling")
+    )
 
     return Settings(
         bot_token=os.getenv("BOT_TOKEN", "").strip(),
