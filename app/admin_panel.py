@@ -545,7 +545,7 @@ initVid();loadAll().catch(e=>toast(e.message));
 
 
 def _admin_page_v2() -> str:
-    return """<!doctype html>
+    return r"""<!doctype html>
 <html lang="uz">
 <head>
   <meta charset="utf-8" />
@@ -854,8 +854,12 @@ def setup_admin_routes(app: web.Application, settings: Settings) -> None:
 
     async def admin_index(request: web.Request) -> web.Response:
         if not _is_authenticated(request, settings):
-            return web.Response(text=_login_page(), content_type="text/html")
-        return web.Response(text=_admin_page_v2(), content_type="text/html")
+            response = web.Response(text=_login_page(), content_type="text/html")
+        else:
+            response = web.Response(text=_admin_page_v2(), content_type="text/html")
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        return response
 
     async def login(request: web.Request) -> web.Response:
         form = await request.post()
