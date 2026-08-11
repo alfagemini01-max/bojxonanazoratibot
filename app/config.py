@@ -40,9 +40,6 @@ class Settings:
     data_source: str
     database_path: Path
     user_database_url: str
-    terms_image_path: Path
-    terms_photo_file_id: str
-    terms_pdf_path: Path
     permission_rules_path: Path
     fees_rules_path: Path
     bhm_value: int
@@ -74,9 +71,6 @@ def get_settings() -> Settings:
         data_source=os.getenv("DATA_SOURCE", "demo").strip().lower(),
         database_path=BASE_DIR / os.getenv("DATABASE_PATH", "data/bot_data.sqlite3"),
         user_database_url=(os.getenv("USER_DATABASE_URL") or os.getenv("DATABASE_URL") or "").strip(),
-        terms_image_path=BASE_DIR / os.getenv("TERMS_IMAGE_PATH", "assets/foydalanish_shartlari.png"),
-        terms_photo_file_id=os.getenv("TERMS_PHOTO_FILE_ID", "").strip(),
-        terms_pdf_path=BASE_DIR / os.getenv("TERMS_PDF_PATH", "assets/foydalanish_shartlari.pdf"),
         permission_rules_path=BASE_DIR / os.getenv("PERMISSION_RULES_PATH", "data/permission_rules.json"),
         fees_rules_path=BASE_DIR / os.getenv("FEES_RULES_PATH", "data/fees_2026.json"),
         bhm_value=int(os.getenv("BHM_VALUE", "412000")),

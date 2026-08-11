@@ -26,6 +26,7 @@ SESSION_COOKIE = "nazorat_admin"
 SESSION_TTL_SECONDS = 12 * 60 * 60
 MAX_IMPORT_FILE_BYTES = 10 * 1024 * 1024
 IMPORT_JOB_TTL_SECONDS = 60 * 60
+MAX_IMPORT_JOBS = 10
 IMPORT_JOBS: dict[str, dict[str, Any]] = {}
 IMPORT_TASKS: set[asyncio.Task[Any]] = set()
 
@@ -195,6 +196,16 @@ def _cleanup_import_jobs() -> None:
     expired = [job_id for job_id, job in IMPORT_JOBS.items() if float(job.get("created_at", 0)) < cutoff]
     for job_id in expired:
         IMPORT_JOBS.pop(job_id, None)
+    if len(IMPORT_JOBS) > MAX_IMPORT_JOBS:
+        removable = sorted(
+            (
+                (job_id, job) for job_id, job in IMPORT_JOBS.items()
+                if job.get("status") not in {"queued", "processing"}
+            ),
+            key=lambda item: float(item[1].get("created_at", 0)),
+        )
+        for job_id, _ in removable[: max(0, len(IMPORT_JOBS) - MAX_IMPORT_JOBS)]:
+            IMPORT_JOBS.pop(job_id, None)
 
 
 def _import_job_response(job: dict[str, Any]) -> dict[str, Any]:

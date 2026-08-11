@@ -1,23 +1,19 @@
 from __future__ import annotations
 
-import asyncio
 import html
 import logging
 import re
 
 from aiogram import F, Router
-from aiogram.exceptions import TelegramNetworkError
 from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.types import (
     CallbackQuery,
-    FSInputFile,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
     KeyboardButton,
     Message,
     ReplyKeyboardMarkup,
-    ReplyKeyboardRemove,
 )
 
 from app.config import Settings
@@ -25,7 +21,7 @@ from app.i18n import LANGUAGES, button_texts, normalize_lang, t
 from app.services.fee_calculator import FeeCalculator, TAJIKISTAN_CODE
 from app.services.permit import PermitRuleService, UZBEKISTAN_CODE, build_permit_message, country_label, turkmenistan_extra_fee_applies
 from app.services.permit import TURKMENISTAN_CODE, is_eu_or_azerbaijan
-from app.states import CheckState, FeeCalcState, RegistrationState
+from app.states import CheckState, FeeCalcState
 from app.storage import UserStorage
 
 logger = logging.getLogger(__name__)
@@ -33,7 +29,6 @@ MAX_TELEGRAM_TEXT_LENGTH = 3800
 
 CHECK_BUTTONS = button_texts("button_check")
 FEE_BUTTONS = button_texts("button_fees")
-TERMS_BUTTONS = button_texts("button_terms")
 LANGUAGE_BUTTONS = button_texts("button_language")
 CANCEL_BUTTONS = button_texts("button_cancel")
 
@@ -47,30 +42,10 @@ def language_keyboard() -> InlineKeyboardMarkup:
     )
 
 
-def contact_keyboard(lang: str = "uz") -> ReplyKeyboardMarkup:
-    return ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text=t(lang, "button_contact"), request_contact=True)],
-        ],
-        resize_keyboard=True,
-        one_time_keyboard=True,
-        input_field_placeholder=t(lang, "contact_placeholder"),
-    )
-
-
-def terms_keyboard(lang: str = "uz") -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton(text=t(lang, "button_accept_terms"), callback_data="accept_terms")],
-        ]
-    )
-
-
 def main_menu_keyboard(lang: str = "uz") -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[
             [KeyboardButton(text=t(lang, "button_check")), KeyboardButton(text=t(lang, "button_fees"))],
-            [KeyboardButton(text=t(lang, "button_terms"))],
             [KeyboardButton(text=t(lang, "button_language"))],
         ],
         resize_keyboard=True,
@@ -173,7 +148,6 @@ def split_telegram_text(text: str, limit: int = MAX_TELEGRAM_TEXT_LENGTH) -> lis
 
 def build_router(user_storage: UserStorage, settings: Settings) -> Router:
     router = Router(name="nazoratbot")
-    terms_photo_file_id = settings.terms_photo_file_id
     permit_service = PermitRuleService(settings.permission_rules_path)
     fee_calculator = FeeCalculator(settings.fees_rules_path, settings.bhm_value, settings.usd_fallback_rate)
 
@@ -185,89 +159,6 @@ def build_router(user_storage: UserStorage, settings: Settings) -> Router:
 
     async def ask_language(message: Message) -> None:
         await message.answer(t("uz", "choose_language"), reply_markup=language_keyboard())
-
-    async def send_safely(send_action, *, retries: int = 2):
-        for attempt in range(retries + 1):
-            try:
-                return await send_action()
-            except TelegramNetworkError as exc:
-                if attempt >= retries:
-                    logger.warning("Telegram message was not sent after retries: %s", exc)
-                    return None
-                await asyncio.sleep(1 + attempt)
-        return None
-
-    async def save_telegram_user(message: Message) -> None:
-        if not message.from_user:
-            return
-        await user_storage.upsert_telegram_user(
-            message.from_user.id,
-            message.from_user.username,
-            message.from_user.full_name,
-        )
-
-    async def send_terms(message: Message, show_accept_button: bool = True, lang: str | None = None) -> None:
-        nonlocal terms_photo_file_id
-        lang = normalize_lang(lang) if lang else await profile_lang(message.from_user.id if message.from_user else None)
-        reply_markup = terms_keyboard(lang) if show_accept_button else None
-        caption = t(lang, "terms_caption")
-
-        if terms_photo_file_id or settings.terms_image_path.exists():
-            photo = terms_photo_file_id or FSInputFile(settings.terms_image_path)
-            sent_message = await send_safely(
-                lambda: message.answer_photo(
-                    photo,
-                    caption=caption,
-                    reply_markup=reply_markup,
-                )
-            )
-            if not terms_photo_file_id and sent_message and sent_message.photo:
-                terms_photo_file_id = sent_message.photo[-1].file_id
-                logger.info("Terms photo file_id cached: %s", terms_photo_file_id)
-            return
-
-        if settings.terms_pdf_path.exists():
-            await send_safely(
-                lambda: message.answer_document(
-                    FSInputFile(settings.terms_pdf_path),
-                    caption=caption,
-                    reply_markup=reply_markup,
-                )
-            )
-            return
-
-        await send_safely(
-            lambda: message.answer(
-                caption
-                + "\n\n"
-                + t(lang, "terms_missing", path=settings.terms_image_path.as_posix()),
-                reply_markup=reply_markup,
-            )
-        )
-
-    async def process_contact(message: Message, state: FSMContext) -> None:
-        if not message.from_user or not message.contact:
-            return
-        await save_telegram_user(message)
-
-        if message.contact.user_id and message.contact.user_id != message.from_user.id:
-            lang = await profile_lang(message.from_user.id)
-            await message.answer(t(lang, "wrong_contact"))
-            return
-
-        await user_storage.set_phone(message.from_user.id, message.contact.phone_number)
-        logger.info("Contact saved for user_id=%s", message.from_user.id)
-        await state.clear()
-        profile = await user_storage.get_profile(message.from_user.id)
-        lang = normalize_lang(profile.language_code if profile else None)
-        if profile and profile.terms_accepted_at:
-            await message.answer(
-                t(lang, "contact_updated"),
-                reply_markup=main_menu_keyboard(lang),
-            )
-            return
-        await message.answer(t(lang, "contact_saved"), reply_markup=ReplyKeyboardRemove())
-        await send_terms(message, show_accept_button=True, lang=lang)
 
     async def answer_country_not_found(message: Message, lang: str, raw_country: str, slot: str) -> None:
         await message.answer(
@@ -524,41 +415,14 @@ def build_router(user_storage: UserStorage, settings: Settings) -> Router:
         if not message.from_user:
             return
 
-        await save_telegram_user(message)
         profile = await user_storage.get_profile(message.from_user.id)
-
         if not profile or not profile.language_code:
             await state.clear()
             await ask_language(message)
             return
-
         lang = normalize_lang(profile.language_code)
-        if profile and profile.is_registered:
-            await state.clear()
-            await message.answer(
-                t(lang, "registered"),
-                reply_markup=main_menu_keyboard(lang),
-            )
-            return
-
-        if not profile or not profile.full_name:
-            await state.set_state(RegistrationState.waiting_for_name)
-            await message.answer(
-                t(lang, "ask_name"),
-                reply_markup=ReplyKeyboardRemove(),
-            )
-            return
-
-        if not profile.phone:
-            await state.set_state(RegistrationState.waiting_for_contact)
-            await message.answer(
-                t(lang, "ask_contact"),
-                reply_markup=contact_keyboard(lang),
-            )
-            return
-
         await state.clear()
-        await send_terms(message, show_accept_button=True)
+        await message.answer(t(lang, "registered"), reply_markup=main_menu_keyboard(lang))
 
     @router.message(Command("start"))
     async def start(message: Message, state: FSMContext) -> None:
@@ -587,97 +451,13 @@ def build_router(user_storage: UserStorage, settings: Settings) -> Router:
         if not callback.from_user or not callback.message or not callback.data:
             return
         lang = normalize_lang(callback.data.split(":", 1)[1])
-        await user_storage.upsert_telegram_user(
-            callback.from_user.id,
-            callback.from_user.username,
-            callback.from_user.full_name,
-        )
         await user_storage.set_language(callback.from_user.id, lang)
-        await callback.answer(t(lang, "language_changed"))
-        await callback.message.answer(t(lang, "language_saved"), reply_markup=ReplyKeyboardRemove())
-
-        profile = await user_storage.get_profile(callback.from_user.id)
-        if profile and profile.is_registered:
-            await state.clear()
-            await callback.message.answer(t(lang, "registered"), reply_markup=main_menu_keyboard(lang))
-        elif not profile or not profile.full_name:
-            await state.set_state(RegistrationState.waiting_for_name)
-            await callback.message.answer(t(lang, "ask_name"), reply_markup=ReplyKeyboardRemove())
-        elif not profile.phone:
-            await state.set_state(RegistrationState.waiting_for_contact)
-            await callback.message.answer(t(lang, "ask_contact"), reply_markup=contact_keyboard(lang))
-        else:
-            await state.clear()
-            await send_terms(callback.message, show_accept_button=True, lang=lang)
-
-    @router.message(StateFilter(RegistrationState.waiting_for_name))
-    async def receive_name(message: Message, state: FSMContext) -> None:
-        if not message.from_user:
-            return
-        await save_telegram_user(message)
-        lang = await profile_lang(message.from_user.id)
-        name = (message.text or "").strip()
-        if len(name) < 2:
-            await message.answer(t(lang, "short_name"))
-            return
-
-        await user_storage.set_full_name(message.from_user.id, name)
-        await state.set_state(RegistrationState.waiting_for_contact)
-        await message.answer(
-            t(lang, "ask_contact_after_name"),
-            reply_markup=contact_keyboard(lang),
-        )
-
-    @router.message(StateFilter(RegistrationState.waiting_for_contact), F.contact)
-    async def receive_contact(message: Message, state: FSMContext) -> None:
-        await process_contact(message, state)
-
-    @router.message(F.contact)
-    async def receive_contact_without_state(message: Message, state: FSMContext) -> None:
-        await process_contact(message, state)
-
-    @router.message(StateFilter(RegistrationState.waiting_for_contact))
-    async def contact_expected(message: Message) -> None:
-        lang = await profile_lang(message.from_user.id if message.from_user else None)
-        await message.answer(
-            t(lang, "contact_expected"),
-            reply_markup=contact_keyboard(lang),
-        )
-
-    @router.callback_query(F.data == "accept_terms")
-    async def accept_terms(callback: CallbackQuery, state: FSMContext) -> None:
-        if not callback.from_user or not callback.message:
-            return
-
-        await user_storage.upsert_telegram_user(
-            callback.from_user.id,
-            callback.from_user.username,
-            callback.from_user.full_name,
-        )
-        profile = await user_storage.get_profile(callback.from_user.id)
-        lang = normalize_lang(profile.language_code if profile else None)
-        if not profile or not profile.full_name or not profile.phone:
-            await callback.answer(t(lang, "accept_first"), show_alert=True)
-            await state.set_state(RegistrationState.waiting_for_name)
-            await callback.message.answer(t(lang, "ask_name"), reply_markup=ReplyKeyboardRemove())
-            return
-
-        accepted_at = await user_storage.accept_terms(callback.from_user.id)
         await state.clear()
-        await callback.answer(t(lang, "accept_terms_answer"))
+        await callback.answer(t(lang, "language_changed"))
         await callback.message.answer(
-            t(lang, "terms_accepted", accepted_at=accepted_at),
+            t(lang, "language_saved"),
             reply_markup=main_menu_keyboard(lang),
         )
-
-    @router.message(Command("terms"))
-    @router.message(F.text.in_(TERMS_BUTTONS))
-    async def terms(message: Message) -> None:
-        if not message.from_user:
-            return
-        profile = await user_storage.get_profile(message.from_user.id)
-        lang = normalize_lang(profile.language_code if profile else None)
-        await send_terms(message, show_accept_button=not bool(profile and profile.terms_accepted_at), lang=lang)
 
     @router.message(Command("fees"))
     @router.message(F.text.in_(FEE_BUTTONS))

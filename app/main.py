@@ -51,7 +51,7 @@ async def start_health_server(settings: Settings) -> None:
     app.router.add_get("/health", health)
     setup_admin_routes(app, settings)
 
-    runner = web.AppRunner(app)
+    runner = web.AppRunner(app, access_log=None)
     await runner.setup()
     site = web.TCPSite(runner, settings.web_host, settings.web_port)
     await site.start()
@@ -115,11 +115,12 @@ def run_webhook() -> None:
     setup_admin_routes(app, settings)
     SimpleRequestHandler(dispatcher=dispatcher, bot=bot).register(app, path=settings.webhook_path)
     setup_application(app, dispatcher, bot=bot)
-    web.run_app(app, host=settings.web_host, port=settings.web_port)
+    web.run_app(app, host=settings.web_host, port=settings.web_port, access_log=None)
 
 
 def main() -> None:
     logging.basicConfig(level=logging.INFO)
+    logging.getLogger("aiogram.event").setLevel(logging.WARNING)
     settings = get_settings()
     if settings.bot_mode == "webhook":
         run_webhook()

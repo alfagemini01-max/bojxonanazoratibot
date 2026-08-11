@@ -20,7 +20,7 @@ class UserProfile:
 
     @property
     def is_registered(self) -> bool:
-        return bool(self.language_code and self.full_name and self.phone and self.terms_accepted_at)
+        return bool(self.language_code)
 
 
 class UserStorage(Protocol):
@@ -44,7 +44,7 @@ class UserStorage(Protocol):
 class CachedUserStorage:
     """Small in-process cache that avoids repeated profile reads from PostgreSQL."""
 
-    def __init__(self, backend: UserStorage, ttl_seconds: float = 30.0, max_entries: int = 2048) -> None:
+    def __init__(self, backend: UserStorage, ttl_seconds: float = 300.0, max_entries: int = 2048) -> None:
         self.backend = backend
         self.ttl_seconds = ttl_seconds
         self.max_entries = max_entries

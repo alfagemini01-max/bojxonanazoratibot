@@ -252,6 +252,10 @@ TEXTS = {
     },
 }
 
+TEXTS["uz"]["registered"] = "✅ Bot foydalanishga tayyor.\n\nKerakli xizmatni tanlang."
+TEXTS["ru"]["registered"] = "✅ Бот готов к работе.\n\nВыберите нужную услугу."
+TEXTS["en"]["registered"] = "✅ The bot is ready.\n\nSelect a service."
+
 
 def normalize_lang(lang: str | None) -> str:
     return lang if lang in LANGUAGES else DEFAULT_LANG
