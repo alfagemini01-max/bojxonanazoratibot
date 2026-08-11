@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import asyncio
 import hmac
 import json
 import secrets
 import time
+import uuid
 from copy import deepcopy
 from hashlib import sha256
 from pathlib import Path
@@ -12,11 +14,20 @@ from typing import Any
 from aiohttp import web
 
 from app.config import Settings
+from app.services.permission_import import (
+    PermissionImportError,
+    apply_permission_import_changes,
+    build_permission_import_preview,
+)
 from app.services.permit import COUNTRY_LABELS, transliterate_cyrillic_to_latin
 
 
 SESSION_COOKIE = "nazorat_admin"
 SESSION_TTL_SECONDS = 12 * 60 * 60
+MAX_IMPORT_FILE_BYTES = 10 * 1024 * 1024
+IMPORT_JOB_TTL_SECONDS = 60 * 60
+IMPORT_JOBS: dict[str, dict[str, Any]] = {}
+IMPORT_TASKS: set[asyncio.Task[Any]] = set()
 
 PERMISSION_NAMES = {
     "1": "Обязательно",
@@ -177,6 +188,31 @@ def _require_admin(request: web.Request, settings: Settings) -> None:
 
 def _json_error(message: str, status: int = 400) -> web.Response:
     return web.json_response({"ok": False, "error": message}, status=status)
+
+
+def _cleanup_import_jobs() -> None:
+    cutoff = time.time() - IMPORT_JOB_TTL_SECONDS
+    expired = [job_id for job_id, job in IMPORT_JOBS.items() if float(job.get("created_at", 0)) < cutoff]
+    for job_id in expired:
+        IMPORT_JOBS.pop(job_id, None)
+
+
+def _import_job_response(job: dict[str, Any]) -> dict[str, Any]:
+    response = {
+        "ok": True,
+        "job_id": job["job_id"],
+        "status": job["status"],
+        "progress": job.get("progress", 0),
+        "message": job.get("message", ""),
+        "filename": job.get("filename", ""),
+        "summary": job.get("summary", {}),
+        "error": job.get("error", ""),
+    }
+    if job.get("status") in {"ready", "applied"}:
+        response["changes"] = job.get("changes", [])
+    if job.get("status") == "applied":
+        response["applied_count"] = job.get("applied_count", 0)
+    return response
 
 
 def _rule_payload(data: dict[str, Any], rules_data: dict[str, Any]) -> dict[str, str]:
@@ -495,8 +531,9 @@ def _admin_page_v2() -> str:
     .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{display:grid;gap:6px;margin-bottom:10px}.field.full{grid-column:1/-1}label{font-size:12px;color:#52627a;font-weight:900}input,select,textarea{width:100%;border:1px solid var(--line);border-radius:16px;padding:12px;background:rgba(255,255,255,.88);outline:none}textarea{min-height:90px}
     .detail-head{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;padding:16px}.detail-head h2{margin:0;font-size:25px}.detail-block{padding:16px}.section-title{display:flex;justify-content:space-between;gap:12px;align-items:end;padding:4px 2px}.section-title h3{font-size:22px;margin:0}.rule-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:14px}.rule-card{padding:16px}.rule-card-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:12px}.rule-title{display:flex;gap:10px;align-items:flex-start}.transport-icon{width:44px;height:44px;border-radius:16px;display:grid;place-items:center;font-size:22px;background:linear-gradient(145deg,#fff,#e7f6ff);box-shadow:8px 10px 20px rgba(16,100,176,.12),inset -4px -4px 10px rgba(16,100,176,.08)}.rule-card h4{margin:0;font-size:17px}.rule-card .mini{font-size:12px;color:var(--muted);font-weight:900}.status-row{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 2px}.note-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.text-edit-btn{width:100%;border:1px solid var(--line);border-radius:15px;padding:11px 12px;background:rgba(255,255,255,.76);text-align:left;font-weight:900;color:#334155}.text-edit-btn.has-text{background:#edf9f4;color:var(--green);border-color:rgba(15,143,112,.22)}.text-edit-btn.empty{background:#f8fafc;color:#64748b}.back-link{white-space:nowrap}
     .modal{position:fixed;inset:0;background:rgba(16,32,51,.28);display:none;place-items:center;padding:20px;z-index:50}.modal.show{display:grid}.dialog{width:min(980px,100%);max-height:92vh;overflow:auto;padding:20px}.dialog.text-dialog{width:min(760px,100%)}.dialog-head{display:flex;justify-content:space-between;gap:12px;align-items:center;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:14px}.dialog h3{font-size:24px;margin:0}.large-text{min-height:310px;resize:vertical;line-height:1.5;font-size:15px}
-    table{width:100%;border-collapse:separate;border-spacing:0 8px}td,th{text-align:left;padding:10px;background:rgba(255,255,255,.72);font-size:13px}th{color:#52627a;background:transparent}.toast{position:fixed;right:20px;bottom:20px;padding:14px 16px;border-radius:16px;background:#102033;color:white;display:none;z-index:80}
-    @media(max-width:900px){.app{grid-template-columns:1fr}.side{position:relative;height:auto}.stats{grid-template-columns:1fr 1fr}.form-grid,.detail-head,.note-grid{grid-template-columns:1fr}.top{align-items:flex-start;flex-direction:column}}
+    table{width:100%;border-collapse:separate;border-spacing:0 8px}td,th{text-align:left;padding:10px;background:rgba(255,255,255,.72);font-size:13px;vertical-align:top}th{color:#52627a;background:transparent}.toast{position:fixed;right:20px;bottom:20px;padding:14px 16px;border-radius:16px;background:#102033;color:white;display:none;z-index:80}
+    .import-box{padding:18px;display:grid;gap:14px}.file-row{display:flex;gap:10px;align-items:end;flex-wrap:wrap}.file-row .field{flex:1;min-width:240px}.progress-box{display:none;gap:8px}.progress-box.show{display:grid}.progress-track{height:14px;border-radius:999px;background:#e5edf5;overflow:hidden;border:1px solid var(--line)}.progress-bar{height:100%;width:0;background:linear-gradient(90deg,var(--blue),var(--green));transition:width .25s ease}.progress-meta{display:flex;justify-content:space-between;gap:10px;font-size:13px;font-weight:900}.import-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px}.import-summary div{padding:12px;border-radius:18px;background:rgba(255,255,255,.72);border:1px solid var(--line)}.import-summary b{display:block;font-size:22px}.compare-wrap{overflow:visible}.compare-table td:first-child,.compare-table th:first-child{width:44px;text-align:center}.compare-table input[type=checkbox]{width:20px;height:20px;accent-color:var(--green)}.compare-table tr.not-selected{opacity:.48}.change-text{min-width:190px;line-height:1.45;white-space:normal}.change-code{font-family:Consolas,monospace;font-weight:900}.import-empty{text-align:center;padding:28px;color:var(--muted)}
+    @media(max-width:900px){.app{grid-template-columns:1fr}.side{position:relative;height:auto}.stats,.import-summary{grid-template-columns:1fr 1fr}.form-grid,.detail-head,.note-grid{grid-template-columns:1fr}.top{align-items:flex-start;flex-direction:column}.compare-table thead{display:none}.compare-table,.compare-table tbody,.compare-table tr,.compare-table td{display:block;width:100%}.compare-table tr{margin-bottom:12px;padding:10px;background:rgba(255,255,255,.72);border:1px solid var(--line);border-radius:18px}.compare-table td{background:transparent;padding:7px}.compare-table td:before{content:attr(data-label);display:block;font-size:11px;color:var(--muted);font-weight:900;margin-bottom:4px}.compare-table td:first-child{text-align:left;width:100%}}
   </style>
 </head>
 <body>
@@ -507,6 +544,7 @@ def _admin_page_v2() -> str:
     <nav class="nav">
       <button class="active" data-screen="home">🏠 Bosh sahifa</button>
       <button data-screen="dazvol">📄 Dazvol</button>
+      <button data-screen="importRules">📥 Qoidalarni import qilish</button>
       <button data-screen="fees">💰 Chegaradagi yig'imlar</button>
       <button data-screen="countries">🌍 Davlatlar</button>
     </nav>
@@ -551,6 +589,46 @@ def _admin_page_v2() -> str:
     <section id="countries" class="screen">
       <div class="toolbar glass"><input id="countrySearch" class="search" placeholder="Davlatni qidiring..." oninput="queueSearch('countries')" /><button class="btn primary" onclick="openCountryPage()">➕ Davlat qo'shish</button></div>
       <div id="countryCards" class="cards"></div>
+    </section>
+
+    <section id="importRules" class="screen">
+      <div class="import-box glass">
+        <div>
+          <h3 style="margin:0 0 6px">📥 Excel orqali qoidalarni yangilash</h3>
+          <div class="muted">Excel avval tahlil qilinadi. Hech bir qoida tasdiqlashdan oldin o'zgarmaydi.</div>
+        </div>
+        <div class="file-row">
+          <div class="field">
+            <label>📊 Dazvol qoidalari Excel fayli (.xlsx)</label>
+            <input id="permissionImportFile" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+          </div>
+          <button id="startImportButton" class="btn primary" onclick="startPermissionImport()">🔍 Tahlil qilish</button>
+        </div>
+        <div id="importProgress" class="progress-box">
+          <div class="progress-meta"><span id="importProgressText">Tayyorlanmoqda</span><span id="importProgressPercent">0%</span></div>
+          <div class="progress-track"><div id="importProgressBar" class="progress-bar"></div></div>
+        </div>
+      </div>
+      <div id="importPreview" style="display:none;gap:14px">
+        <div id="importSummary" class="import-summary"></div>
+        <div class="toolbar glass">
+          <div class="actions">
+            <button class="btn" onclick="selectImportChanges(true)">☑️ Barchasini tanlash</button>
+            <button class="btn" onclick="selectSafeImportChanges()">🛡️ Faqat xavfsizlari</button>
+            <button class="btn" onclick="selectImportChanges(false)">⬜ Tanlovni bekor qilish</button>
+          </div>
+          <div class="actions">
+            <select id="importActionFilter" onchange="renderImportChanges()"><option value="all">Barcha o'zgarishlar</option><option value="add">Qo'shiladigan</option><option value="update">Yangilanadigan</option><option value="delete">O'chiriladigan</option></select>
+            <button id="applyImportButton" class="btn primary" onclick="applyPermissionImport()">💾 Tanlanganlarni qo'llash</button>
+          </div>
+        </div>
+        <div class="glass detail-block compare-wrap">
+          <table class="compare-table">
+            <thead><tr><th>Tanlash</th><th>Davlat / tashuv</th><th>Amal</th><th>Avvalgi holat</th><th>Excel bo'yicha yangi holat</th><th>Tahrirlash</th></tr></thead>
+            <tbody id="importChangesBody"></tbody>
+          </table>
+        </div>
+      </div>
     </section>
 
     <section id="countryDetail" class="screen">
@@ -598,6 +676,27 @@ def _admin_page_v2() -> str:
   </div>
 </div>
 
+<div id="importEditModal" class="modal">
+  <div class="dialog glass text-dialog">
+    <div class="dialog-head"><h3 id="importEditTitle">Import o'zgarishini tahrirlash</h3><button class="btn" onclick="closeModal('importEditModal')">Yopish</button></div>
+    <input id="importEditId" type="hidden" />
+    <div id="importCountryFields" class="form-grid">
+      <div class="field full"><label>Davlat nomi</label><input id="importCountryName" /></div>
+    </div>
+    <div id="importRuleFields" class="form-grid">
+      <div class="field"><label>Ruxsatnoma</label><select id="importPermission"><option value="1">Majburiy</option><option value="2">Kerak emas</option><option value="3">Taqiqlangan</option></select></div>
+      <div class="field"><label>Yig'im</label><select id="importDues" onchange="toggleImportAmount()"><option value="0">Belgilanmagan</option><option value="1">Undiriladi</option><option value="2">Undirilmaydi</option><option value="3">Ruxsat turiga bog'liq</option></select></div>
+      <div id="importAmountField" class="field"><label>USD stavka</label><input id="importAmount" placeholder="400 yoki 100/150/200" /></div>
+      <div class="field"><label>Tashuv turi (ruscha)</label><input id="importVidName" /></div>
+      <div class="field full"><label>Admin izohi</label><textarea id="importAdminNote"></textarea></div>
+      <div class="field full"><label>Foydalanuvchiga izoh (UZ)</label><textarea id="importNoteUz"></textarea></div>
+      <div class="field full"><label>Foydalanuvchiga izoh (RU)</label><textarea id="importNoteRu"></textarea></div>
+      <div class="field full"><label>Foydalanuvchiga izoh (EN)</label><textarea id="importNoteEn"></textarea></div>
+    </div>
+    <div class="actions"><button class="btn primary" onclick="saveImportEdit()">✅ Tahrirni saqlash</button><button class="btn" onclick="closeModal('importEditModal')">Bekor qilish</button></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 <script>
 const vidLabels={"1":"Ikki tomonlama: O'zbekistondan","2":"Ikki tomonlama: O'zbekistonga","3":"Tranzit","4":"Uchinchi davlatga","5":"Uchinchi davlatdan","6":"Ichki tashuv","7":"Yuksiz kirish","8":"Yuksiz tranzit"};
@@ -605,6 +704,7 @@ const vidIcons={"1":"🚚🇺🇿","2":"🏁🇺🇿","3":"🔁🚛","4":"🌍�
 const permissionText={"1":"⚠️ ruxsat kerak","2":"✅ ruxsat kerak emas","3":"⛔ taqiqlangan"};
 const duesText={"0":"⚪ belgilanmagan","1":"💵 yig'im bor","2":"✅ yig'im yo'q","3":"🔎 ruxsat turiga bog'liq"};
 let permissionData={countries:[]}; let countryCache={}; let activeDirection='import'; let feeItems=[]; let selectedCountry=null; let lastCountryListScreen='dazvol'; let editingTextFieldId='';
+let importJobId=''; let importChanges=[]; let importPollTimer=null;
 const searchTimers={dazvol:null,countries:null};
 function queueSearch(section){clearTimeout(searchTimers[section]);searchTimers[section]=setTimeout(()=>{(section==='dazvol'?loadDazvol():loadCountries()).catch(e=>toast(e.message))},300)}
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -614,7 +714,7 @@ function showScreen(name,title=''){document.querySelectorAll('.screen').forEach(
 document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>showScreen(b.dataset.screen,b.textContent.trim()));
 document.querySelectorAll('.fee-tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.fee-tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');activeDirection=b.dataset.direction;loadFeeItems();});
 function closeModal(id){document.getElementById(id).classList.remove('show')}
-function backToCountryList(){showScreen(lastCountryListScreen,lastCountryListScreen==='dazvol'?'📄 Dazvol':'🌍 Davlatlar')}
+function backToCountryList(){showScreen(lastCountryListScreen,lastCountryListScreen==='dazvol'?'📄 Dazvol':'🌍 Davlatlar');(lastCountryListScreen==='dazvol'?loadDazvol():loadCountries()).catch(e=>toast(e.message))}
 function pill(text,kind){return `<span class="pill ${kind}">${esc(text)}</span>`}
 function rulePills(rules){return Object.entries(rules||{}).map(([vid,r])=>pill(`${vid}: R${r.permission_cd}`,r.permission_cd==='1'?'warn':r.permission_cd==='3'?'bad':'ok')+pill(`Y${r.dues_cd}`,r.dues_cd==='1'?'warn':r.dues_cd==='2'?'ok':'info')).join('')}
 function rememberCountries(rows){(rows||[]).forEach(c=>{countryCache[c.code]=c})}
@@ -633,8 +733,8 @@ function selectHtml(id,val,opts,onchange=''){return `<select id="${id}" ${onchan
 function toggleFeeFields(vid){const show=document.getElementById('d'+vid)?.value==='1';const amount=document.getElementById('a'+vid);if(amount)amount.closest('.field').style.display=show?'grid':'none';}
 function renderExceptions(){const list=selectedCountry.exceptions||[];exceptionsBox.innerHTML=list.length?list.slice(0,12).map(x=>`<div class="card glass"><b>${esc(x.exception_cd||'')}</b><p class="muted">${esc(x.exception_desc||'')}</p></div>`).join(''):'<div class="card glass muted">Istisno kiritilmagan</div>'}
 async function refreshCountry(code){const d=await api('/admin/api/permission?q='+encodeURIComponent(code));rememberCountries(d.countries);return countryCache[code]||d.countries[0]}
-async function saveRule(vid){await api('/admin/api/rule',{method:'POST',body:JSON.stringify({country_code:countryCode.value,vid_cd:vid,permission_cd:document.getElementById('p'+vid).value,dues_cd:document.getElementById('d'+vid).value,dues_amount_usd:document.getElementById('a'+vid).value,dues_amount_note_uz:document.getElementById('uz'+vid).value,dues_amount_note_ru:document.getElementById('ru'+vid).value,dues_amount_note_en:document.getElementById('en'+vid).value,exception_cd:'0',exception_name_ru:'',admin_note:document.getElementById('n'+vid).value})});toast('Qoida saqlandi');await loadAll();const c=await refreshCountry(countryCode.value);if(c)openCountryPage(countryCode.value)}
-async function saveCountry(){await api('/admin/api/country',{method:'POST',body:JSON.stringify({code:countryCode.value,name:countryName.value,name_uz:countryNameUz.value})});toast('Davlat saqlandi');await loadAll();const c=await refreshCountry(countryCode.value);if(c)openCountryPage(countryCode.value)}
+async function saveRule(vid){await api('/admin/api/rule',{method:'POST',body:JSON.stringify({country_code:countryCode.value,vid_cd:vid,permission_cd:document.getElementById('p'+vid).value,dues_cd:document.getElementById('d'+vid).value,dues_amount_usd:document.getElementById('a'+vid).value,dues_amount_note_uz:document.getElementById('uz'+vid).value,dues_amount_note_ru:document.getElementById('ru'+vid).value,dues_amount_note_en:document.getElementById('en'+vid).value,exception_cd:'0',exception_name_ru:'',admin_note:document.getElementById('n'+vid).value})});toast('Qoida saqlandi');const [c]=await Promise.all([refreshCountry(countryCode.value),loadSummary()]);if(c)openCountryPage(countryCode.value)}
+async function saveCountry(){await api('/admin/api/country',{method:'POST',body:JSON.stringify({code:countryCode.value,name:countryName.value,name_uz:countryNameUz.value})});toast('Davlat saqlandi');const [c]=await Promise.all([refreshCountry(countryCode.value),loadSummary()]);if(c)openCountryPage(countryCode.value)}
 async function deleteCountry(){if(!countryCode.value||!confirm('Davlatni o‘chirasizmi?'))return;await api('/admin/api/country/'+countryCode.value,{method:'DELETE'});toast('Davlat o‘chirildi');await loadAll();backToCountryList()}
 async function loadCountries(){const q=encodeURIComponent(countrySearch.value||'');const d=await api('/admin/api/permission?q='+q);rememberCountries(d.countries);countryCards.innerHTML=d.countries.map(countryCard).join('')||'<div class="card glass">Maʼlumot topilmadi</div>'}
 async function loadFeeItems(){const d=await api('/admin/api/fee-items?direction='+activeDirection);feeItems=d.items;feeCards.innerHTML=feeItems.map(feeCard).join('')||'<div class="card glass">Bu yo‘nalishda yig‘im yo‘q</div>'}
@@ -642,6 +742,21 @@ function feeCard(f){return `<button class="card glass" style="text-align:left" o
 function openFeeModal(id=''){const f=feeItems.find(x=>x.id===id)||{id:'',title:'',amount:'',condition:'',basis:'',enabled:true};feeId.value=f.id;feeDirection.value=activeDirection;feeTitle.value=f.title;feeAmount.value=f.amount;feeCondition.value=f.condition;feeBasis.value=f.basis;feeEnabled.value=String(f.enabled!==false);feeModalTitle.textContent=f.id?'Yig‘imni tahrirlash':'Yangi yig‘im';feeModal.classList.add('show')}
 async function saveFeeItem(){await api('/admin/api/fee-item',{method:'POST',body:JSON.stringify({id:feeId.value,direction:feeDirection.value,title:feeTitle.value,amount:feeAmount.value,condition:feeCondition.value,basis:feeBasis.value,enabled:feeEnabled.value==='true'})});activeDirection=feeDirection.value;closeModal('feeModal');toast('Yig‘im saqlandi');await loadFeeItems()}
 async function deleteFeeItem(){if(!feeId.value||!confirm('Yig‘imni o‘chirasizmi?'))return;await api(`/admin/api/fee-item/${feeDirection.value}/${feeId.value}`,{method:'DELETE'});closeModal('feeModal');toast('Yig‘im o‘chirildi');await loadFeeItems()}
+function setImportProgress(percent,message){const value=Math.max(0,Math.min(100,Math.round(percent)));importProgress.classList.add('show');importProgressBar.style.width=value+'%';importProgressPercent.textContent=value+'%';importProgressText.textContent=message||'Tahlil qilinmoqda'}
+function importActionLabel(action){return action==='add'?'➕ Qo\'shiladi':action==='delete'?'🗑️ O\'chiriladi':'🔄 Yangilanadi'}
+function importActionKind(action){return action==='add'?'ok':action==='delete'?'bad':'warn'}
+function importValueText(change,side){const value=change[side]||{};if(change.kind==='country')return value.name||'—';if(side==='after'&&change.action==='delete')return 'Qoida o\'chiriladi';const permission={1:'Ruxsat majburiy',2:'Ruxsat kerak emas',3:'Tashuv taqiqlangan'};const dues={0:'Yig\'im belgilanmagan',1:'Yig\'im undiriladi',2:'Yig\'im undirilmaydi',3:'Yig\'im ruxsat turiga bog\'liq'};const amount=value.dues_amount_usd?` · ${value.dues_amount_usd} USD`:'';return `${permission[value.permission_cd]||'Ruxsat: —'}<br>${dues[value.dues_cd]||'Yig\'im: —'}${esc(amount)}`}
+function renderImportChanges(){const filter=importActionFilter.value||'all';const rows=importChanges.filter(change=>filter==='all'||change.action===filter);importChangesBody.innerHTML=rows.length?rows.map(change=>`<tr class="${change.selected?'':'not-selected'}"><td data-label="Tanlash"><input type="checkbox" ${change.selected?'checked':''} onchange="toggleImportChange('${esc(change.id)}',this.checked)" title="Ushbu o'zgarishni qo'llash" /></td><td data-label="Davlat / tashuv"><div class="change-code">${esc(change.country_code)} · ${esc(change.country_name)}</div><div class="muted">${change.kind==='country'?'Davlat ma\'lumoti':`Tashuv ${esc(change.vid_cd)} · ${esc(change.vid_name)}`}</div></td><td data-label="Amal">${pill(importActionLabel(change.action),importActionKind(change.action))}</td><td data-label="Avvalgi holat"><div class="change-text">${importValueText(change,'before')}</div></td><td data-label="Yangi holat"><div class="change-text">${importValueText(change,'after')}</div></td><td data-label="Tahrirlash">${change.action==='delete'?'<span class="muted">Checkboxni olib tashlab bekor qiling</span>':`<button class="btn" onclick="editImportChange('${esc(change.id)}')">✏️ Tahrirlash</button>`}</td></tr>`).join(''):'<tr><td colspan="6" class="import-empty">Tanlangan filtr bo\'yicha o\'zgarish topilmadi.</td></tr>'}
+function toggleImportChange(id,selected){const change=importChanges.find(item=>item.id===id);if(change)change.selected=selected;renderImportChanges()}
+function selectImportChanges(selected){importChanges.forEach(change=>change.selected=selected);renderImportChanges()}
+function selectSafeImportChanges(){importChanges.forEach(change=>change.selected=change.action!=='delete');renderImportChanges()}
+function renderImportPreview(job){importChanges=(job.changes||[]).map(change=>({...change,selected:change.selected!==false,after:{...(change.after||{})}}));const s=job.summary||{};importSummary.innerHTML=`<div class="glass"><b>${s.countries||0}</b><span>Excel davlatlari</span></div><div class="glass"><b>${s.active_rules||0}</b><span>Faol qoidalar</span></div><div class="glass"><b>${s.unchanged_rules||0}</b><span>O'zgarmagan</span></div><div class="glass"><b>${s.add||0}</b><span>Qo'shiladi</span></div><div class="glass"><b>${s.update||0}</b><span>Yangilanadi</span></div><div class="glass"><b>${s.delete||0}</b><span>O'chirish taklifi</span></div><div class="glass"><b>${s.invalid_rows||0}</b><span>Noto'g'ri satr</span></div><div class="glass"><b>${s.duplicates||0}</b><span>Takroriy satr</span></div>`;importPreview.style.display='grid';renderImportChanges();applyImportButton.disabled=importChanges.length===0}
+function editImportChange(id){const change=importChanges.find(item=>item.id===id);if(!change||change.action==='delete')return;importEditId.value=id;importEditTitle.textContent=`${change.country_code} · ${change.kind==='country'?'Davlat nomi':'Tashuv '+change.vid_cd}`;const isCountry=change.kind==='country';importCountryFields.style.display=isCountry?'grid':'none';importRuleFields.style.display=isCountry?'none':'grid';if(isCountry){importCountryName.value=change.after.name||''}else{const value=change.after||{};importPermission.value=value.permission_cd||'2';importDues.value=value.dues_cd||'2';importAmount.value=value.dues_amount_usd||'';importVidName.value=value.vid_name_ru||'';importAdminNote.value=value.admin_note||'';importNoteUz.value=value.dues_amount_note_uz||'';importNoteRu.value=value.dues_amount_note_ru||'';importNoteEn.value=value.dues_amount_note_en||'';toggleImportAmount()}importEditModal.classList.add('show')}
+function toggleImportAmount(){importAmountField.style.display=importDues.value==='1'?'grid':'none'}
+function saveImportEdit(){const change=importChanges.find(item=>item.id===importEditId.value);if(!change)return;if(change.kind==='country'){change.after.name=importCountryName.value.trim()}else{const permissionNames={1:'Обязательно',2:'Не обязательно',3:'Запрещен'};const duesNames={0:'-не выбрано-',1:'Сбор обязательно',2:'Сбор не обязательно',3:'Сбор зависит от вида разрешения'};change.after.permission_cd=importPermission.value;change.after.permission_name_ru=permissionNames[importPermission.value];change.after.dues_cd=importDues.value;change.after.dues_name_ru=duesNames[importDues.value];change.after.dues_amount_usd=importDues.value==='1'?importAmount.value.trim():'';change.after.vid_name_ru=importVidName.value.trim();change.after.admin_note=importAdminNote.value.trim();change.after.dues_amount_note_uz=importNoteUz.value.trim();change.after.dues_amount_note_ru=importNoteRu.value.trim();change.after.dues_amount_note_en=importNoteEn.value.trim()}change.selected=true;closeModal('importEditModal');renderImportChanges();toast('Import o\'zgarishi tahrirlandi')}
+function startPermissionImport(){const file=permissionImportFile.files?.[0];if(!file){toast('Avval .xlsx faylni tanlang');return}if(!file.name.toLowerCase().endsWith('.xlsx')){toast('Faqat .xlsx fayl tanlang');return}if(file.size>10*1024*1024){toast('Fayl 10 MB dan oshmasligi kerak');return}clearTimeout(importPollTimer);importPreview.style.display='none';startImportButton.disabled=true;setImportProgress(1,'Excel serverga yuklanmoqda');const form=new FormData();form.append('file',file);const xhr=new XMLHttpRequest();xhr.open('POST','/admin/api/permission-import');xhr.upload.onprogress=event=>{if(event.lengthComputable)setImportProgress(Math.max(1,event.loaded/event.total*20),'Excel serverga yuklanmoqda')};xhr.onerror=()=>{startImportButton.disabled=false;setImportProgress(0,'Faylni yuborib bo\'lmadi');toast('Server bilan aloqa xatosi')};xhr.onload=()=>{let data;try{data=JSON.parse(xhr.responseText)}catch(e){data={ok:false,error:xhr.responseText||'Server javobi xato'}}if(xhr.status===401){location.href='/admin';return}if(xhr.status<200||xhr.status>=300||data.ok===false){startImportButton.disabled=false;setImportProgress(0,data.error||'Import boshlanmadi');toast(data.error||'Import boshlanmadi');return}importJobId=data.job_id;setImportProgress(20,'Excel qoidalari o\'qilmoqda');pollPermissionImport()};xhr.send(form)}
+async function pollPermissionImport(){try{const job=await api('/admin/api/permission-import/'+importJobId);if(job.status==='queued'||job.status==='processing'){setImportProgress(20+(job.progress||0)*.8,job.message);importPollTimer=setTimeout(pollPermissionImport,500);return}startImportButton.disabled=false;if(job.status==='error'){setImportProgress(0,job.error||job.message);toast(job.error||'Import tahlilida xatolik');return}setImportProgress(100,job.message||'Taqqoslash tayyor');renderImportPreview(job)}catch(e){startImportButton.disabled=false;setImportProgress(0,e.message);toast(e.message)}}
+async function applyPermissionImport(){const selected=importChanges.filter(change=>change.selected);if(!selected.length){toast('Kamida bitta o\'zgarishni tanlang');return}const deletes=selected.filter(change=>change.action==='delete').length;if(deletes&&!confirm(`${deletes} ta qoida o'chiriladi. Davom etasizmi?`))return;applyImportButton.disabled=true;try{const result=await api('/admin/api/permission-import/'+importJobId+'/apply',{method:'POST',body:JSON.stringify({changes:selected.map(change=>({id:change.id,after:change.after}))})});setImportProgress(100,`${result.applied_count} ta o'zgarish qo'llandi`);toast(`${result.applied_count} ta o'zgarish muvaffaqiyatli qo'llandi`);importChanges.forEach(change=>change.selected=false);renderImportChanges();await loadAll()}catch(e){toast(e.message)}finally{applyImportButton.disabled=false}}
 async function logout(){await fetch('/admin/logout',{method:'POST'});location.href='/admin'}
 async function loadAll(){await Promise.all([loadSummary(),loadCountrySections(),loadFeeItems()])}
 loadAll().catch(e=>toast(e.message));
@@ -650,6 +765,8 @@ loadAll().catch(e=>toast(e.message));
 
 
 def setup_admin_routes(app: web.Application, settings: Settings) -> None:
+    permission_write_lock = asyncio.Lock()
+
     async def admin_index(request: web.Request) -> web.Response:
         if not _is_authenticated(request, settings):
             return web.Response(text=_login_page(), content_type="text/html")
@@ -834,6 +951,141 @@ def setup_admin_routes(app: web.Application, settings: Settings) -> None:
         _write_json(settings.fees_rules_path, fees_data)
         return web.json_response({"ok": True})
 
+    async def start_permission_import(request: web.Request) -> web.Response:
+        _require_admin(request, settings)
+        _cleanup_import_jobs()
+        if not request.content_type.startswith("multipart/"):
+            return _json_error("Excel fayli multipart shaklida yuborilishi kerak.")
+
+        reader = await request.multipart()
+        field = await reader.next()
+        if field is None or field.name != "file":
+            return _json_error("Import uchun Excel fayli tanlanmagan.")
+        filename = Path(field.filename or "qoidalar.xlsx").name
+        if Path(filename).suffix.lower() != ".xlsx":
+            return _json_error("Faqat .xlsx formatidagi fayl qabul qilinadi.")
+
+        import_dir = settings.permission_rules_path.parent / ".imports"
+        import_dir.mkdir(parents=True, exist_ok=True)
+        job_id = uuid.uuid4().hex
+        temp_path = import_dir / f"{job_id}.xlsx"
+        size = 0
+        try:
+            with temp_path.open("wb") as output:
+                while True:
+                    chunk = await field.read_chunk(size=64 * 1024)
+                    if not chunk:
+                        break
+                    size += len(chunk)
+                    if size > MAX_IMPORT_FILE_BYTES:
+                        raise PermissionImportError("Excel fayli 10 MB dan oshmasligi kerak.")
+                    output.write(chunk)
+        except Exception as exc:
+            temp_path.unlink(missing_ok=True)
+            if isinstance(exc, PermissionImportError):
+                return _json_error(str(exc), 413)
+            raise
+        if size == 0:
+            temp_path.unlink(missing_ok=True)
+            return _json_error("Tanlangan Excel fayli bo'sh.")
+
+        job: dict[str, Any] = {
+            "job_id": job_id,
+            "status": "queued",
+            "progress": 0,
+            "message": "Import navbatga qo'yildi",
+            "filename": filename,
+            "created_at": time.time(),
+            "base_mtime_ns": settings.permission_rules_path.stat().st_mtime_ns,
+            "changes": [],
+            "summary": {},
+            "error": "",
+        }
+        IMPORT_JOBS[job_id] = job
+
+        async def process_import() -> None:
+            job["status"] = "processing"
+
+            def update_progress(percent: int, message: str) -> None:
+                job["progress"] = percent
+                job["message"] = message
+
+            try:
+                preview = await asyncio.to_thread(
+                    build_permission_import_preview,
+                    temp_path,
+                    settings.permission_rules_path,
+                    filename,
+                    update_progress,
+                )
+                job["changes"] = preview["changes"]
+                job["summary"] = preview["summary"]
+                job["status"] = "ready"
+                job["progress"] = 100
+                job["message"] = "Taqqoslash tayyor"
+            except Exception as exc:
+                job["status"] = "error"
+                job["error"] = str(exc)
+                job["message"] = "Import tahlilida xatolik"
+            finally:
+                temp_path.unlink(missing_ok=True)
+
+        task = asyncio.create_task(process_import())
+        IMPORT_TASKS.add(task)
+        task.add_done_callback(IMPORT_TASKS.discard)
+        return web.json_response({"ok": True, "job_id": job_id, "filename": filename}, status=202)
+
+    async def permission_import_status(request: web.Request) -> web.Response:
+        _require_admin(request, settings)
+        _cleanup_import_jobs()
+        job = IMPORT_JOBS.get(request.match_info["job_id"])
+        if not job:
+            return _json_error("Import jarayoni topilmadi yoki muddati tugagan.", 404)
+        return web.json_response(_import_job_response(job))
+
+    async def apply_permission_import(request: web.Request) -> web.Response:
+        _require_admin(request, settings)
+        job = IMPORT_JOBS.get(request.match_info["job_id"])
+        if not job:
+            return _json_error("Import jarayoni topilmadi yoki muddati tugagan.", 404)
+        if job.get("status") != "ready":
+            return _json_error("Import natijasi hali qo'llashga tayyor emas.", 409)
+        body = await request.json()
+        submitted_changes = body.get("changes")
+        if not isinstance(submitted_changes, list) or not submitted_changes:
+            return _json_error("Kamida bitta o'zgarishni tanlang.")
+        if len(submitted_changes) > len(job.get("changes", [])):
+            return _json_error("Tanlangan o'zgarishlar soni noto'g'ri.")
+
+        async with permission_write_lock:
+            current_mtime_ns = settings.permission_rules_path.stat().st_mtime_ns
+            if current_mtime_ns != job.get("base_mtime_ns"):
+                return _json_error(
+                    "Taqqoslashdan keyin qoidalar o'zgargan. Excelni qayta tahlil qiling.",
+                    409,
+                )
+            data = _read_json(settings.permission_rules_path)
+            backup_path = settings.permission_rules_path.with_name(
+                settings.permission_rules_path.stem + ".before-import.json"
+            )
+            _write_json(backup_path, data)
+            try:
+                applied_count = apply_permission_import_changes(
+                    data,
+                    job.get("changes", []),
+                    submitted_changes,
+                    str(job.get("filename") or "import.xlsx"),
+                )
+            except PermissionImportError as exc:
+                return _json_error(str(exc))
+            data.setdefault("source", {})["last_admin_update"] = int(time.time())
+            _write_json(settings.permission_rules_path, data)
+            job["status"] = "applied"
+            job["message"] = "Tanlangan o'zgarishlar qo'llandi"
+            job["applied_count"] = applied_count
+            job["base_mtime_ns"] = settings.permission_rules_path.stat().st_mtime_ns
+        return web.json_response(_import_job_response(job))
+
     app.router.add_get("/admin", admin_index)
     app.router.add_get("/admin/dashboard", admin_index)
     app.router.add_post("/admin/login", login)
@@ -851,3 +1103,6 @@ def setup_admin_routes(app: web.Application, settings: Settings) -> None:
     app.router.add_get("/admin/api/fee-items", fee_items)
     app.router.add_post("/admin/api/fee-item", save_fee_item)
     app.router.add_delete("/admin/api/fee-item/{direction}/{item_id}", delete_fee_item)
+    app.router.add_post("/admin/api/permission-import", start_permission_import)
+    app.router.add_get("/admin/api/permission-import/{job_id}", permission_import_status)
+    app.router.add_post("/admin/api/permission-import/{job_id}/apply", apply_permission_import)

@@ -14,7 +14,7 @@ from app.handlers import build_router
 from app.storage import UserStorage, create_user_storage
 
 logger = logging.getLogger(__name__)
-APP_VERSION = "2026-08-11-performance-v8"
+APP_VERSION = "2026-08-11-simple-onboarding-v10"
 
 
 def create_bot(settings: Settings) -> Bot:
@@ -46,7 +46,7 @@ async def start_health_server(settings: Settings) -> None:
     async def health(_: web.Request) -> web.Response:
         return web.json_response({"ok": True, "service": "nazoratbot-telegram", "version": APP_VERSION})
 
-    app = web.Application()
+    app = web.Application(client_max_size=12 * 1024 * 1024)
     app.router.add_get("/", index)
     app.router.add_get("/health", health)
     setup_admin_routes(app, settings)
@@ -109,7 +109,7 @@ def run_webhook() -> None:
     dispatcher.startup.register(on_startup)
     dispatcher.shutdown.register(on_shutdown)
 
-    app = web.Application()
+    app = web.Application(client_max_size=12 * 1024 * 1024)
     app.router.add_get("/", index)
     app.router.add_get("/health", health)
     setup_admin_routes(app, settings)
