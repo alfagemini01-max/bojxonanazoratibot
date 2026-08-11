@@ -4,16 +4,12 @@ Bu papka xorijiy yuk avtotransport vositalarining O'zbekiston Respublikasiga kir
 
 Bot oqimi:
 
-1. `/start` bosilganda foydalanuvchidan bot tilini tanlash so'raladi.
-2. Foydalanuvchidan ism so'raladi.
-3. Telefon raqamini Telegram kontakt tugmasi orqali yuborish so'raladi.
-4. Foydalanish shartlari rasm ko'rinishida yuboriladi. Rasm hali bo'lmasa, bot PDF fallback yoki matnli ogohlantirish beradi.
-5. Foydalanuvchi `Shartlarga roziman` tugmasini bosadi.
-6. Rozilik vaqti foydalanuvchi bazasida saqlanadi. Render uchun tashqi Postgres ishlatish tavsiya etiladi.
-7. Asosiy menyuda `Dazvol` tugmasi orqali tashuv boshlangan davlat, tashuv tugaydigan davlat va avtotransport ro'yxatdan o'tgan davlat ketma-ket kiritiladi.
-8. Asosiy menyudagi `Chegaradagi yig'imlar` tugmasi orqali chegara bojxona postida undirilishi mumkin bo'lgan to'lovlar kalkulyatori ishga tushadi.
-8. Har bir davlat nomi yozilganda bot 75 foizdan yuqori mos kelgan davlatlarni kod va nomi bilan tugma ko'rinishida chiqaradi.
-9. Foydalanuvchi ro'yxatdan kerakli davlatni tanlagandan keyin bot tashuv turini avtomatik aniqlaydi va ruxsatnoma talab etilishi hamda yig'im undirilishi bo'yicha xabar qaytaradi.
+1. `/start` bosilganda yangi foydalanuvchidan faqat bot tilini tanlash so'raladi.
+2. Til avval tanlangan bo'lsa, asosiy menyu darhol ochiladi.
+3. `Dazvol` tugmasi orqali tashuv boshlangan davlat, tashuv tugaydigan davlat va avtotransport ro'yxatdan o'tgan davlat ketma-ket kiritiladi.
+4. `Chegaradagi yig'imlar` tugmasi orqali chegara bojxona postida undirilishi mumkin bo'lgan to'lovlar kalkulyatori ishga tushadi.
+5. Har bir davlat nomi yozilganda bot mos kelgan davlatlarni kod va nomi bilan tugma ko'rinishida chiqaradi.
+6. Davlatlar tanlangandan keyin bot tashuv turini avtomatik aniqlaydi va ruxsatnoma hamda yig'im bo'yicha javob qaytaradi.
 
 Bot O'zbek, Rus va Ingliz tillarida ishlaydi. Tilni asosiy menyudagi `Tilni o'zgartirish` tugmasi yoki `/language` buyrug'i orqali almashtirish mumkin.
 
@@ -76,32 +72,6 @@ USER_DATABASE_URL=postgresql://user:password@host:5432/dbname?sslmode=require
 
 `USER_DATABASE_URL` bo'lmasa bot SQLite faylga yozadi. Render Free Web Service redeploy/restart bo'lganda local fayllar o'chishi mumkin, shu sababli ishlab turgan bot uchun Postgres tavsiya etiladi.
 
-## Foydalanish shartlari rasmi
-
-Bot foydalanish shartlarini Telegram photo ko'rinishida yuboradi. Rasm quyidagi manzilda bo'lishi kerak:
-
-```text
-assets/foydalanish_shartlari.png
-```
-
-Kerak bo'lsa `.env` yoki Render Environment Variables orqali boshqa rasm yo'lini ko'rsatish mumkin:
-
-```text
-TERMS_IMAGE_PATH=assets/foydalanish_shartlari.png
-```
-
-Bot rasmni birinchi marta yuborgandan keyin Render logida `Terms photo file_id cached: ...` degan yozuv chiqadi. Shu `file_id` ni Render envga qo'ysangiz, keyingi deploylardan keyin ham rasm Telegram serveridan juda tez yuboriladi:
-
-```text
-TERMS_PHOTO_FILE_ID=telegram_file_id
-```
-
-PDF fallback sifatida qoldirilgan:
-
-```text
-TERMS_PDF_PATH=assets/foydalanish_shartlari.pdf
-```
-
 ## Ma'lumot manbai
 
 Bot `data/permission_rules.json` faylidagi spravochnik orqali ishlaydi. JSON fayl `Dazvollar davlatlar kesimida.xlsx` va `Dazvol istisnolar.xlsx` fayllari asosida tayyorlangan.
@@ -150,6 +120,11 @@ Panel orqali quyidagilar boshqariladi:
 5. Dazvol qoidasi bo'yicha yig'im undirilsa, USD stavka va foydalanuvchiga chiqadigan UZ/RU/EN izoh kiritish.
 6. Chegaradagi yig'imlar import, eksport va tranzit yo'nalishlari bo'yicha alohida boshqariladi.
 7. Yig'im turi, miqdori, qo'llanish sharti va huquqiy asosi oddiy forma orqali qo'shiladi, o'zgartiriladi yoki o'chiriladi.
+8. `Qoidalarni import qilish` bo'limida `Dazvollar davlatlar kesimida.xlsx` shaklidagi fayl yuklanadi.
+9. Import jarayoni yuklash va tahlil foizini ko'rsatadi, so'ng mavjud va yangi qiymatlarni taqqoslaydi.
+10. Har bir o'zgarish checkbox orqali alohida tanlanadi, tahrirlanadi yoki importdan chiqariladi.
+11. `ISDELETED=1` yozuvlari xavfsizlik uchun dastlab tanlanmaydi; ularni o'chirish admin tomonidan alohida tasdiqlanadi.
+12. Importdan avvalgi qoidalar `data/permission_rules.before-import.json` vaqtinchalik zaxira nusxasida saqlanadi.
 
 Render Environment Variables ichida admin login va parolni albatta o'zgartiring:
 

@@ -5,5 +5,7 @@ __pycache__/
 venv/
 data/*.sqlite3
 data/*.sqlite3-*
+data/.imports/
+data/*.before-import.json
 .pytest_cache/
 .mypy_cache/
