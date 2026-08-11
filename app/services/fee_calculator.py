@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone as datetime_timezone
 from html import escape as html_escape
 from pathlib import Path
+from time import monotonic
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from app.services.permit import (
@@ -80,6 +81,8 @@ class FeeCalculator:
     def __init__(self, data_path: Path, bhm_value: int, usd_rate: float) -> None:
         self.data_path = data_path
         self._mtime_ns = 0
+        self._last_reload_check = 0.0
+        self._reload_check_interval = 1.0
         self.data = {}
         self.bhm_value = int(bhm_value or self.data.get("bhm", {}).get("value", 412000))
         self.usd_rate = float(usd_rate or 0) or 12600.0
@@ -93,6 +96,10 @@ class FeeCalculator:
         self.legal_basis = self.data.get("legal_basis", {})
 
     def reload_if_changed(self) -> None:
+        now = monotonic()
+        if now - self._last_reload_check < self._reload_check_interval:
+            return
+        self._last_reload_check = now
         try:
             mtime_ns = self.data_path.stat().st_mtime_ns
         except OSError:

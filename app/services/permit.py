@@ -7,6 +7,7 @@ from difflib import SequenceMatcher
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone as datetime_timezone
 from pathlib import Path
+from time import monotonic
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 
@@ -174,6 +175,8 @@ class PermitRuleService:
     def __init__(self, data_path: Path) -> None:
         self.data_path = data_path
         self._mtime_ns = 0
+        self._last_reload_check = 0.0
+        self._reload_check_interval = 1.0
         self._load_data()
 
     def _load_data(self) -> None:
@@ -188,6 +191,10 @@ class PermitRuleService:
         self.country_candidates = self._build_country_candidates()
 
     def reload_if_changed(self) -> None:
+        now = monotonic()
+        if now - self._last_reload_check < self._reload_check_interval:
+            return
+        self._last_reload_check = now
         try:
             mtime_ns = self.data_path.stat().st_mtime_ns
         except OSError:
