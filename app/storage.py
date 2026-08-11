@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone as datetime_timezone
 from pathlib import Path
+from time import monotonic
 from typing import Protocol
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -38,6 +39,74 @@ class UserStorage(Protocol):
     async def accept_terms(self, user_id: int) -> str: ...
 
     async def get_profile(self, user_id: int) -> UserProfile | None: ...
+
+
+class CachedUserStorage:
+    """Small in-process cache that avoids repeated profile reads from PostgreSQL."""
+
+    def __init__(self, backend: UserStorage, ttl_seconds: float = 30.0, max_entries: int = 2048) -> None:
+        self.backend = backend
+        self.ttl_seconds = ttl_seconds
+        self.max_entries = max_entries
+        self._profiles: dict[int, tuple[float, UserProfile | None]] = {}
+
+    async def init(self) -> None:
+        await self.backend.init()
+
+    async def close(self) -> None:
+        self._profiles.clear()
+        await self.backend.close()
+
+    def _invalidate(self, user_id: int) -> None:
+        self._profiles.pop(user_id, None)
+
+    def _trim(self) -> None:
+        if len(self._profiles) < self.max_entries:
+            return
+        now = monotonic()
+        expired = [user_id for user_id, (expires_at, _) in self._profiles.items() if expires_at <= now]
+        for user_id in expired:
+            self._profiles.pop(user_id, None)
+        if len(self._profiles) >= self.max_entries:
+            oldest_user_id = min(self._profiles, key=lambda user_id: self._profiles[user_id][0])
+            self._profiles.pop(oldest_user_id, None)
+
+    async def upsert_telegram_user(
+        self,
+        user_id: int,
+        username: str | None,
+        telegram_full_name: str | None,
+    ) -> None:
+        await self.backend.upsert_telegram_user(user_id, username, telegram_full_name)
+        self._invalidate(user_id)
+
+    async def set_full_name(self, user_id: int, full_name: str) -> None:
+        await self.backend.set_full_name(user_id, full_name)
+        self._invalidate(user_id)
+
+    async def set_phone(self, user_id: int, phone: str) -> None:
+        await self.backend.set_phone(user_id, phone)
+        self._invalidate(user_id)
+
+    async def set_language(self, user_id: int, language_code: str) -> None:
+        await self.backend.set_language(user_id, language_code)
+        self._invalidate(user_id)
+
+    async def accept_terms(self, user_id: int) -> str:
+        accepted_at = await self.backend.accept_terms(user_id)
+        self._invalidate(user_id)
+        return accepted_at
+
+    async def get_profile(self, user_id: int) -> UserProfile | None:
+        now = monotonic()
+        cached = self._profiles.get(user_id)
+        if cached and cached[0] > now:
+            return cached[1]
+        self._profiles.pop(user_id, None)
+        profile = await self.backend.get_profile(user_id)
+        self._trim()
+        self._profiles[user_id] = (now + self.ttl_seconds, profile)
+        return profile
 
 
 class TimezoneMixin:
@@ -195,7 +264,13 @@ class PostgresUserStorage(TimezoneMixin):
     async def init(self) -> None:
         import asyncpg
 
-        self.pool = await asyncpg.create_pool(self.database_url, min_size=1, max_size=3)
+        self.pool = await asyncpg.create_pool(
+            self.database_url,
+            min_size=1,
+            max_size=2,
+            max_inactive_connection_lifetime=300,
+            command_timeout=15,
+        )
         async with self.pool.acquire() as connection:
             await connection.execute(
                 """
@@ -325,5 +400,7 @@ class PostgresUserStorage(TimezoneMixin):
 
 def create_user_storage(database_path: Path, timezone: str = "Asia/Tashkent", database_url: str = "") -> UserStorage:
     if database_url:
-        return PostgresUserStorage(database_url, timezone)
-    return SQLiteUserStorage(database_path, timezone)
+        backend: UserStorage = PostgresUserStorage(database_url, timezone)
+    else:
+        backend = SQLiteUserStorage(database_path, timezone)
+    return CachedUserStorage(backend)
