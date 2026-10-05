@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b3151">
+  <title>Ruxsatnoma va chegara yig'imlari</title>
+  <link rel="stylesheet" href="/static/webapp/webapp.css">
+</head>
+<body>
+  <div class="government-bar"><span>🇺🇿 <span data-t="republic">O'zbekiston Respublikasi</span></span><span data-t="advisory">Axborot-tavsiyaviy xizmat</span></div>
+  <header class="topbar">
+    <div class="brand">
+      <img src="/static/webapp/uzbekistan-emblem.png" alt="O'zbekiston Respublikasi davlat gerbi">
+      <div><strong data-t="brand">Xalqaro avtomobil tashuvlari</strong><small data-t="brandSub">Ruxsatnoma va yig'imlar</small></div>
+    </div>
+    <div class="header-actions">
+      <nav class="languages" aria-label="Til"><button data-lang="uz">UZ</button><button data-lang="ru">RU</button><button data-lang="en">EN</button></nav>
+      <button class="close-app" id="close-app" type="button" hidden aria-label="Yopish">×</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="intro">
+      <div><p class="eyebrow" data-t="online">ONLAYN XIZMAT</p><h1 data-t="title">Ruxsatnoma va chegara yig'imlarini tekshirish</h1><p data-t="subtitle">Yo'nalish ma'lumotlarini kiriting. Natija amaldagi server qoidalari asosida hisoblanadi.</p></div>
+      <span class="year">2026 · USD / UZS</span>
+    </section>
+
+    <nav class="service-tabs" aria-label="Xizmatlar">
+      <button type="button" class="service-tab active" data-view="permit"><span class="tab-icon">▤</span><span><b data-t="permitTab">Dazvol</b><small data-t="permitTabSub">Ruxsatnoma va kirish yig'imi</small></span></button>
+      <button type="button" class="service-tab" data-view="fees"><span class="tab-icon">$</span><span><b data-t="feesTab">Chegaradagi yig'imlar</b><small data-t="feesTabSub">Kirish, tranzit va chiqish hisobi</small></span></button>
+    </nav>
+
+    <section id="permit-view" class="view active">
+      <form id="permit-form" class="glass form-card">
+        <div class="section-head"><span class="step">1</span><div><h2 data-t="routeTitle">Tashuv yo'nalishi</h2><p data-t="routeHint">Davlatni yozing va ro'yxatdan aniq variantni tanlang.</p></div></div>
+        <div class="route-grid">
+          <div class="field country-picker" data-name="permit-origin"><label data-t="origin">Tashuv boshlangan davlat</label><div class="input-wrap"><span class="picker-flag">🌐</span><input autocomplete="off" data-t-placeholder="countrySearch" required><button type="button" class="clear">×</button></div><div class="picker-list" hidden></div></div>
+          <button type="button" class="swap" id="permit-swap" title="Yo'nalishni almashtirish">⇄</button>
+          <div class="field country-picker" data-name="permit-destination"><label data-t="destination">Tashuv tugaydigan davlat</label><div class="input-wrap"><span class="picker-flag">🌐</span><input autocomplete="off" data-t-placeholder="countrySearch" required><button type="button" class="clear">×</button></div><div class="picker-list" hidden></div></div>
+          <div class="field country-picker" data-name="permit-vehicle"><label data-t="vehicleCountry">Transport ro'yxatga olingan davlat</label><div class="input-wrap"><span class="picker-flag">🌐</span><input autocomplete="off" data-t-placeholder="countrySearch" required><button type="button" class="clear">×</button></div><div class="picker-list" hidden></div></div>
+        </div>
+        <div class="section-divider"></div>
+        <div class="section-head"><span class="step">2</span><div><h2 data-t="conditions">Hisoblash shartlari</h2><p data-t="conditionsHint">Faqat tashuvingizga tegishli ma'lumotlarni belgilang.</p></div></div>
+        <div class="two-cols">
+          <div class="field"><label for="permit-weight" data-t="weight">Yuk ko'tarish quvvati, tonna</label><input id="permit-weight" type="number" value="20" min="0.01" max="1000" step="0.01"></div>
+          <div class="field"><label for="permit-days" data-t="days">O'zbekistonda bo'lish muddati, kun</label><input id="permit-days" type="number" value="14" min="1" max="3660" step="1"></div>
+        </div>
+        <div class="checks">
+          <label><input id="permit-humanitarian" type="checkbox"><span data-t="humanitarian">Gumanitar yuk</span></label>
+          <label><input id="permit-heavy" type="checkbox"><span data-t="heavy">Og'ir vaznli yoki yirik gabaritli transport</span></label>
+          <label><input id="permit-purchase" type="checkbox"><span data-t="permitPurchase">Ortiqcha kvotadagi ruxsatnoma blankini sotib olish</span></label>
+        </div>
+        <div class="form-error" id="permit-error" hidden></div>
+        <button class="primary-action" type="submit"><span>⌕</span><span data-t="checkPermit">Dazvolni tekshirish</span></button>
+      </form>
+      <section id="permit-result" class="result" hidden></section>
+    </section>
+
+    <section id="fees-view" class="view">
+      <form id="fees-form" class="glass form-card">
+        <div class="section-head"><span class="step">1</span><div><h2 data-t="feeBase">Asosiy ma'lumotlar</h2><p data-t="feeBaseHint">Transport va yo'nalishni tanlang.</p></div></div>
+        <div class="segmented" id="direction-tabs"><button type="button" class="active" data-value="entry" data-t="entry">Kirish</button><button type="button" data-value="transit" data-t="transit">Tranzit</button><button type="button" data-value="exit" data-t="exit">Chiqish</button></div>
+        <div class="two-cols">
+          <div class="field"><label for="vehicle-type" data-t="vehicleType">Transport turi</label><select id="vehicle-type"><option value="truck" data-t="truck">Yuk avtomobili</option><option value="truck_trailer" data-t="truckTrailer">Yuk avtomobili + tirkama</option><option value="light" data-t="light">Yengil avtomobil</option><option value="bus" data-t="bus">Avtobus</option></select></div>
+          <div class="field country-picker" data-name="fee-vehicle"><label data-t="vehicleCountry">Transport ro'yxatga olingan davlat</label><div class="input-wrap"><span class="picker-flag">🌐</span><input autocomplete="off" data-t-placeholder="countrySearch" required><button type="button" class="clear">×</button></div><div class="picker-list" hidden></div></div>
+        </div>
+        <div id="fee-route" class="two-cols">
+          <div class="field country-picker" data-name="fee-origin"><label data-t="origin">Tashuv boshlangan davlat</label><div class="input-wrap"><span class="picker-flag">🌐</span><input autocomplete="off" data-t-placeholder="countrySearch" required><button type="button" class="clear">×</button></div><div class="picker-list" hidden></div></div>
+          <div class="field country-picker" data-name="fee-destination"><label data-t="destination">Tashuv tugaydigan davlat</label><div class="input-wrap"><span class="picker-flag">🌐</span><input autocomplete="off" data-t-placeholder="countrySearch" required><button type="button" class="clear">×</button></div><div class="picker-list" hidden></div></div>
+        </div>
+        <div class="two-cols cargo-only"><div class="field"><label for="fee-weight" data-t="weight">Yuk ko'tarish quvvati, tonna</label><input id="fee-weight" type="number" value="20" min="0.01" max="1000" step="0.01"></div><div class="field"><label for="fee-days" data-t="days">O'zbekistonda bo'lish muddati, kun</label><input id="fee-days" type="number" value="14" min="1" max="3660" step="1"></div></div>
+        <div class="section-divider"></div>
+        <div class="section-head"><span class="step">2</span><div><h2 data-t="extraConditions">Qo'shimcha holatlar</h2><p data-t="extraHint">Belgilangan bandlar hisob-kitobga qo'shiladi.</p></div></div>
+        <div class="checks fee-checks">
+          <label class="cargo-only"><input id="fee-declared" type="checkbox"><span data-t="declared">Yuk deklaratsiyasi rasmiylashtiriladi</span></label>
+          <label><input id="fee-tinted" type="checkbox"><span data-t="tinted">Qoraytirilgan oyna mavjud</span></label>
+          <label><input id="fee-osago" type="checkbox"><span data-t="osago">OSAGO sug'urta polisi mavjud emas</span></label>
+          <label class="cargo-only"><input id="fee-heavy" type="checkbox"><span data-t="heavy">Og'ir vaznli yoki yirik gabaritli transport</span></label>
+          <label class="cargo-only"><input id="fee-humanitarian" type="checkbox"><span data-t="humanitarian">Gumanitar yuk</span></label>
+          <label class="cargo-only"><input id="fee-animal" type="checkbox"><span data-t="animal">Hayvon yoki hayvonot mahsuloti mavjud</span></label>
+        </div>
+        <div class="two-cols conditional-fields">
+          <div class="field" id="customs-value-field" hidden><label for="customs-value" data-t="customsValue">Yukning bojxona qiymati, USD</label><input id="customs-value" type="number" min="0.01" step="0.01" value="10000"></div>
+          <div class="field"><label for="temp-days" data-t="tempDays">Vaqtincha olib kirish muddati o'tgan kunlar</label><input id="temp-days" type="number" min="0" step="1" value="0"></div>
+          <div class="field cargo-only"><label for="delivery-days" data-t="deliveryDays">Yukni yetkazish muddati o'tgan kunlar</label><input id="delivery-days" type="number" min="0" step="1" value="0"></div>
+        </div>
+        <div class="form-error" id="fees-error" hidden></div>
+        <button class="primary-action" type="submit"><span>$</span><span data-t="calculateFees">Yig'imlarni hisoblash</span></button>
+      </form>
+      <section id="fees-result" class="result" hidden></section>
+    </section>
+  </main>
+
+  <nav class="mobile-nav"><button class="active" data-view="permit"><span>▤</span><b data-t="permitTab">Dazvol</b></button><button data-view="fees"><span>$</span><b data-t="feesTab">Chegaradagi yig'imlar</b></button></nav>
+  <div class="toast" id="toast" hidden></div>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="/static/webapp/webapp.js"></script>
+</body>
+</html>
