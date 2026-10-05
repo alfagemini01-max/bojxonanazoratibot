@@ -7,14 +7,16 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.types import MenuButtonWebApp, WebAppInfo
 
 from app.config import Settings, get_settings
 from app.admin_panel import setup_admin_routes
 from app.handlers import build_router
 from app.storage import UserStorage, create_user_storage
+from app.webapp import setup_webapp_routes, webapp_page
 
 logger = logging.getLogger(__name__)
-APP_VERSION = "2026-08-11-admin-js-fix-v12"
+APP_VERSION = "2026-10-05-telegram-webapp-v1"
 
 
 def create_bot(settings: Settings) -> Bot:
@@ -34,22 +36,34 @@ def create_dispatcher(settings: Settings) -> tuple[Dispatcher, UserStorage]:
     return dispatcher, user_storage
 
 
+async def configure_telegram_webapp(bot: Bot, settings: Settings) -> None:
+    if not settings.webhook_url.startswith("https://"):
+        logger.warning("Telegram Web App menu skipped: public HTTPS WEBHOOK_URL is not configured.")
+        return
+    app_url = settings.webhook_url.rstrip("/") + "/app"
+    try:
+        await bot.set_chat_menu_button(
+            menu_button=MenuButtonWebApp(
+                text="Web App",
+                web_app=WebAppInfo(url=app_url),
+            )
+        )
+        logger.info("Telegram Web App menu configured: %s", app_url)
+    except Exception:
+        logger.exception("Telegram Web App menu could not be configured.")
+
+
 async def start_health_server(settings: Settings) -> None:
     from aiohttp import web
-
-    async def index(_: web.Request) -> web.Response:
-        return web.Response(
-            text="NazoratBot Telegram xizmati ishlayapti.\nHealth: /health\n",
-            content_type="text/plain",
-        )
 
     async def health(_: web.Request) -> web.Response:
         return web.json_response({"ok": True, "service": "nazoratbot-telegram", "version": APP_VERSION})
 
     app = web.Application(client_max_size=12 * 1024 * 1024)
-    app.router.add_get("/", index)
+    app.router.add_get("/", webapp_page)
     app.router.add_get("/health", health)
     setup_admin_routes(app, settings)
+    setup_webapp_routes(app, settings)
 
     runner = web.AppRunner(app, access_log=None)
     await runner.setup()
@@ -65,6 +79,7 @@ async def run_polling() -> None:
 
     await user_storage.init()
     await start_health_server(settings)
+    await configure_telegram_webapp(bot, settings)
     logger.info("Starting Telegram polling mode. Existing webhook will be deleted.")
     await bot.delete_webhook(drop_pending_updates=True)
     try:
@@ -86,12 +101,6 @@ def run_webhook() -> None:
     dispatcher, user_storage = create_dispatcher(settings)
     webhook_url = settings.webhook_url.rstrip("/") + settings.webhook_path
 
-    async def index(_: web.Request) -> web.Response:
-        return web.Response(
-            text="NazoratBot Telegram xizmati ishlayapti.\nHealth: /health\nWebhook: /webhook\n",
-            content_type="text/plain",
-        )
-
     async def health(_: web.Request) -> web.Response:
         return web.json_response(
             {"ok": True, "service": "nazoratbot-telegram", "mode": "webhook", "version": APP_VERSION}
@@ -101,6 +110,7 @@ def run_webhook() -> None:
         await user_storage.init()
         logger.info("Setting Telegram webhook: %s", webhook_url)
         await bot.set_webhook(webhook_url, drop_pending_updates=True)
+        await configure_telegram_webapp(bot, settings)
 
     async def on_shutdown(bot: Bot) -> None:
         await user_storage.close()
@@ -110,9 +120,10 @@ def run_webhook() -> None:
     dispatcher.shutdown.register(on_shutdown)
 
     app = web.Application(client_max_size=12 * 1024 * 1024)
-    app.router.add_get("/", index)
+    app.router.add_get("/", webapp_page)
     app.router.add_get("/health", health)
     setup_admin_routes(app, settings)
+    setup_webapp_routes(app, settings)
     SimpleRequestHandler(dispatcher=dispatcher, bot=bot).register(app, path=settings.webhook_path)
     setup_application(app, dispatcher, bot=bot)
     web.run_app(app, host=settings.web_host, port=settings.web_port, access_log=None)

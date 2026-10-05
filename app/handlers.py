@@ -15,6 +15,7 @@ from aiogram.types import (
     KeyboardButton,
     Message,
     ReplyKeyboardMarkup,
+    WebAppInfo,
 )
 
 from app.config import Settings
@@ -480,6 +481,32 @@ def build_router(user_storage: UserStorage, settings: Settings) -> Router:
     async def start(message: Message, state: FSMContext) -> None:
         metrics.increment("starts")
         await continue_registration(message, state)
+
+    @router.message(Command("app"))
+    async def webapp_command(message: Message) -> None:
+        lang = await profile_lang(message.from_user.id if message.from_user else None)
+        if not settings.webhook_url.startswith("https://"):
+            await message.answer(t(lang, "technical_error"))
+            return
+        labels = {
+            "uz": ("🌐 Web App", "Dazvol va chegaradagi yig'imlarni Web App orqali tekshiring."),
+            "ru": ("🌐 Web App", "Проверьте разрешение и пограничные сборы в Web App."),
+            "en": ("🌐 Web App", "Check permits and border fees in the Web App."),
+        }
+        button, text = labels.get(lang, labels["uz"])
+        await message.answer(
+            text,
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [
+                        InlineKeyboardButton(
+                            text=button,
+                            web_app=WebAppInfo(url=settings.webhook_url.rstrip("/") + "/app"),
+                        )
+                    ]
+                ]
+            ),
+        )
 
     @router.message(Command("language"))
     async def language_command(message: Message) -> None:
