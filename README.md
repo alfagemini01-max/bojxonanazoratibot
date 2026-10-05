@@ -7,8 +7,8 @@ Bot oqimi:
 1. `/start` bosilganda yangi foydalanuvchidan faqat bot tilini tanlash so'raladi.
 2. Til avval tanlangan bo'lsa, asosiy menyu darhol ochiladi.
 3. `Dazvol` tugmasi orqali tashuv boshlangan davlat, tashuv tugaydigan davlat va avtotransport ro'yxatdan o'tgan davlat ketma-ket kiritiladi.
-4. `Chegaradagi yig'imlar` tugmasi orqali chegara bojxona postida undirilishi mumkin bo'lgan to'lovlar kalkulyatori ishga tushadi.
-5. Har bir davlat nomi yozilganda bot mos kelgan davlatlarni kod va nomi bilan tugma ko'rinishida chiqaradi.
+4. `Chegaradagi yig'imlar` tugmasida tezkor yoki batafsil hisoblash usuli tanlanadi.
+5. Ko'p ishlatiladigan davlatlar bir bosishda tanlanadi; boshqa davlat nomi yozilganda bot mos variantlarni kod va nomi bilan chiqaradi.
 6. Davlatlar tanlangandan keyin bot tashuv turini avtomatik aniqlaydi va ruxsatnoma hamda yig'im bo'yicha javob qaytaradi.
 
 Bot O'zbek, Rus va Ingliz tillarida ishlaydi. Tilni asosiy menyudagi `Tilni o'zgartirish` tugmasi yoki `/language` buyrug'i orqali almashtirish mumkin.
@@ -53,10 +53,30 @@ Bot Renderda `webhook` rejimida ishlaydi. Bu rejim bitta bot token bo'yicha bir 
 Render uchun kichik HTTP tekshiruv endpointlari ham ochiladi:
 
 ```text
-/
+/                  # ommaviy Web App
+/app              # Telegram Web App manzili
 /health
 /admin
 ```
+
+## Telegram Web App
+
+Bot bilan birga alohida ommaviy Web App ham ishlaydi. U telefon va kompyuter brauzerida ochiladi hamda admin panelda e'lon qilingan shu qoidalardan foydalanadi.
+
+```text
+https://SIZNING-RENDER-NOMINGIZ.onrender.com/app
+```
+
+Web App imkoniyatlari:
+
+1. Dazvol bo'limida tashuv boshlangan, tugaydigan va transport ro'yxatdan o'tgan davlatlar tanlanadi.
+2. Tashuv turi avtomatik aniqlanib, ruxsatnoma talabi, kirish yoki tranzit yig'imi va istisnolar ko'rsatiladi.
+3. Chegaradagi yig'imlar bo'limida kirish, tranzit yoki chiqish yo'nalishi bo'yicha hisob-kitob qilinadi.
+4. Transport turi, yuk qiymati, og'irlik, bo'lish muddati va qo'shimcha holatlar hisobga olinadi.
+5. Natija O'zbek, Rus va Ingliz tillarida ko'rsatiladi, nusxalanadi yoki PDF sifatida chop etiladi.
+6. Telegramda `/app` buyrug'i yoki botning `Menu` tugmasi Web App'ni ochadi.
+
+Qo'shimcha Render sozlamasi talab qilinmaydi. `WEBHOOK_URL` qiymati amaldagi `https://...onrender.com` manziliga teng bo'lishi kerak.
 
 Render Free Web Service 15 daqiqa kiruvchi trafik bo'lmasa uxlab qoladi. Botni uyg'oq saqlash uchun UptimeRobot orqali quyidagi URLga 5 daqiqada bir marta HTTP GET so'rov yuborish mumkin:
 
@@ -64,7 +84,7 @@ Render Free Web Service 15 daqiqa kiruvchi trafik bo'lmasa uxlab qoladi. Botni u
 https://SIZNING-RENDER-NOMINGIZ.onrender.com/health
 ```
 
-Foydalanuvchi ma'lumotlari restart/redeploydan keyin ham saqlanishi uchun tashqi Postgres URL kiriting:
+Foydalanuvchining tanlagan tili restart/redeploydan keyin ham saqlanishi uchun tashqi Postgres URL kiriting:
 
 ```text
 USER_DATABASE_URL=postgresql://user:password@host:5432/dbname?sslmode=require
@@ -125,6 +145,9 @@ Panel orqali quyidagilar boshqariladi:
 10. Har bir o'zgarish checkbox orqali alohida tanlanadi, tahrirlanadi yoki importdan chiqariladi.
 11. `ISDELETED=1` yozuvlari xavfsizlik uchun dastlab tanlanmaydi; ularni o'chirish admin tomonidan alohida tasdiqlanadi.
 12. Importdan avvalgi qoidalar `data/permission_rules.before-import.json` vaqtinchalik zaxira nusxasida saqlanadi.
+13. Barcha tahrirlar avval qoralamaga yoziladi; `E'lon qilish` bosilgandan keyingina botga tatbiq etiladi.
+14. Har bir e'lon alohida versiya sifatida saqlanadi, oldingi versiyani qayta tiklash va admin amallarini audit jurnalida ko'rish mumkin.
+15. Davlatlar ro'yxati ixcham yuklanadi; to'liq qoida va istisnolar faqat davlat ochilganda olinadi.
 
 Render Environment Variables ichida admin login va parolni albatta o'zgartiring:
 
@@ -134,7 +157,22 @@ ADMIN_PASSWORD=faqat_siz_biladigan_kuchli_parol
 ADMIN_SESSION_SECRET=kamida_32_belgili_tasodifiy_secret
 ```
 
-Muhim: Render Free Web Service local fayl tizimidagi admin o'zgarishlarini redeploy/restartdan keyin yo'qotishi mumkin. Doimiy saqlash uchun keyingi bosqichda qoidalarni Postgres jadvaliga ko'chirish tavsiya etiladi.
+Muhim: `USER_DATABASE_URL` kiritilgan bo'lsa, e'lon qilingan qoida versiyalari va audit jurnali PostgreSQL'da saqlanadi. Qoralama mahalliy vaqtinchalik faylda turadi; muhim tahrirlarni Render redeployidan oldin `E'lon qilish` kerak.
+
+## Tezlik va himoya
+
+- Foydalanuvchi tili 5 daqiqa xotira keshida saqlanadi va takroriy PostgreSQL so'rovlari kamayadi.
+- Qoidalar va yig'imlar fayli faqat o'zgarganda qayta o'qiladi.
+- Admin ro'yxat API'si to'liq 710 KB spravochnikni har safar yubormaydi.
+- Bir foydalanuvchidan juda qisqa vaqtda kelgan haddan tashqari ko'p so'rovlar yumshoq cheklanadi.
+- Admin bosh sahifasida ishga tushirishlar, Dazvol tekshiruvlari, yig'im hisoblari va texnik xatolar ko'rsatiladi.
+- Webhook rejimi polling to'qnashuvini va keraksiz doimiy so'rovlarni bartaraf etadi.
+
+Testlarni ishga tushirish:
+
+```bash
+python -m unittest discover -s tests -v
+```
 
 ## Tekshiruv mantiqi
 

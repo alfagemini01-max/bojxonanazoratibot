@@ -1,5 +1,6 @@
 __pycache__/
 *.py[cod]
+*.pyc.*
 .env
 .venv/
 venv/
@@ -7,5 +8,10 @@ data/*.sqlite3
 data/*.sqlite3-*
 data/.imports/
 data/*.before-import.json
+data/*.draft.json
+data/rule_versions/
 .pytest_cache/
 .mypy_cache/
+tools/.dazvol-flags/
+tools/pdf-*
+tools/dazvol-*.png

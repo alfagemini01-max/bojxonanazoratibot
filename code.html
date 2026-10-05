@@ -1,0 +1,159 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>RoadPermit — Official International Road Transport Compliance Platform</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Manrope:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-tertiary-fixed-variant": "#004b73",
+            "on-secondary-fixed": "#002020",
+            "inverse-primary": "#afc6ff",
+            "surface-bright": "#faf8ff",
+            "surface": "#faf8ff",
+            "on-secondary": "#ffffff",
+            "tertiary": "#005b8b",
+            "surface-container-low": "#f2f3ff",
+            "surface-variant": "#dae2fd",
+            "on-primary-fixed-variant": "#004398",
+            "primary-fixed-dim": "#afc6ff",
+            "surface-tint": "#0059c7",
+            "primary-container": "#1769e0",
+            "on-error-container": "#93000a",
+            "primary-fixed": "#d9e2ff",
+            "on-surface-variant": "#424754",
+            "on-primary-fixed": "#001a43",
+            "on-tertiary": "#ffffff",
+            "inverse-on-surface": "#eef0ff",
+            "on-tertiary-fixed": "#001d31",
+            "error-container": "#ffdad6",
+            "tertiary-fixed-dim": "#93ccff",
+            "outline-variant": "#c2c6d6",
+            "on-secondary-fixed-variant": "#00504f",
+            "error": "#ba1a1a",
+            "on-tertiary-container": "#eaf3ff",
+            "on-error": "#ffffff",
+            "on-primary-container": "#f0f2ff",
+            "tertiary-fixed": "#cce5ff",
+            "on-background": "#131b2e",
+            "surface-container": "#eaedff",
+            "on-secondary-container": "#007070",
+            "surface-dim": "#d2d9f4",
+            "on-surface": "#131b2e",
+            "surface-container-lowest": "#ffffff",
+            "background": "#faf8ff",
+            "on-primary": "#ffffff",
+            "surface-container-highest": "#dae2fd",
+            "secondary-container": "#7df5f4",
+            "secondary-fixed-dim": "#5ed9d7",
+            "secondary": "#006a69",
+            "tertiary-container": "#0074b0",
+            "primary": "#0051b6",
+            "inverse-surface": "#283044",
+            "secondary-fixed": "#7df5f4",
+            "outline": "#727785",
+            "surface-container-high": "#e2e7ff"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-xl": "2.5rem",
+            "space-lg": "1.5rem",
+            "space-sm": "0.5rem",
+            "space-md": "1rem",
+            "margin": "2rem",
+            "gutter": "1.5rem",
+            "space-xs": "0.25rem",
+            "gutter-sm": "1rem",
+            "margin-lg": "3rem",
+            "margin-sm": "1rem",
+            "gutter-lg": "2rem"
+          },
+          "fontFamily": {
+            "body-lg": ["Inter"],
+            "label-md": ["Inter"],
+            "label-sm": ["Inter"],
+            "display": ["Manrope"],
+            "label-lg": ["Inter"],
+            "headline-xl": ["Manrope"],
+            "headline-lg-mobile": ["Manrope"],
+            "body-sm": ["Inter"],
+            "body-md": ["Inter"],
+            "headline-sm": ["Manrope"],
+            "headline-md": ["Manrope"],
+            "display-mobile": ["Manrope"],
+            "headline-lg": ["Manrope"],
+            "headline-xl-mobile": ["Manrope"]
+          },
+          "fontSize": {
+            "body-lg": ["1.125rem", { "lineHeight": "1.75rem", "letterSpacing": "-0.011em", "fontWeight": "400" }],
+            "label-md": ["0.75rem", { "lineHeight": "1rem", "letterSpacing": "0.03em", "fontWeight": "600" }],
+            "label-sm": ["0.6875rem", { "lineHeight": "0.875rem", "letterSpacing": "0.04em", "fontWeight": "500" }],
+            "display": ["3.5rem", { "lineHeight": "4.25rem", "letterSpacing": "-0.025em", "fontWeight": "700" }],
+            "label-lg": ["0.875rem", { "lineHeight": "1.25rem", "letterSpacing": "0.01em", "fontWeight": "600" }],
+            "headline-xl": ["2.5rem", { "lineHeight": "3rem", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-lg-mobile": ["1.5rem", { "lineHeight": "2rem", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "body-sm": ["0.875rem", { "lineHeight": "1.25rem", "letterSpacing": "0", "fontWeight": "400" }],
+            "body-md": ["1rem", { "lineHeight": "1.5rem", "letterSpacing": "-0.006em", "fontWeight": "400" }],
+            "headline-sm": ["1.25rem", { "lineHeight": "1.75rem", "letterSpacing": "0", "fontWeight": "600" }],
+            "headline-md": ["1.5rem", { "lineHeight": "2rem", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "display-mobile": ["2.25rem", { "lineHeight": "2.75rem", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-lg": ["2rem", { "lineHeight": "2.5rem", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "headline-xl-mobile": ["1.75rem", { "lineHeight": "2.25rem", "letterSpacing": "-0.015em", "fontWeight": "700" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    .custom-scroll::-webkit-scrollbar {
+      height: 6px;
+      width: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background-color: #CBD5E1;
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface antialiased font-body-md text-body-md selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- ========================================================================= -->
+<!-- 1. TOP APP BAR (from Shared Components JSON: TopNavBar)                  -->
+<!-- ========================================================================= -->
+<header class="bg-surface-container-lowest dark:bg-surface border-b border-outline-variant dark:border-outline shadow-sm dark:shadow-none docked full-width top-0 sticky z-50"><div class="w-full max-w-7xl mx-auto px-gutter flex items-center justify-between h-16"><div class="flex items-center gap-space-md"><a class="flex items-center gap-2 group" href="#"><div class="w-9 h-9 rounded-lg bg-primary flex items-center justify-center text-on-primary shadow-sm group-hover:bg-primary-container transition-colors"><span class="material-symbols-outlined text-xl">local_shipping</span></div><div class="flex flex-col"><span class="font-display text-headline-sm font-bold text-primary dark:text-inverse-primary tracking-tight">RoadPermit</span><span class="font-label-sm text-label-sm text-outline hidden sm:inline-block leading-tight">Xalqaro yuk tashish platformasi</span></div></a></div><nav class="hidden md:flex items-center gap-6"><a class="border-b-2 border-primary text-primary font-label-lg text-label-lg pb-1" href="#">Bosh sahifa</a><a class="text-on-surface-variant font-label-lg text-label-lg hover:text-on-surface transition-colors" href="#">Ruxsatnomalar</a><a class="text-on-surface-variant font-label-lg text-label-lg hover:text-on-surface transition-colors" href="#">To'lovlar</a><a class="text-on-surface-variant font-label-lg text-label-lg hover:text-on-surface transition-colors" href="#">Yordam</a></nav><div class="flex items-center gap-3"><div class="bg-surface-container-low p-0.5 rounded-lg flex items-center border border-outline-variant/40"><button class="px-2.5 py-1 text-xs font-semibold rounded bg-surface-container-lowest text-primary shadow-xs">UZ</button><button class="px-2.5 py-1 text-xs font-medium text-on-surface-variant hover:text-on-surface">RU</button><button class="px-2.5 py-1 text-xs font-medium text-on-surface-variant hover:text-on-surface">EN</button></div></div></div></header>
+<!-- ========================================================================= -->
+<!-- 2. HERO SECTION & REGULATORY CONTEXT                                      -->
+<!-- ========================================================================= -->
+<section class="bg-surface-container-low/60 border-b border-outline-variant/60 pt-8 pb-10"><div class="max-w-4xl mx-auto px-gutter text-center py-6"><div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-primary-fixed text-on-primary-fixed border border-primary/20 mb-3"><span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>Rasmiy ma'lumotlar bazasi • 2025</div><h1 class="font-headline-xl text-headline-xl text-on-surface tracking-tight mb-3">Xalqaro yuk tashish ruxsatnomalarini tekshiring</h1><p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto leading-relaxed">Qayerdan, qayerga va mashina qayerda ro'yxatdan o'tganini tanlang — nima kerakligini darhol va oson ko'ring.</p></div></section>
+<!-- ========================================================================= -->
+<!-- 3. MASTER INTERACTIVE TRANSPORT REQUIREMENT CHECKER                      -->
+<!-- ========================================================================= -->
+<main class="max-w-7xl mx-auto px-gutter -mt-5 pb-16"><div class="max-w-5xl mx-auto bg-surface-container-lowest rounded-2xl border border-outline-variant/80 shadow-md p-6 lg:p-8"><div class="grid grid-cols-1 md:grid-cols-3 gap-5"><div class="p-4 rounded-xl bg-surface-container-low/50 border border-outline-variant/50"><label class="block font-label-md text-label-md text-on-surface-variant mb-2">1. Qayerdan (Boshlang'ich davlat)</label><div class="flex items-center gap-3 bg-surface-container-lowest p-3 rounded-lg border border-outline-variant hover:border-primary transition-colors cursor-pointer"><span class="text-2xl">🇺🇿</span><div><div class="font-bold text-sm text-on-surface">O'zbekiston</div><div class="text-xs text-outline">Toshkent</div></div><span class="material-symbols-outlined text-outline ml-auto">expand_more</span></div></div><div class="p-4 rounded-xl bg-surface-container-low/50 border border-outline-variant/50"><label class="block font-label-md text-label-md text-on-surface-variant mb-2">2. Qayerga (Yetib borish davlati)</label><div class="flex items-center gap-3 bg-surface-container-lowest p-3 rounded-lg border border-outline-variant hover:border-primary transition-colors cursor-pointer"><span class="text-2xl">🇩🇪</span><div><div class="font-bold text-sm text-on-surface">Germaniya</div><div class="text-xs text-outline">Berlin / Frankfurt</div></div><span class="material-symbols-outlined text-outline ml-auto">expand_more</span></div></div><div class="p-4 rounded-xl bg-surface-container-low/50 border border-outline-variant/50"><label class="block font-label-md text-label-md text-on-surface-variant mb-2">3. Mashina ro'yxatdan o'tgan davlat</label><div class="flex items-center gap-3 bg-surface-container-lowest p-3 rounded-lg border border-outline-variant hover:border-primary transition-colors cursor-pointer"><span class="text-2xl">🇺🇿</span><div><div class="font-bold text-sm text-on-surface">O'zbekiston</div><div class="text-xs text-outline">Milliy tashuvchi</div></div><span class="material-symbols-outlined text-outline ml-auto">expand_more</span></div></div></div><div class="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-outline-variant/40"><button class="text-xs text-primary font-medium hover:underline inline-flex items-center gap-1"><span class="material-symbols-outlined text-sm">tune</span> Qo'shimcha parametrlar (vazn, tirkama, tranzit)</button><button class="w-full sm:w-auto px-8 h-12 bg-primary hover:bg-primary-container text-on-primary font-label-lg text-label-lg rounded-xl shadow-md transition-all flex items-center justify-center gap-2 active:scale-[0.98]"><span class="material-symbols-outlined text-xl">search</span><span class="">Tekshirish</span></button></div></div><div class="max-w-5xl mx-auto mt-10"><div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4 shadow-xs mb-6 flex flex-col sm:flex-row items-center justify-between gap-4"><div class="flex items-center gap-3 flex-wrap"><span class="px-3 py-1 rounded-full bg-primary/10 text-primary font-bold text-xs">Tanlangan yo'nalish:</span><div class="flex items-center gap-2 text-sm font-semibold text-on-surface"><span class="">🇺🇿 O'zbekiston</span><span class="text-outline">➔</span><span class="">🇩🇪 Germaniya</span><span class="text-xs text-outline font-normal">(Mashina: 🇺🇿 O'zbekiston)</span></div></div><div class="flex items-center gap-2"><button class="px-3 py-1.5 rounded-lg border border-outline-variant bg-surface-container-lowest hover:bg-surface-container-low text-xs font-semibold text-on-surface flex items-center gap-1.5 transition-colors"><span class="material-symbols-outlined text-sm">picture_as_pdf</span><span class="">PDF yuklab olish</span></button><button class="px-3 py-1.5 rounded-lg border border-outline-variant bg-surface-container-lowest hover:bg-surface-container-low text-xs font-semibold text-on-surface flex items-center gap-1.5 transition-colors"><span class="material-symbols-outlined text-sm">print</span><span class="">Chop etish</span></button></div></div><div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8"><div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-5 shadow-xs"><span class="font-label-md text-label-md text-on-surface-variant block mb-1">Ruxsatnomalar</span><div class="flex items-baseline gap-2"><span class="font-headline-lg text-headline-lg font-bold text-on-surface">2 ta</span><span class="text-xs font-semibold text-primary bg-primary-fixed/50 px-2 py-0.5 rounded-full">Zarur</span></div><p class="font-body-sm text-body-sm text-outline mt-1">Bilateral + Tranzit ruxsatnomasi</p></div><div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-5 shadow-xs"><span class="font-label-md text-label-md text-on-surface-variant block mb-1">Yo'l to'lovlari (taxminiy)</span><div class="flex items-baseline gap-2"><span class="font-headline-lg text-headline-lg font-bold text-primary">~€220</span><span class="text-xs font-medium text-outline">jami</span></div><p class="font-body-sm text-body-sm text-outline mt-1">Germaniya Maut va Polsha yo'llari</p></div><div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-5 shadow-xs"><span class="font-label-md text-label-md text-on-surface-variant block mb-1">Zarur hujjatlar</span><div class="flex items-baseline gap-2"><span class="font-headline-lg text-headline-lg font-bold text-on-surface">4 ta</span><span class="text-xs font-medium text-secondary bg-secondary-fixed/50 px-2 py-0.5 rounded-full">Tayyorlash shart</span></div><p class="font-body-sm text-body-sm text-outline mt-1">CMR, TIR, Sug'urta, Viza</p></div></div><div class="space-y-4"><div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-5 shadow-xs"><div class="flex items-start justify-between gap-4"><div class="flex items-start gap-3"><div class="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center flex-shrink-0 mt-0.5"><span class="material-symbols-outlined text-xl">assignment</span></div><div><div class="flex items-center gap-2 mb-1"><span class="px-2 py-0.5 rounded-full text-xs font-bold bg-primary text-on-primary">Talab etiladi</span><span class="text-xs text-outline">O'zbekiston Transport vazirligi</span></div><h3 class="font-headline-sm text-headline-sm font-bold text-on-surface">O'zbekiston – Germaniya ikki tomonlama ruxsatnoma</h3><p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Har bir reys uchun alohida blanka olinadi. O'rtacha 1-2 ish kunida rasmiylashtiriladi. Davlat boji: ~$35.</p></div></div><div class="text-right flex-shrink-0 hidden sm:block"><span class="text-xs font-semibold text-secondary">Muddati: 90 kun</span></div></div></div><div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-5 shadow-xs"><div class="flex items-start gap-3"><div class="w-10 h-10 rounded-lg bg-secondary-fixed/50 text-secondary flex items-center justify-center flex-shrink-0 mt-0.5"><span class="material-symbols-outlined text-xl">toll</span></div><div class="w-full"><div class="flex items-center gap-2 mb-1"><span class="px-2 py-0.5 rounded-full text-xs font-bold bg-secondary text-on-secondary">To'lovlar</span></div><h3 class="font-headline-sm text-headline-sm font-bold text-on-surface">Tranzit yo'l va pulli avtomagistral to'lovlari</h3><p class="font-body-sm text-body-sm text-on-surface-variant mt-1 mb-3">Yo'nalish bo'ylab to'lovlar taxminan <strong>€210 - €230</strong> ni tashkil qiladi:</p><div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-surface-container-low p-3.5 rounded-lg border border-outline-variant/40"><div class="">• <strong>Germaniya (Toll Collect / LKW-Maut):</strong> ~€112 (masofaga qarab)</div><div class="">• <strong>Polsha (e-TOLL):</strong> ~€58 (A2 trassasi)</div><div class="">• <strong>Belarus (BelToll):</strong> ~€25 (vinyetka tizimi)</div><div class="">• <strong>Ruxsatnoma arizasi yig'imi:</strong> ~$35 (370 000 so'm)</div></div></div></div></div><div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-5 shadow-xs"><div class="flex items-start gap-3"><div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-primary flex-shrink-0 mt-0.5"><span class="material-symbols-outlined text-xl">inventory_2</span></div><div class="w-full"><h3 class="font-headline-sm text-headline-sm font-bold text-on-surface mb-2">Mashinada bo'lishi shart bo'lgan 4 ta hujjat</h3><div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs text-on-surface"><div class="flex items-center gap-2 p-2.5 rounded-lg bg-surface-container-low border border-outline-variant/40"><span class="material-symbols-outlined text-secondary text-sm">check_circle</span><span class=""><strong>CMR</strong> — Xalqaro tovar-transport yuk xati (4 nusxa)</span></div><div class="flex items-center gap-2 p-2.5 rounded-lg bg-surface-container-low border border-outline-variant/40"><span class="material-symbols-outlined text-secondary text-sm">check_circle</span><span class=""><strong>TIR Carnet</strong> yoki T1 tranzit deklaratsiyasi</span></div><div class="flex items-center gap-2 p-2.5 rounded-lg bg-surface-container-low border border-outline-variant/40"><span class="material-symbols-outlined text-secondary text-sm">check_circle</span><span class=""><strong>Yashil karta (Green Card)</strong> xalqaro sug'urtasi</span></div><div class="flex items-center gap-2 p-2.5 rounded-lg bg-surface-container-low border border-outline-variant/40"><span class="material-symbols-outlined text-secondary text-sm">check_circle</span><span class=""><strong>Haydovchi viza va guvohnomasi</strong> (C+E toifa, Shengen)</span></div></div></div></div></div><div class="bg-surface-container-lowest border-l-4 border-l-error border border-outline-variant rounded-xl p-5 shadow-xs"><div class="flex items-start gap-3"><span class="material-symbols-outlined text-error text-2xl mt-0.5">warning</span><div><div class="text-xs font-bold text-error uppercase tracking-wide mb-1">Muhim cheklov</div><h4 class="font-label-lg text-label-lg text-on-surface font-bold">Germaniyada yakshanba kunlari harakatlanish taqiqlanadi</h4><p class="font-body-sm text-body-sm text-on-surface-variant mt-1 leading-relaxed">Vazni 7.5 tonnadan ortiq yuk mashinalariga Germaniyada yakshanba va rasmiy bayram kunlari soat 00:00 dan 22:00 gacha harakatlanish qat'iyan man etiladi. Chegara oldida to'xtash joylarini oldindan rejalashtiring.</p></div></div></div></div></div></main>
+<!-- ========================================================================= -->
+<!-- 5. INSTITUTIONAL FOOTER (from Shared Components JSON: Footer)              -->
+<!-- ========================================================================= -->
+<footer class="bg-surface-container-low dark:bg-inverse-surface border-t border-outline-variant dark:border-outline flat no shadows full-width bottom"><div class="w-full max-w-7xl mx-auto px-gutter py-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-on-surface-variant"><div class="flex items-center gap-2"><span class="font-bold text-on-surface text-sm">RoadPermit</span><span class="">© 2025 Barcha huquqlar himoyalangan.</span></div><nav class="flex items-center gap-4"><a class="hover:text-primary transition-colors" href="#">Foydalanish qoidalari</a><a class="hover:text-primary transition-colors" href="#">Maxfiylik siyosati</a><a class="hover:text-primary transition-colors" href="#">Bog'lanish</a></nav></div></footer>
+
+
+</body></html>
