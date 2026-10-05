@@ -1,1 +1,21 @@
-
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const source=JSON.parse(await fs.readFile(path.join(root,'data/permission_rules.json'),'utf8'));
+const fees=JSON.parse(await fs.readFile(path.join(root,'data/fees_2026.json'),'utf8'));
+const iso=Object.fromEntries(`004 AF,008 AL,010 AQ,012 DZ,016 AS,020 AD,024 AO,028 AG,031 AZ,032 AR,036 AU,040 AT,044 BS,048 BH,050 BD,051 AM,052 BB,056 BE,060 BM,064 BT,068 BO,074 BV,076 BR,084 BZ,086 IO,090 SB,092 VG,096 BN,100 BG,104 MM,108 BI,112 BY,116 KH,120 CM,124 CA,132 CV,136 KY,140 CF,144 LK,148 TD,152 CL,156 CN,158 TW,162 CX,166 CC,170 CO,174 KM,178 CG,180 CD,184 CK,188 CR,191 HR,192 CU,196 CY,203 CZ,204 BJ,208 DK,212 DM,214 DO,218 EC,222 SV,226 GQ,231 ET,232 ER,233 EE,234 FO,238 FK,242 FJ,246 FI,250 FR,254 GF,258 PF,260 TF,262 DJ,266 GA,268 GE,270 GM,274 PS,276 DE,288 GH,292 GI,296 KI,300 GR,304 GL,308 GD,312 GP,316 GU,320 GT,324 GN,328 GY,332 HT,334 HM,336 VA,340 HN,344 HK,348 HU,352 IS,356 IN,360 ID,364 IR,368 IQ,372 IE,376 IL,380 IT,384 CI,388 JM,392 JP,396 UM,398 KZ,400 JO,404 KE,408 KP,410 KR,414 KW,417 KG,418 LA,422 LB,426 LS,428 LV,430 LR,434 LY,438 LI,440 LT,442 LU,496 MN,498 MD,528 NL,616 PL,643 RU,703 SK,705 SI,756 CH,762 TJ,792 TR,795 TM,804 UA,860 UZ`.split(',').map(s=>s.split(' ')));
+const flagDir=path.join(root,'tools','.dazvol-flags');await fs.mkdir(flagDir,{recursive:true});
+const flags={};const codes=[...new Set(Object.values(iso))];let cursor=0;
+await Promise.all(Array.from({length:8},async()=>{while(cursor<codes.length){const code=codes[cursor++],file=path.join(flagDir,code+'.png');try{let png;try{png=await fs.readFile(file)}catch{const response=await fetch('https://flagcdn.com/w40/'+code.toLowerCase()+'.png',{signal:AbortSignal.timeout(15000)});if(!response.ok)throw Error('HTTP '+response.status);png=Buffer.from(await response.arrayBuffer());await fs.writeFile(file,png)}flags[code]='data:image/png;base64,'+png.toString('base64')}catch(e){console.warn('Flag unavailable:',code,e.message)}}}));
+const rules={};for(const [c,rows]of Object.entries(source.rules)){rules[c]={};for(const [v,r]of Object.entries(rows))rules[c][v]={p:String(r.permission_cd),d:String(r.dues_cd),amount:r.dues_amount_usd||'',exception:String(r.exception_cd||'0'),notes:{uz:r.dues_amount_note_uz||'',ru:r.dues_amount_note_ru||'',en:r.dues_amount_note_en||''},manual:!!r.source?.startsWith('manual:'),inferred:!!r.source?.startsWith('fallback:')};}
+const exceptions=Object.fromEntries(Object.entries(source.exceptions).map(([c,rows])=>[c,rows.map(r=>({code:r.exception_cd,text:r.exception_desc,mask:String(r.exception_for).padStart(8,'0')}))]));
+const names=Object.fromEntries(['uz','ru','en'].map(lang=>{const display=new Intl.DisplayNames([lang],{type:'region'});return [lang,Object.fromEntries(Object.entries(iso).map(([code,alpha])=>[code,display.of(alpha)]))]}));
+const emblems={};for(const name of ['uzbekistan','transport'])emblems[name]='data:image/png;base64,'+(await fs.readFile(path.join(root,'tools',name+'-emblem.png'))).toString('base64');
+const payload={countries:source.countries,names,iso,flags,emblems,rules,exceptions,aliases:source.manual_aliases||{},fees:fees.entry_fee,sourceDate:'26.07.2026',law:'https://lex.uz/ru/docs/-7949060',built:'05.10.2026'};
+const template=await fs.readFile(path.join(root,'tools/dazvol.template.html'),'utf8');
+const pdfLibrary=await fs.readFile('C:/Users/h.hayitov/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/pdf-lib/dist/pdf-lib.min.js','utf8');
+const pdfCode=await fs.readFile(path.join(root,'tools/dazvol-pdf.js'),'utf8');
+const html=template.replace('/*__EMBEDDED_DATA__*/',()=>JSON.stringify(payload).replace(/</g,'\\u003c')).replace('/*__PDF_LIBRARY__*/',()=>pdfLibrary).replace('/*__PDF_EXPORT__*/',()=>pdfCode);
+await fs.writeFile(path.join(root,'Dazvol.html'),html,'utf8');
+console.log(JSON.stringify({file:'Dazvol.html',countries:Object.keys(payload.countries).length,rules:Object.values(rules).reduce((n,r)=>n+Object.keys(r).length,0),flags:Object.keys(flags).length,bytes:Buffer.byteLength(html)}));
