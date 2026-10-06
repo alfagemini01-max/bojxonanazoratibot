@@ -57,7 +57,7 @@
     <main>
       <section class="screen active" id="screen-permits">
         <div id="country-list-view">
-          <div class="page-heading"><div><p class="eyebrow">DAZVOL</p><h1>Davlat qoidalari</h1><p>Davlatni toping va tashuv turiga tegishli talabni tahrirlang.</p></div><button class="primary" id="add-country"><svg><use href="#i-plus"/></svg>Davlat qo'shish</button></div>
+          <div class="page-heading"><div><p class="eyebrow">DAZVOL</p><h1>Davlat qoidalari</h1><p>Davlatni toping va tashuv turiga tegishli talabni tahrirlang.</p></div><div class="inline-actions"><button class="secondary manage-transport-types" type="button"><svg><use href="#i-route"/></svg>Tashuv turlari</button><button class="primary" id="add-country"><svg><use href="#i-plus"/></svg>Davlat qo'shish</button></div></div>
           <div class="toolbar"><label class="search-box"><svg><use href="#i-search"/></svg><input id="country-search" placeholder="Davlat nomi yoki kodi" autocomplete="off"></label><span id="country-count"></span></div>
           <div class="country-grid" id="country-grid"></div>
         </div>
@@ -71,7 +71,7 @@
             <div class="country-identity"><span class="large-flag" id="detail-flag"><svg><use href="#i-globe"/></svg></span><div><p class="eyebrow">DAVLAT</p><h1 id="detail-title">Davlat</h1><p id="detail-subtitle"></p></div></div>
             <div class="country-fields"><label>Kod<input id="country-code" inputmode="numeric" maxlength="3"></label><label>O'zbekcha nom<input id="country-name-uz"></label><label>Asosiy/Ruscha nom<input id="country-name"></label></div>
           </section>
-          <div class="section-title"><div><h2>Tashuv turi bo'yicha qoida</h2><p>Faqat tanlangan tashuv turining formasi ko'rsatiladi.</p></div></div>
+          <div class="section-title"><div><h2>Tashuv turi bo'yicha qoida</h2><p>Faqat tanlangan tashuv turining formasi ko'rsatiladi.</p></div><button class="secondary manage-transport-types" type="button"><svg><use href="#i-route"/></svg>Tashuv turlarini boshqarish</button></div>
           <div class="transport-tabs" id="transport-tabs"></div>
           <form class="panel rule-editor" id="rule-form">
             <div class="rule-editor-head"><div><p class="eyebrow">TANLANGAN QOIDA</p><h2 id="rule-title"></h2></div><button class="primary" type="submit"><svg><use href="#i-save"/></svg>Qoidani saqlash</button></div>

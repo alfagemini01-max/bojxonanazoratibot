@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#0b3151">
   <title>Ruxsatnoma va chegara yig'imlari</title>
-  <link rel="stylesheet" href="/static/webapp/webapp.css">
+  <link rel="stylesheet" href="/static/webapp/webapp.css?v=5">
 </head>
 <body>
   <svg class="icon-sprite" aria-hidden="true">
@@ -53,11 +53,19 @@
           <div class="field country-picker" data-name="permit-destination"><label data-t="destination">Tashuv tugaydigan davlat</label><div class="input-wrap"><span class="picker-flag"><svg class="icon"><use href="#icon-globe"/></svg></span><input autocomplete="off" data-t-placeholder="countrySearch" required><button type="button" class="clear icon-button" aria-label="Tozalash"><svg class="icon"><use href="#icon-x"/></svg></button></div><div class="picker-list" hidden></div></div>
           <div class="field country-picker" data-name="permit-vehicle"><label data-t="vehicleCountry">Transport ro'yxatga olingan davlat</label><div class="input-wrap"><span class="picker-flag"><svg class="icon"><use href="#icon-globe"/></svg></span><input autocomplete="off" data-t-placeholder="countrySearch" required><button type="button" class="clear icon-button" aria-label="Tozalash"><svg class="icon"><use href="#icon-x"/></svg></button></div><div class="picker-list" hidden></div></div>
         </div>
+        <div class="field operation-field">
+          <label data-t="operation">Tashuv holati</label>
+          <div class="segmented operation-tabs" id="permit-operation">
+            <button type="button" class="active" data-operation="cargo" data-t="cargo">Yukli tashuv</button>
+            <button type="button" data-operation="empty_entry" data-t="emptyEntry">Bo'sh holatda kirish</button>
+            <button type="button" data-operation="empty_transit" data-t="emptyTransit">Bo'sh holatda tranzit</button>
+          </div>
+        </div>
         <div class="section-divider"></div>
         <div class="section-head"><span class="step">2</span><div><h2 data-t="conditions">Hisoblash shartlari</h2><p data-t="conditionsHint">Faqat tashuvingizga tegishli ma'lumotlarni belgilang.</p></div></div>
         <div class="two-cols">
-          <div class="field"><label for="permit-weight" data-t="weight">Yuk ko'tarish quvvati, tonna</label><input id="permit-weight" type="number" value="20" min="0.01" max="1000" step="0.01"></div>
-          <div class="field"><label for="permit-days" data-t="days">O'zbekistonda bo'lish muddati, kun</label><input id="permit-days" type="number" value="14" min="1" max="3660" step="1"></div>
+          <div class="field" id="permit-weight-field" hidden><label for="permit-weight" data-t="weight">Yuk ko'tarish quvvati, tonna</label><input id="permit-weight" type="number" value="20" min="0.01" max="1000" step="0.01"></div>
+          <div class="field" id="permit-days-field" hidden><label for="permit-days" data-t="days">O'zbekistonda bo'lish muddati, kun</label><input id="permit-days" type="number" value="14" min="1" max="3660" step="1"></div>
         </div>
         <div class="checks">
           <label><input id="permit-humanitarian" type="checkbox"><span data-t="humanitarian">Gumanitar yuk</span></label>
@@ -82,7 +90,7 @@
           <div class="field country-picker" data-name="fee-origin"><label data-t="origin">Tashuv boshlangan davlat</label><div class="input-wrap"><span class="picker-flag"><svg class="icon"><use href="#icon-globe"/></svg></span><input autocomplete="off" data-t-placeholder="countrySearch" required><button type="button" class="clear icon-button" aria-label="Tozalash"><svg class="icon"><use href="#icon-x"/></svg></button></div><div class="picker-list" hidden></div></div>
           <div class="field country-picker" data-name="fee-destination"><label data-t="destination">Tashuv tugaydigan davlat</label><div class="input-wrap"><span class="picker-flag"><svg class="icon"><use href="#icon-globe"/></svg></span><input autocomplete="off" data-t-placeholder="countrySearch" required><button type="button" class="clear icon-button" aria-label="Tozalash"><svg class="icon"><use href="#icon-x"/></svg></button></div><div class="picker-list" hidden></div></div>
         </div>
-        <div class="two-cols cargo-only"><div class="field"><label for="fee-weight" data-t="weight">Yuk ko'tarish quvvati, tonna</label><input id="fee-weight" type="number" value="20" min="0.01" max="1000" step="0.01"></div><div class="field"><label for="fee-days" data-t="days">O'zbekistonda bo'lish muddati, kun</label><input id="fee-days" type="number" value="14" min="1" max="3660" step="1"></div></div>
+        <div class="two-cols cargo-only" id="fee-special-fields" hidden><div class="field" id="fee-weight-field" hidden><label for="fee-weight" data-t="weight">Yuk ko'tarish quvvati, tonna</label><input id="fee-weight" type="number" value="20" min="0.01" max="1000" step="0.01"></div><div class="field" id="fee-days-field" hidden><label for="fee-days" data-t="days">O'zbekistonda bo'lish muddati, kun</label><input id="fee-days" type="number" value="14" min="1" max="3660" step="1"></div></div>
         <div class="section-divider"></div>
         <div class="section-head"><span class="step">2</span><div><h2 data-t="extraConditions">Qo'shimcha holatlar</h2><p data-t="extraHint">Belgilangan bandlar hisob-kitobga qo'shiladi.</p></div></div>
         <div class="checks fee-checks">
@@ -108,6 +116,6 @@
   <nav class="mobile-nav"><button class="active" data-view="permit"><svg class="icon"><use href="#icon-file-check"/></svg><b data-t="permitTab">Dazvol</b></button><button data-view="fees"><svg class="icon"><use href="#icon-receipt"/></svg><b data-t="feesTab">Chegaradagi yig'imlar</b></button></nav>
   <div class="toast" id="toast" hidden></div>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="/static/webapp/webapp.js"></script>
+  <script src="/static/webapp/webapp.js?v=5"></script>
 </body>
 </html>

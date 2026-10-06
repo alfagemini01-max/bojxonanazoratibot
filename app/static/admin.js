@@ -1,7 +1,7 @@
 'use strict';
 
 const $=id=>document.getElementById(id);
-const state={screen:'permits',countries:[],flagMap:{},country:null,vidTypes:{},vid:'1',rule:null,feeDirection:'import',feeItems:[],modalSave:null,importJob:null,importChanges:[]};
+const state={screen:'permits',countries:[],flagMap:{},country:null,vidTypes:{},vidLabels:{},vid:'1',rule:null,feeDirection:'import',feeItems:[],modalSave:null,importJob:null,importChanges:[]};
 const escapeHTML=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const icon=name=>`<svg aria-hidden="true"><use href="#i-${name}"/></svg>`;
 
@@ -17,18 +17,18 @@ async function api(url,options={}){
 }
 function toast(message,error=false){const el=$('toast');el.textContent=message;el.className='toast'+(error?' error':'');el.hidden=false;clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.hidden=true,3200)}
 function busy(button,value){if(!button)return;button.disabled=value;button.classList.toggle('loading',value)}
-function flag(code,name=''){const iso=state.flagMap[code];return iso?`<img src="/static/webapp/flags/${iso.toLowerCase()}.svg" alt="${escapeHTML(name)}" loading="lazy" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><svg hidden><use href="#i-globe"/></svg>`:icon('globe')}
+function flag(code,name=''){const iso=state.flagMap[code];return iso?`<img src="/static/webapp/flags/${iso.toLowerCase()}.svg" alt="${escapeHTML(name)}" loading="eager" decoding="async" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><svg hidden><use href="#i-globe"/></svg>`:icon('globe')}
 function debounce(fn,delay=250){let timer;return(...args)=>{clearTimeout(timer);timer=setTimeout(()=>fn(...args),delay)}}
 
 function switchScreen(name){state.screen=name;document.querySelectorAll('.screen').forEach(el=>el.classList.toggle('active',el.id===`screen-${name}`));document.querySelectorAll('#main-nav button').forEach(el=>el.classList.toggle('active',el.dataset.screen===name));if(name==='permits')loadCountries();if(name==='fees')loadFees();if(name==='history')loadVersions();window.scrollTo({top:0,behavior:'smooth'})}
 document.querySelectorAll('#main-nav button').forEach(button=>button.addEventListener('click',()=>switchScreen(button.dataset.screen)));
 
 async function loadStatus(){try{const data=await api('/admin/api/rule-version/status');$('version-status').textContent=data.active_version?`Faol versiya: ${data.active_version}`:'Ma\'lumotlar faol'}catch(error){$('version-status').textContent='Holat aniqlanmadi'}}
-async function loadFlags(){try{const data=await api('/api/webapp/countries?lang=uz');state.flagMap=Object.fromEntries(data.countries.map(row=>[row.code,row.iso]))}catch(error){console.warn(error)}}
+async function loadFlags(){try{const data=await api('/api/webapp/countries?lang=uz');state.flagMap=Object.fromEntries(data.countries.map(row=>[row.code,row.iso]));const preload=()=>Object.values(state.flagMap).filter(Boolean).forEach(iso=>{const image=new Image();image.decoding='async';image.src=`/static/webapp/flags/${iso.toLowerCase()}.svg`});if('requestIdleCallback'in window)requestIdleCallback(preload,{timeout:1200});else setTimeout(preload,80)}catch(error){console.warn(error)}}
 async function loadCountries(query=''){
   try{
     const data=await api('/admin/api/permission?q='+encodeURIComponent(query));
-    state.countries=data.countries;state.vidTypes=data.vid_types||state.vidTypes;renderCountries();
+    state.countries=data.countries;state.vidTypes=data.vid_types||state.vidTypes;state.vidLabels=data.vid_labels||state.vidLabels;renderCountries();
   }catch(error){toast(error.message,true)}
 }
 function renderCountries(){
@@ -49,7 +49,7 @@ async function openCountry(code){
 function renderTransportTabs(){
   $('transport-tabs').innerHTML=Object.entries(state.vidTypes).sort(([a],[b])=>Number(a)-Number(b)).map(([vid,name])=>`<button type="button" data-vid="${vid}" class="${vid===state.vid?'active':''}"><b>Tashuv turi ${vid}</b><small>${escapeHTML(shortTransportName(vid,name))}</small></button>`).join('');
 }
-function shortTransportName(vid,name){return({1:"Ikki tomonlama: O'zbekistondan",2:"Ikki tomonlama: O'zbekistonga",3:'Tranzit',4:'Uchinchi davlatga',5:'Uchinchi davlatdan',6:'Ichki tashuv',7:'Yuksiz kirish',8:'Yuksiz tranzit'}[vid]||name)}
+function shortTransportName(vid,name){return state.vidLabels?.[vid]?.uz||({1:"Ikki tomonlama: O'zbekistondan",2:"Ikki tomonlama: O'zbekistonga",3:'Tranzit',4:'Uchinchi davlatga',5:'Uchinchi davlatdan',6:'Ichki tashuv',7:'Yuksiz kirish',8:'Yuksiz tranzit'}[vid]||name)}
 $('transport-tabs').addEventListener('click',event=>{const button=event.target.closest('[data-vid]');if(button)selectRule(button.dataset.vid)});
 function defaultRule(vid){return{vid_cd:vid,permission_cd:'2',exception_cd:'0',exception_name_ru:'-не выбрано-',dues_cd:'2',dues_amount_usd:'',admin_note:'',dues_amount_note_uz:'',dues_amount_note_ru:'',dues_amount_note_en:'',additional_conditions:[]}}
 function selectRule(vid){state.vid=vid;state.rule=structuredClone(state.country.rules?.[vid]||defaultRule(vid));state.rule.additional_conditions=Array.isArray(state.rule.additional_conditions)?state.rule.additional_conditions:[];renderTransportTabs();renderRule()}
@@ -72,6 +72,16 @@ $('back-to-countries').addEventListener('click',()=>{$('country-detail-view').hi
 $('save-country').addEventListener('click',async event=>{busy(event.currentTarget,true);try{const data=await api('/admin/api/country',{method:'POST',body:{code:$('country-code').value,name:$('country-name').value,name_uz:$('country-name-uz').value}});toast('Davlat saqlandi va faollashtirildi.');loadStatus();if(!state.country)await openCountry(data.code);else await openCountry(state.country.code)}catch(error){toast(error.message,true)}finally{busy(event.currentTarget,false)}});
 $('delete-country').addEventListener('click',async()=>{if(!state.country||!confirm(`${state.country.name_uz||state.country.name} davlatini o'chirasizmi?`))return;try{await api(`/admin/api/country/${state.country.code}`,{method:'DELETE'});toast('Davlat o\'chirildi.');$('back-to-countries').click();loadStatus()}catch(error){toast(error.message,true)}});
 $('add-country').addEventListener('click',()=>openModal({title:"Yangi davlat",body:`<div class="modal-fields"><label>Davlat kodi<input id="new-country-code" inputmode="numeric" maxlength="3" placeholder="Masalan: 156"></label><label>O'zbekcha nom<input id="new-country-uz" placeholder="Masalan: Xitoy"></label><label>Asosiy/Ruscha nom<input id="new-country-name" placeholder="Masalan: КИТАЙ"></label></div>`,onSave:async()=>{const data=await api('/admin/api/country',{method:'POST',body:{code:$('new-country-code').value,name:$('new-country-name').value,name_uz:$('new-country-uz').value}});closeModal();toast('Davlat qo\'shildi.');await loadCountries();await openCountry(data.code)}}));
+
+document.querySelectorAll('.manage-transport-types').forEach(button=>button.addEventListener('click',openTransportTypes));
+async function openTransportTypes(){
+  try{
+    const data=await api('/admin/api/transport-types');
+    const rows=(data.items||[]).map(item=>`<div class="transport-type-row"><span class="transport-code">${escapeHTML(item.code)}</span><div><b>${escapeHTML(item.uz)}</b><small>${escapeHTML(item.ru)} · Asosiy mantiq: ${escapeHTML(item.base_vid)}${item.auto_detect?' · avtomatik':''}</small></div>${item.core?'<span class="core-badge">Asosiy</span>':`<button type="button" class="icon-button" data-transport-delete="${escapeHTML(item.code)}" title="O'chirish">${icon('trash')}</button>`}</div>`).join('');
+    openModal({title:'Tashuv turlarini boshqarish',eyebrow:'DAZVOL MANTIG\'I',body:`<div class="transport-manager-list">${rows}</div><div class="modal-divider"></div><div class="modal-fields"><h3>Yangi tashuv turi</h3><label>O'zbekcha nom<input id="transport-uz" placeholder="Masalan: Maxsus tranzit"></label><label>Ruscha nom<input id="transport-ru"></label><label>Inglizcha nom<input id="transport-en"></label><label>Qaysi asosiy mantiq bo'yicha aniqlanadi<select id="transport-base">${Object.entries({1:"Yuk bilan O'zbekistondan",2:"Yuk bilan O'zbekistonga",3:'Yuk bilan tranzit',4:'Uchinchi davlatga',5:'Uchinchi davlatdan',6:'Ichki tashuv',7:"Bo'sh kirish",8:"Bo'sh tranzit"}).map(([code,name])=>`<option value="${code}">${code} · ${escapeHTML(name)}</option>`).join('')}</select></label><label class="toggle-row"><span>Yo'nalishdan avtomatik aniqlansin</span><input id="transport-auto" type="checkbox" checked></label></div>`,onSave:async()=>{await api('/admin/api/transport-type',{method:'POST',body:{uz:$('transport-uz').value,ru:$('transport-ru').value,en:$('transport-en').value,base_vid:$('transport-base').value,auto_detect:$('transport-auto').checked}});closeModal();await loadCountries();if(state.country)renderTransportTabs();toast('Yangi tashuv turi saqlandi va faollashtirildi.');openTransportTypes()}});
+    $('modal-body').querySelectorAll('[data-transport-delete]').forEach(button=>button.addEventListener('click',async()=>{if(!confirm('Ushbu tashuv turini o\'chirasizmi?'))return;await api(`/admin/api/transport-type/${button.dataset.transportDelete}`,{method:'DELETE'});closeModal();await loadCountries();if(state.country){state.vid='1';renderTransportTabs();selectRule('1')}toast('Tashuv turi o\'chirildi.');openTransportTypes()}));
+  }catch(error){toast(error.message,true)}
+}
 
 function openModal({title,eyebrow='TAHRIRLASH',body,onSave}){$('modal-title').textContent=title;$('modal-eyebrow').textContent=eyebrow;$('modal-body').innerHTML=body;state.modalSave=onSave;$('modal').hidden=false;document.body.style.overflow='hidden';setTimeout(()=>$('modal-body').querySelector('input,textarea,select')?.focus(),60)}
 function closeModal(){$('modal').hidden=true;document.body.style.overflow='';state.modalSave=null}

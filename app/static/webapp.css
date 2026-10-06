@@ -7,4 +7,6 @@
 @media print{body{background:white}.government-bar,.topbar,.intro,.service-tabs,.form-card,.mobile-nav,.toast{display:none!important}main{padding:0}.view{display:none!important}.view.active{display:block!important}.result{margin:0}.result-card{box-shadow:none;border:0;padding:8mm}.result-actions{display:none}.notice{break-inside:avoid}.fee-table,.status-grid,.total-box{break-inside:avoid}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 .form-card:before{background:linear-gradient(90deg,var(--blue),var(--teal))}
+.operation-field{margin-top:18px}.operation-tabs{max-width:none;grid-template-columns:repeat(3,minmax(0,1fr))}.operation-tabs button{min-height:46px;line-height:1.25}.operation-tabs button.active{background:linear-gradient(135deg,#0b69c7,#087f84);color:#fff}.two-cols>[hidden]:only-child{grid-column:1/-1}
+@media(max-width:900px){.operation-tabs{grid-template-columns:1fr}}
 
