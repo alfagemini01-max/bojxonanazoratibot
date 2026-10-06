@@ -1,0 +1,1237 @@
+{
+  "100": {
+    "uz": "Bolgariya",
+    "ru": "Болгария",
+    "en": "Bulgaria"
+  },
+  "104": {
+    "uz": "Myanma (Birma)",
+    "ru": "Мьянма (Бирма)",
+    "en": "Myanmar (Burma)"
+  },
+  "108": {
+    "uz": "Burundi",
+    "ru": "Бурунди",
+    "en": "Burundi"
+  },
+  "112": {
+    "uz": "Belarus",
+    "ru": "Беларусь",
+    "en": "Belarus"
+  },
+  "116": {
+    "uz": "Kambodja",
+    "ru": "Камбоджа",
+    "en": "Cambodia"
+  },
+  "120": {
+    "uz": "Kamerun",
+    "ru": "Камерун",
+    "en": "Cameroon"
+  },
+  "124": {
+    "uz": "Kanada",
+    "ru": "Канада",
+    "en": "Canada"
+  },
+  "132": {
+    "uz": "Kabo-Verde",
+    "ru": "Кабо-Верде",
+    "en": "Cape Verde"
+  },
+  "136": {
+    "uz": "Kayman orollari",
+    "ru": "о-ва Кайман",
+    "en": "Cayman Islands"
+  },
+  "140": {
+    "uz": "Markaziy Afrika Respublikasi",
+    "ru": "Центрально-Африканская Республика",
+    "en": "Central African Republic"
+  },
+  "144": {
+    "uz": "Shri-Lanka",
+    "ru": "Шри-Ланка",
+    "en": "Sri Lanka"
+  },
+  "148": {
+    "uz": "Chad",
+    "ru": "Чад",
+    "en": "Chad"
+  },
+  "152": {
+    "uz": "Chili",
+    "ru": "Чили",
+    "en": "Chile"
+  },
+  "156": {
+    "uz": "Xitoy",
+    "ru": "Китай",
+    "en": "China"
+  },
+  "158": {
+    "uz": "Tayvan",
+    "ru": "Тайвань",
+    "en": "Taiwan"
+  },
+  "162": {
+    "uz": "Rojdestvo oroli",
+    "ru": "о-в Рождества",
+    "en": "Christmas Island"
+  },
+  "166": {
+    "uz": "Kokos (Kiling) orollari",
+    "ru": "Кокосовые о-ва",
+    "en": "Cocos (Keeling) Islands"
+  },
+  "170": {
+    "uz": "Kolumbiya",
+    "ru": "Колумбия",
+    "en": "Colombia"
+  },
+  "174": {
+    "uz": "Komor orollari",
+    "ru": "Коморы",
+    "en": "Comoros"
+  },
+  "178": {
+    "uz": "Kongo – Brazzavil",
+    "ru": "Конго - Браззавиль",
+    "en": "Congo - Brazzaville"
+  },
+  "180": {
+    "uz": "Kongo – Kinshasa",
+    "ru": "Конго - Киншаса",
+    "en": "Congo - Kinshasa"
+  },
+  "184": {
+    "uz": "Kuk orollari",
+    "ru": "о-ва Кука",
+    "en": "Cook Islands"
+  },
+  "188": {
+    "uz": "Kosta-Rika",
+    "ru": "Коста-Рика",
+    "en": "Costa Rica"
+  },
+  "191": {
+    "uz": "Xorvatiya",
+    "ru": "Хорватия",
+    "en": "Croatia"
+  },
+  "192": {
+    "uz": "Kuba",
+    "ru": "Куба",
+    "en": "Cuba"
+  },
+  "196": {
+    "uz": "Kipr",
+    "ru": "Кипр",
+    "en": "Cyprus"
+  },
+  "203": {
+    "uz": "Chexiya",
+    "ru": "Чехия",
+    "en": "Czechia"
+  },
+  "204": {
+    "uz": "Benin",
+    "ru": "Бенин",
+    "en": "Benin"
+  },
+  "208": {
+    "uz": "Daniya",
+    "ru": "Дания",
+    "en": "Denmark"
+  },
+  "212": {
+    "uz": "Dominika",
+    "ru": "Доминика",
+    "en": "Dominica"
+  },
+  "214": {
+    "uz": "Dominikan Respublikasi",
+    "ru": "Доминиканская Республика",
+    "en": "Dominican Republic"
+  },
+  "218": {
+    "uz": "Ekvador",
+    "ru": "Эквадор",
+    "en": "Ecuador"
+  },
+  "222": {
+    "uz": "Salvador",
+    "ru": "Сальвадор",
+    "en": "El Salvador"
+  },
+  "226": {
+    "uz": "Ekvatorial Gvineya",
+    "ru": "Экваториальная Гвинея",
+    "en": "Equatorial Guinea"
+  },
+  "231": {
+    "uz": "Efiopiya",
+    "ru": "Эфиопия",
+    "en": "Ethiopia"
+  },
+  "232": {
+    "uz": "Eritreya",
+    "ru": "Эритрея",
+    "en": "Eritrea"
+  },
+  "233": {
+    "uz": "Estoniya",
+    "ru": "Эстония",
+    "en": "Estonia"
+  },
+  "234": {
+    "uz": "Farer orollari",
+    "ru": "Фарерские о-ва",
+    "en": "Faroe Islands"
+  },
+  "238": {
+    "uz": "Folklend orollari",
+    "ru": "Фолклендские о-ва",
+    "en": "Falkland Islands"
+  },
+  "242": {
+    "uz": "Fiji",
+    "ru": "Фиджи",
+    "en": "Fiji"
+  },
+  "246": {
+    "uz": "Finlandiya",
+    "ru": "Финляндия",
+    "en": "Finland"
+  },
+  "250": {
+    "uz": "Fransiya",
+    "ru": "Франция",
+    "en": "France"
+  },
+  "254": {
+    "uz": "Fransuz Gvianasi",
+    "ru": "Французская Гвиана",
+    "en": "French Guiana"
+  },
+  "258": {
+    "uz": "Fransuz Polineziyasi",
+    "ru": "Французская Полинезия",
+    "en": "French Polynesia"
+  },
+  "260": {
+    "uz": "Fransuz Janubiy hududlari",
+    "ru": "Французские Южные территории",
+    "en": "French Southern Territories"
+  },
+  "262": {
+    "uz": "Jibuti",
+    "ru": "Джибути",
+    "en": "Djibouti"
+  },
+  "266": {
+    "uz": "Gabon",
+    "ru": "Габон",
+    "en": "Gabon"
+  },
+  "268": {
+    "uz": "Gruziya",
+    "ru": "Грузия",
+    "en": "Georgia"
+  },
+  "270": {
+    "uz": "Gambiya",
+    "ru": "Гамбия",
+    "en": "Gambia"
+  },
+  "274": {
+    "uz": "Falastin hududlari",
+    "ru": "Палестинские территории",
+    "en": "Palestinian Territories"
+  },
+  "275": {
+    "uz": "Falastin hududlari",
+    "ru": "Палестинские территории",
+    "en": "Palestinian Territories"
+  },
+  "276": {
+    "uz": "Germaniya",
+    "ru": "Германия",
+    "en": "Germany"
+  },
+  "288": {
+    "uz": "Gana",
+    "ru": "Гана",
+    "en": "Ghana"
+  },
+  "292": {
+    "uz": "Gibraltar",
+    "ru": "Гибралтар",
+    "en": "Gibraltar"
+  },
+  "296": {
+    "uz": "Kiribati",
+    "ru": "Кирибати",
+    "en": "Kiribati"
+  },
+  "300": {
+    "uz": "Gretsiya",
+    "ru": "Греция",
+    "en": "Greece"
+  },
+  "304": {
+    "uz": "Grenlandiya",
+    "ru": "Гренландия",
+    "en": "Greenland"
+  },
+  "308": {
+    "uz": "Grenada",
+    "ru": "Гренада",
+    "en": "Grenada"
+  },
+  "312": {
+    "uz": "Gvadelupe",
+    "ru": "Гваделупа",
+    "en": "Guadeloupe"
+  },
+  "316": {
+    "uz": "Guam",
+    "ru": "Гуам",
+    "en": "Guam"
+  },
+  "320": {
+    "uz": "Gvatemala",
+    "ru": "Гватемала",
+    "en": "Guatemala"
+  },
+  "324": {
+    "uz": "Gvineya",
+    "ru": "Гвинея",
+    "en": "Guinea"
+  },
+  "328": {
+    "uz": "Gayana",
+    "ru": "Гайана",
+    "en": "Guyana"
+  },
+  "332": {
+    "uz": "Gaiti",
+    "ru": "Гаити",
+    "en": "Haiti"
+  },
+  "334": {
+    "uz": "Xerd va Makdonald orollari",
+    "ru": "о-ва Херд и Макдональд",
+    "en": "Heard & McDonald Islands"
+  },
+  "336": {
+    "uz": "Vatikan",
+    "ru": "Ватикан",
+    "en": "Vatican City"
+  },
+  "340": {
+    "uz": "Gonduras",
+    "ru": "Гондурас",
+    "en": "Honduras"
+  },
+  "344": {
+    "uz": "Gonkong (Xitoy MMH)",
+    "ru": "Гонконг (САР)",
+    "en": "Hong Kong SAR China"
+  },
+  "348": {
+    "uz": "Vengriya",
+    "ru": "Венгрия",
+    "en": "Hungary"
+  },
+  "352": {
+    "uz": "Islandiya",
+    "ru": "Исландия",
+    "en": "Iceland"
+  },
+  "356": {
+    "uz": "Hindiston",
+    "ru": "Индия",
+    "en": "India"
+  },
+  "360": {
+    "uz": "Indoneziya",
+    "ru": "Индонезия",
+    "en": "Indonesia"
+  },
+  "364": {
+    "uz": "Eron",
+    "ru": "Иран",
+    "en": "Iran"
+  },
+  "368": {
+    "uz": "Iroq",
+    "ru": "Ирак",
+    "en": "Iraq"
+  },
+  "372": {
+    "uz": "Irlandiya",
+    "ru": "Ирландия",
+    "en": "Ireland"
+  },
+  "376": {
+    "uz": "Isroil",
+    "ru": "Израиль",
+    "en": "Israel"
+  },
+  "380": {
+    "uz": "Italiya",
+    "ru": "Италия",
+    "en": "Italy"
+  },
+  "384": {
+    "uz": "Kot-d’Ivuar",
+    "ru": "Кот-д’Ивуар",
+    "en": "Côte d’Ivoire"
+  },
+  "388": {
+    "uz": "Yamayka",
+    "ru": "Ямайка",
+    "en": "Jamaica"
+  },
+  "392": {
+    "uz": "Yaponiya",
+    "ru": "Япония",
+    "en": "Japan"
+  },
+  "396": {
+    "uz": "AQSH yondosh orollari",
+    "ru": "Внешние малые о-ва (США)",
+    "en": "U.S. Outlying Islands"
+  },
+  "398": {
+    "uz": "Qozogʻiston",
+    "ru": "Казахстан",
+    "en": "Kazakhstan"
+  },
+  "400": {
+    "uz": "Iordaniya",
+    "ru": "Иордания",
+    "en": "Jordan"
+  },
+  "404": {
+    "uz": "Keniya",
+    "ru": "Кения",
+    "en": "Kenya"
+  },
+  "408": {
+    "uz": "Shimoliy Koreya",
+    "ru": "КНДР",
+    "en": "North Korea"
+  },
+  "410": {
+    "uz": "Janubiy Koreya",
+    "ru": "Республика Корея",
+    "en": "South Korea"
+  },
+  "414": {
+    "uz": "Quvayt",
+    "ru": "Кувейт",
+    "en": "Kuwait"
+  },
+  "417": {
+    "uz": "Qirgʻiziston",
+    "ru": "Киргизия",
+    "en": "Kyrgyzstan"
+  },
+  "418": {
+    "uz": "Laos",
+    "ru": "Лаос",
+    "en": "Laos"
+  },
+  "422": {
+    "uz": "Livan",
+    "ru": "Ливан",
+    "en": "Lebanon"
+  },
+  "426": {
+    "uz": "Lesoto",
+    "ru": "Лесото",
+    "en": "Lesotho"
+  },
+  "428": {
+    "uz": "Latviya",
+    "ru": "Латвия",
+    "en": "Latvia"
+  },
+  "430": {
+    "uz": "Liberiya",
+    "ru": "Либерия",
+    "en": "Liberia"
+  },
+  "434": {
+    "uz": "Liviya",
+    "ru": "Ливия",
+    "en": "Libya"
+  },
+  "438": {
+    "uz": "Lixtenshteyn",
+    "ru": "Лихтенштейн",
+    "en": "Liechtenstein"
+  },
+  "440": {
+    "uz": "Litva",
+    "ru": "Литва",
+    "en": "Lithuania"
+  },
+  "442": {
+    "uz": "Lyuksemburg",
+    "ru": "Люксембург",
+    "en": "Luxembourg"
+  },
+  "446": {
+    "uz": "Makao (Xitoy MMH)",
+    "ru": "Макао (САР)",
+    "en": "Macao SAR China"
+  },
+  "450": {
+    "uz": "Madagaskar",
+    "ru": "Мадагаскар",
+    "en": "Madagascar"
+  },
+  "454": {
+    "uz": "Malavi",
+    "ru": "Малави",
+    "en": "Malawi"
+  },
+  "458": {
+    "uz": "Malayziya",
+    "ru": "Малайзия",
+    "en": "Malaysia"
+  },
+  "462": {
+    "uz": "Maldiv orollari",
+    "ru": "Мальдивы",
+    "en": "Maldives"
+  },
+  "466": {
+    "uz": "Mali",
+    "ru": "Мали",
+    "en": "Mali"
+  },
+  "470": {
+    "uz": "Malta",
+    "ru": "Мальта",
+    "en": "Malta"
+  },
+  "474": {
+    "uz": "Martinika",
+    "ru": "Мартиника",
+    "en": "Martinique"
+  },
+  "478": {
+    "uz": "Mavritaniya",
+    "ru": "Мавритания",
+    "en": "Mauritania"
+  },
+  "480": {
+    "uz": "Mavrikiy",
+    "ru": "Маврикий",
+    "en": "Mauritius"
+  },
+  "484": {
+    "uz": "Meksika",
+    "ru": "Мексика",
+    "en": "Mexico"
+  },
+  "492": {
+    "uz": "Monako",
+    "ru": "Монако",
+    "en": "Monaco"
+  },
+  "496": {
+    "uz": "Mongoliya",
+    "ru": "Монголия",
+    "en": "Mongolia"
+  },
+  "498": {
+    "uz": "Moldova",
+    "ru": "Молдова",
+    "en": "Moldova"
+  },
+  "499": {
+    "uz": "Chernogoriya",
+    "ru": "Черногория",
+    "en": "Montenegro"
+  },
+  "500": {
+    "uz": "Montserrat",
+    "ru": "Монтсеррат",
+    "en": "Montserrat"
+  },
+  "504": {
+    "uz": "Marokash",
+    "ru": "Марокко",
+    "en": "Morocco"
+  },
+  "508": {
+    "uz": "Mozambik",
+    "ru": "Мозамбик",
+    "en": "Mozambique"
+  },
+  "512": {
+    "uz": "Ummon",
+    "ru": "Оман",
+    "en": "Oman"
+  },
+  "516": {
+    "uz": "Namibiya",
+    "ru": "Намибия",
+    "en": "Namibia"
+  },
+  "520": {
+    "uz": "Nauru",
+    "ru": "Науру",
+    "en": "Nauru"
+  },
+  "524": {
+    "uz": "Nepal",
+    "ru": "Непал",
+    "en": "Nepal"
+  },
+  "528": {
+    "uz": "Niderlandiya",
+    "ru": "Нидерланды",
+    "en": "Netherlands"
+  },
+  "531": {
+    "uz": "Kyurasao",
+    "ru": "Кюрасао",
+    "en": "Curaçao"
+  },
+  "533": {
+    "uz": "Aruba",
+    "ru": "Аруба",
+    "en": "Aruba"
+  },
+  "534": {
+    "uz": "Sint-Marten",
+    "ru": "Синт-Мартен",
+    "en": "Sint Maarten"
+  },
+  "535": {
+    "uz": "Boneyr, Sint-Estatius va Saba",
+    "ru": "Бонэйр, Синт-Эстатиус и Саба",
+    "en": "Caribbean Netherlands"
+  },
+  "540": {
+    "uz": "Yangi Kaledoniya",
+    "ru": "Новая Каледония",
+    "en": "New Caledonia"
+  },
+  "548": {
+    "uz": "Vanuatu",
+    "ru": "Вануату",
+    "en": "Vanuatu"
+  },
+  "554": {
+    "uz": "Yangi Zelandiya",
+    "ru": "Новая Зеландия",
+    "en": "New Zealand"
+  },
+  "558": {
+    "uz": "Nikaragua",
+    "ru": "Никарагуа",
+    "en": "Nicaragua"
+  },
+  "562": {
+    "uz": "Niger",
+    "ru": "Нигер",
+    "en": "Niger"
+  },
+  "566": {
+    "uz": "Nigeriya",
+    "ru": "Нигерия",
+    "en": "Nigeria"
+  },
+  "570": {
+    "uz": "Niue",
+    "ru": "Ниуэ",
+    "en": "Niue"
+  },
+  "574": {
+    "uz": "Norfolk oroli",
+    "ru": "о-в Норфолк",
+    "en": "Norfolk Island"
+  },
+  "578": {
+    "uz": "Norvegiya",
+    "ru": "Норвегия",
+    "en": "Norway"
+  },
+  "580": {
+    "uz": "Shimoliy Mariana orollari",
+    "ru": "Северные Марианские о-ва",
+    "en": "Northern Mariana Islands"
+  },
+  "581": {
+    "uz": "AQSH yondosh orollari",
+    "ru": "Внешние малые о-ва (США)",
+    "en": "U.S. Outlying Islands"
+  },
+  "583": {
+    "uz": "Mikroneziya",
+    "ru": "Федеративные Штаты Микронезии",
+    "en": "Micronesia"
+  },
+  "584": {
+    "uz": "Marshall orollari",
+    "ru": "Маршалловы о-ва",
+    "en": "Marshall Islands"
+  },
+  "585": {
+    "uz": "Palau",
+    "ru": "Палау",
+    "en": "Palau"
+  },
+  "586": {
+    "uz": "Pokiston",
+    "ru": "Пакистан",
+    "en": "Pakistan"
+  },
+  "591": {
+    "uz": "Panama",
+    "ru": "Панама",
+    "en": "Panama"
+  },
+  "598": {
+    "uz": "Papua – Yangi Gvineya",
+    "ru": "Папуа — Новая Гвинея",
+    "en": "Papua New Guinea"
+  },
+  "600": {
+    "uz": "Paragvay",
+    "ru": "Парагвай",
+    "en": "Paraguay"
+  },
+  "604": {
+    "uz": "Peru",
+    "ru": "Перу",
+    "en": "Peru"
+  },
+  "608": {
+    "uz": "Filippin",
+    "ru": "Филиппины",
+    "en": "Philippines"
+  },
+  "612": {
+    "uz": "Pitkern orollari",
+    "ru": "о-ва Питкэрн",
+    "en": "Pitcairn Islands"
+  },
+  "616": {
+    "uz": "Polsha",
+    "ru": "Польша",
+    "en": "Poland"
+  },
+  "620": {
+    "uz": "Portugaliya",
+    "ru": "Португалия",
+    "en": "Portugal"
+  },
+  "624": {
+    "uz": "Gvineya-Bisau",
+    "ru": "Гвинея-Бисау",
+    "en": "Guinea-Bissau"
+  },
+  "626": {
+    "uz": "Timor-Leste",
+    "ru": "Восточный Тимор",
+    "en": "Timor-Leste"
+  },
+  "630": {
+    "uz": "Puerto-Riko",
+    "ru": "Пуэрто-Рико",
+    "en": "Puerto Rico"
+  },
+  "634": {
+    "uz": "Qatar",
+    "ru": "Катар",
+    "en": "Qatar"
+  },
+  "638": {
+    "uz": "Reyunion",
+    "ru": "Реюньон",
+    "en": "Réunion"
+  },
+  "642": {
+    "uz": "Ruminiya",
+    "ru": "Румыния",
+    "en": "Romania"
+  },
+  "643": {
+    "uz": "Rossiya",
+    "ru": "Россия",
+    "en": "Russia"
+  },
+  "646": {
+    "uz": "Ruanda",
+    "ru": "Руанда",
+    "en": "Rwanda"
+  },
+  "652": {
+    "uz": "Sen-Bartelemi",
+    "ru": "Сен-Бартелеми",
+    "en": "St. Barthélemy"
+  },
+  "654": {
+    "uz": "Muqaddas Yelena oroli",
+    "ru": "о-в Св. Елены",
+    "en": "St. Helena"
+  },
+  "659": {
+    "uz": "Sent-Kits va Nevis",
+    "ru": "Сент-Китс и Невис",
+    "en": "St. Kitts & Nevis"
+  },
+  "660": {
+    "uz": "Angilya",
+    "ru": "Ангилья",
+    "en": "Anguilla"
+  },
+  "662": {
+    "uz": "Sent-Lyusiya",
+    "ru": "Сент-Люсия",
+    "en": "St. Lucia"
+  },
+  "663": {
+    "uz": "Sent-Martin",
+    "ru": "Сен-Мартен",
+    "en": "St. Martin"
+  },
+  "666": {
+    "uz": "Sen-Pyer va Mikelon",
+    "ru": "Сен-Пьер и Микелон",
+    "en": "St. Pierre & Miquelon"
+  },
+  "670": {
+    "uz": "Sent-Vinsent va Grenadin",
+    "ru": "Сент-Винсент и Гренадины",
+    "en": "St. Vincent & Grenadines"
+  },
+  "674": {
+    "uz": "San-Marino",
+    "ru": "Сан-Марино",
+    "en": "San Marino"
+  },
+  "678": {
+    "uz": "San-Tome va Prinsipi",
+    "ru": "Сан-Томе и Принсипи",
+    "en": "São Tomé & Príncipe"
+  },
+  "682": {
+    "uz": "Saudiya Arabistoni",
+    "ru": "Саудовская Аравия",
+    "en": "Saudi Arabia"
+  },
+  "686": {
+    "uz": "Senegal",
+    "ru": "Сенегал",
+    "en": "Senegal"
+  },
+  "688": {
+    "uz": "Serbiya",
+    "ru": "Сербия",
+    "en": "Serbia"
+  },
+  "690": {
+    "uz": "Seyshel orollari",
+    "ru": "Сейшельские о-ва",
+    "en": "Seychelles"
+  },
+  "694": {
+    "uz": "Syerra-Leone",
+    "ru": "Сьерра-Леоне",
+    "en": "Sierra Leone"
+  },
+  "702": {
+    "uz": "Singapur",
+    "ru": "Сингапур",
+    "en": "Singapore"
+  },
+  "703": {
+    "uz": "Slovakiya",
+    "ru": "Словакия",
+    "en": "Slovakia"
+  },
+  "704": {
+    "uz": "Vyetnam",
+    "ru": "Вьетнам",
+    "en": "Vietnam"
+  },
+  "705": {
+    "uz": "Sloveniya",
+    "ru": "Словения",
+    "en": "Slovenia"
+  },
+  "706": {
+    "uz": "Somali",
+    "ru": "Сомали",
+    "en": "Somalia"
+  },
+  "710": {
+    "uz": "Janubiy Afrika Respublikasi",
+    "ru": "Южно-Африканская Республика",
+    "en": "South Africa"
+  },
+  "716": {
+    "uz": "Zimbabve",
+    "ru": "Зимбабве",
+    "en": "Zimbabwe"
+  },
+  "724": {
+    "uz": "Ispaniya",
+    "ru": "Испания",
+    "en": "Spain"
+  },
+  "728": {
+    "uz": "Janubiy Sudan",
+    "ru": "Южный Судан",
+    "en": "South Sudan"
+  },
+  "729": {
+    "uz": "Sudan",
+    "ru": "Судан",
+    "en": "Sudan"
+  },
+  "732": {
+    "uz": "G‘arbiy Sahroi Kabir",
+    "ru": "Западная Сахара",
+    "en": "Western Sahara"
+  },
+  "740": {
+    "uz": "Surinam",
+    "ru": "Суринам",
+    "en": "Suriname"
+  },
+  "744": {
+    "uz": "Shpitsbergen va Yan-Mayen",
+    "ru": "Шпицберген и Ян-Майен",
+    "en": "Svalbard & Jan Mayen"
+  },
+  "748": {
+    "uz": "Svazilend",
+    "ru": "Эсватини",
+    "en": "Eswatini"
+  },
+  "752": {
+    "uz": "Shvetsiya",
+    "ru": "Швеция",
+    "en": "Sweden"
+  },
+  "756": {
+    "uz": "Shveytsariya",
+    "ru": "Швейцария",
+    "en": "Switzerland"
+  },
+  "760": {
+    "uz": "Suriya",
+    "ru": "Сирия",
+    "en": "Syria"
+  },
+  "762": {
+    "uz": "Tojikiston",
+    "ru": "Таджикистан",
+    "en": "Tajikistan"
+  },
+  "764": {
+    "uz": "Tailand",
+    "ru": "Таиланд",
+    "en": "Thailand"
+  },
+  "768": {
+    "uz": "Togo",
+    "ru": "Того",
+    "en": "Togo"
+  },
+  "772": {
+    "uz": "Tokelau",
+    "ru": "Токелау",
+    "en": "Tokelau"
+  },
+  "776": {
+    "uz": "Tonga",
+    "ru": "Тонга",
+    "en": "Tonga"
+  },
+  "780": {
+    "uz": "Trinidad va Tobago",
+    "ru": "Тринидад и Тобаго",
+    "en": "Trinidad & Tobago"
+  },
+  "784": {
+    "uz": "Birlashgan Arab Amirliklari",
+    "ru": "ОАЭ",
+    "en": "United Arab Emirates"
+  },
+  "788": {
+    "uz": "Tunis",
+    "ru": "Тунис",
+    "en": "Tunisia"
+  },
+  "792": {
+    "uz": "Turkiya",
+    "ru": "Турция",
+    "en": "Türkiye"
+  },
+  "795": {
+    "uz": "Turkmaniston",
+    "ru": "Туркменистан",
+    "en": "Turkmenistan"
+  },
+  "796": {
+    "uz": "Turks va Kaykos orollari",
+    "ru": "Тёркс и Кайкос",
+    "en": "Turks & Caicos Islands"
+  },
+  "798": {
+    "uz": "Tuvalu",
+    "ru": "Тувалу",
+    "en": "Tuvalu"
+  },
+  "800": {
+    "uz": "Uganda",
+    "ru": "Уганда",
+    "en": "Uganda"
+  },
+  "804": {
+    "uz": "Ukraina",
+    "ru": "Украина",
+    "en": "Ukraine"
+  },
+  "807": {
+    "uz": "Shimoliy Makedoniya",
+    "ru": "Северная Македония",
+    "en": "North Macedonia"
+  },
+  "818": {
+    "uz": "Misr",
+    "ru": "Египет",
+    "en": "Egypt"
+  },
+  "826": {
+    "uz": "Buyuk Britaniya",
+    "ru": "Великобритания",
+    "en": "United Kingdom"
+  },
+  "831": {
+    "uz": "Gernsi",
+    "ru": "Гернси",
+    "en": "Guernsey"
+  },
+  "832": {
+    "uz": "Jersi",
+    "ru": "Джерси",
+    "en": "Jersey"
+  },
+  "833": {
+    "uz": "Men oroli",
+    "ru": "о-в Мэн",
+    "en": "Isle of Man"
+  },
+  "834": {
+    "uz": "Tanzaniya",
+    "ru": "Танзания",
+    "en": "Tanzania"
+  },
+  "840": {
+    "uz": "Amerika Qo‘shma Shtatlari",
+    "ru": "Соединенные Штаты",
+    "en": "United States"
+  },
+  "850": {
+    "uz": "AQSH Virgin orollari",
+    "ru": "Виргинские о-ва (США)",
+    "en": "U.S. Virgin Islands"
+  },
+  "854": {
+    "uz": "Burkina-Faso",
+    "ru": "Буркина-Фасо",
+    "en": "Burkina Faso"
+  },
+  "858": {
+    "uz": "Urugvay",
+    "ru": "Уругвай",
+    "en": "Uruguay"
+  },
+  "860": {
+    "uz": "Oʻzbekiston",
+    "ru": "Узбекистан",
+    "en": "Uzbekistan"
+  },
+  "862": {
+    "uz": "Venesuela",
+    "ru": "Венесуэла",
+    "en": "Venezuela"
+  },
+  "876": {
+    "uz": "Uollis va Futuna",
+    "ru": "Уоллис и Футуна",
+    "en": "Wallis & Futuna"
+  },
+  "882": {
+    "uz": "Samoa",
+    "ru": "Самоа",
+    "en": "Samoa"
+  },
+  "887": {
+    "uz": "Yaman",
+    "ru": "Йемен",
+    "en": "Yemen"
+  },
+  "894": {
+    "uz": "Zambiya",
+    "ru": "Замбия",
+    "en": "Zambia"
+  },
+  "000": {
+    "uz": "Noma'lum davlat",
+    "ru": "Неизвестное государство",
+    "en": "Unknown country"
+  },
+  "004": {
+    "uz": "Afgʻoniston",
+    "ru": "Афганистан",
+    "en": "Afghanistan"
+  },
+  "008": {
+    "uz": "Albaniya",
+    "ru": "Албания",
+    "en": "Albania"
+  },
+  "010": {
+    "uz": "Antarktida",
+    "ru": "Антарктида",
+    "en": "Antarctica"
+  },
+  "012": {
+    "uz": "Jazoir",
+    "ru": "Алжир",
+    "en": "Algeria"
+  },
+  "016": {
+    "uz": "Amerika Samoasi",
+    "ru": "Американское Самоа",
+    "en": "American Samoa"
+  },
+  "020": {
+    "uz": "Andorra",
+    "ru": "Андорра",
+    "en": "Andorra"
+  },
+  "024": {
+    "uz": "Angola",
+    "ru": "Ангола",
+    "en": "Angola"
+  },
+  "028": {
+    "uz": "Antigua va Barbuda",
+    "ru": "Антигуа и Барбуда",
+    "en": "Antigua & Barbuda"
+  },
+  "031": {
+    "uz": "Ozarbayjon",
+    "ru": "Азербайджан",
+    "en": "Azerbaijan"
+  },
+  "032": {
+    "uz": "Argentina",
+    "ru": "Аргентина",
+    "en": "Argentina"
+  },
+  "036": {
+    "uz": "Avstraliya",
+    "ru": "Австралия",
+    "en": "Australia"
+  },
+  "040": {
+    "uz": "Avstriya",
+    "ru": "Австрия",
+    "en": "Austria"
+  },
+  "044": {
+    "uz": "Bagama orollari",
+    "ru": "Багамы",
+    "en": "Bahamas"
+  },
+  "048": {
+    "uz": "Bahrayn",
+    "ru": "Бахрейн",
+    "en": "Bahrain"
+  },
+  "050": {
+    "uz": "Bangladesh",
+    "ru": "Бангладеш",
+    "en": "Bangladesh"
+  },
+  "051": {
+    "uz": "Armaniston",
+    "ru": "Армения",
+    "en": "Armenia"
+  },
+  "052": {
+    "uz": "Barbados",
+    "ru": "Барбадос",
+    "en": "Barbados"
+  },
+  "056": {
+    "uz": "Belgiya",
+    "ru": "Бельгия",
+    "en": "Belgium"
+  },
+  "060": {
+    "uz": "Bermuda orollari",
+    "ru": "Бермудские о-ва",
+    "en": "Bermuda"
+  },
+  "064": {
+    "uz": "Butan",
+    "ru": "Бутан",
+    "en": "Bhutan"
+  },
+  "068": {
+    "uz": "Boliviya",
+    "ru": "Боливия",
+    "en": "Bolivia"
+  },
+  "074": {
+    "uz": "Buve oroli",
+    "ru": "о-в Буве",
+    "en": "Bouvet Island"
+  },
+  "076": {
+    "uz": "Braziliya",
+    "ru": "Бразилия",
+    "en": "Brazil"
+  },
+  "084": {
+    "uz": "Beliz",
+    "ru": "Белиз",
+    "en": "Belize"
+  },
+  "086": {
+    "uz": "Britaniyaning Hind okeanidagi hududi",
+    "ru": "Британская территория в Индийском океане",
+    "en": "British Indian Ocean Territory"
+  },
+  "090": {
+    "uz": "Solomon orollari",
+    "ru": "Соломоновы о-ва",
+    "en": "Solomon Islands"
+  },
+  "092": {
+    "uz": "Britaniya Virgin orollari",
+    "ru": "Виргинские о-ва (Великобритания)",
+    "en": "British Virgin Islands"
+  },
+  "096": {
+    "uz": "Bruney",
+    "ru": "Бруней",
+    "en": "Brunei"
+  }
+}
