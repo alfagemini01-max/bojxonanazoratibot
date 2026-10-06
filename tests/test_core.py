@@ -45,6 +45,20 @@ class PermitRulesTests(unittest.TestCase):
         self.assertEqual(self.service.detect_transport_type(china, uzbekistan, china, "empty_entry"), "7")
         self.assertEqual(self.service.detect_transport_type(china, uzbekistan, china, "empty_transit"), "8")
 
+    def test_country_input_profile_comes_from_rules(self) -> None:
+        self.assertEqual(
+            self.service.country_input_profile("762"),
+            {"uses_weight": True, "uses_stay_days": False},
+        )
+        self.assertEqual(
+            self.service.country_input_profile("031"),
+            {"uses_weight": False, "uses_stay_days": True},
+        )
+        self.assertEqual(
+            self.service.country_input_profile("036"),
+            {"uses_weight": False, "uses_stay_days": False},
+        )
+
     def test_country_names_follow_language(self) -> None:
         australia = self.service.country_by_code("036")
         self.assertEqual(country_label(australia, "uz"), "Avstraliya")
@@ -177,7 +191,9 @@ class WebAppAssetTests(unittest.TestCase):
         self.assertNotIn("flagcdn.com", script)
         self.assertIn("loading=\"eager\"", script)
         self.assertIn("permit-operation", html)
-        self.assertIn("uses_weight", (ROOT / "app" / "webapp.py").read_text(encoding="utf-8"))
+        self.assertIn('data-operation="cargo"', html)
+        self.assertNotIn('data-operation="cargo_entry"', html)
+        self.assertIn("country_input_profile", (ROOT / "app" / "webapp.py").read_text(encoding="utf-8"))
 
     def test_admin_can_manage_transport_types(self) -> None:
         html = (ROOT / "app" / "static" / "admin.html").read_text(encoding="utf-8")
