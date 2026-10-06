@@ -13,6 +13,10 @@ Bot oqimi:
 
 Bot O'zbek, Rus va Ingliz tillarida ishlaydi. Tilni asosiy menyudagi `Tilni o'zgartirish` tugmasi yoki `/language` buyrug'i orqali almashtirish mumkin.
 
+## Web admin panel
+
+`/admin` sahifasida davlatni tanlab, bitta tashuv turi qoidasi ixcham formada tahrirlanadi. Ruxsatnoma, yig'im, USD stavka, uch tildagi izoh va tashuv turiga xos qo'shimcha shartlar saqlanishi bilan bot hamda Web App uchun darhol faollashadi. Chegaradagi yig'imlar import, eksport va tranzit bo'limlarida boshqariladi; Excel importi va oldingi versiyani tiklash alohida bo'limlarda joylashgan.
+
 ## Ishga tushirish
 
 Python 3.11 yoki undan yuqori versiya tavsiya etiladi.
@@ -145,8 +149,8 @@ Panel orqali quyidagilar boshqariladi:
 10. Har bir o'zgarish checkbox orqali alohida tanlanadi, tahrirlanadi yoki importdan chiqariladi.
 11. `ISDELETED=1` yozuvlari xavfsizlik uchun dastlab tanlanmaydi; ularni o'chirish admin tomonidan alohida tasdiqlanadi.
 12. Importdan avvalgi qoidalar `data/permission_rules.before-import.json` vaqtinchalik zaxira nusxasida saqlanadi.
-13. Barcha tahrirlar avval qoralamaga yoziladi; `E'lon qilish` bosilgandan keyingina botga tatbiq etiladi.
-14. Har bir e'lon alohida versiya sifatida saqlanadi, oldingi versiyani qayta tiklash va admin amallarini audit jurnalida ko'rish mumkin.
+13. `Saqlash`, `O'chirish` yoki Excel importini tasdiqlash bilan o'zgarish darhol faol bo'ladi; alohida `E'lon qilish` bosqichi yo'q.
+14. Har bir avtomatik saqlash alohida versiya sifatida saqlanadi, oldingi versiyani qayta tiklash va admin amallarini audit jurnalida ko'rish mumkin.
 15. Davlatlar ro'yxati ixcham yuklanadi; to'liq qoida va istisnolar faqat davlat ochilganda olinadi.
 
 Render Environment Variables ichida admin login va parolni albatta o'zgartiring:
@@ -157,7 +161,7 @@ ADMIN_PASSWORD=faqat_siz_biladigan_kuchli_parol
 ADMIN_SESSION_SECRET=kamida_32_belgili_tasodifiy_secret
 ```
 
-Muhim: `USER_DATABASE_URL` kiritilgan bo'lsa, e'lon qilingan qoida versiyalari va audit jurnali PostgreSQL'da saqlanadi. Qoralama mahalliy vaqtinchalik faylda turadi; muhim tahrirlarni Render redeployidan oldin `E'lon qilish` kerak.
+Muhim: `USER_DATABASE_URL` kiritilgan bo'lsa, faol qoida versiyalari va audit jurnali PostgreSQL'da saqlanadi. Admin paneldagi har bir saqlash PostgreSQL'da yangi faol versiya yaratadi va bot hamda Web App bir xil faol ma'lumotni avtomatik o'qiydi.
 
 ## Tezlik va himoya
 
