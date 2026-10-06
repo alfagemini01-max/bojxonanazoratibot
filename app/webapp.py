@@ -16,6 +16,7 @@ from app.services.permit import (
     UZBEKISTAN_CODE,
     PermitRuleService,
     country_label,
+    is_eu_or_azerbaijan,
     localized_additional_conditions,
     permit_status_text,
     transport_type_label,
@@ -122,7 +123,11 @@ def _permit_payload(
     if origin.code == destination.code == vehicle.code and origin.code != UZBEKISTAN_CODE:
         raise web.HTTPBadRequest(text="Ushbu tashuv O'zbekiston hududiga aloqador emas.")
 
-    result = permit_service.evaluate(origin, destination, vehicle)
+    requested_operation = str(body.get("operation") or "cargo").strip().lower()
+    if requested_operation not in {"cargo", "cargo_entry", "cargo_exit", "cargo_transit", "empty_entry", "empty_transit"}:
+        raise web.HTTPBadRequest(text="Tashuv holati noto'g'ri.")
+    operation = requested_operation if requested_operation.startswith("empty_") else "cargo"
+    result = permit_service.evaluate(origin, destination, vehicle, operation=operation)
     rule = result.rule or {}
     permission_code = str(rule.get("permission_cd", "0"))
     dues_code = str(rule.get("dues_cd", "0"))
@@ -146,7 +151,8 @@ def _permit_payload(
         extra_fee = float(fee_calculator.data["entry_fee"]["turkmenistan_extra_usd"])
     purchase_fee = 0.0
     if _bool(body.get("permit_purchase")) and vehicle.code != UZBEKISTAN_CODE and permission_code != "3":
-        purchase_fee = 200.0 if result.vid_cd == "3" else 800.0 if result.vid_cd in {"4", "5"} else 400.0
+        base_vid = result.base_vid_cd or result.vid_cd
+        purchase_fee = 200.0 if base_vid == "3" else 800.0 if base_vid in {"4", "5"} else 400.0
 
     warnings: list[str] = []
     if _bool(body.get("heavy")):
@@ -168,7 +174,12 @@ def _permit_payload(
             "destination": {"code": destination.code, "name": country_label(destination, lang)},
             "vehicle": {"code": vehicle.code, "name": country_label(vehicle, lang)},
         },
-        "transport_type": {"code": result.vid_cd, "name": transport_type_label(result.vid_cd, result.vid_name, lang)},
+        "transport_type": {
+            "code": result.vid_cd,
+            "base_code": result.base_vid_cd or result.vid_cd,
+            "name": transport_type_label(result.vid_cd, result.vid_name, lang, result.vid_labels),
+            "operation": requested_operation,
+        },
         "permission": {"code": permission_code, "text": permit_status_text(result.rule, lang)},
         "fee": {
             "dues_code": dues_code,
@@ -321,7 +332,7 @@ def _fee_payload(
             "vehicle_type": vehicle_type,
         },
         "transport_type": (
-            {"code": permit_result.vid_cd, "name": transport_type_label(permit_result.vid_cd, permit_result.vid_name, lang)}
+            {"code": permit_result.vid_cd, "name": transport_type_label(permit_result.vid_cd, permit_result.vid_name, lang, permit_result.vid_labels)}
             if permit_result else None
         ),
         "items": items,
@@ -354,11 +365,30 @@ def setup_webapp_routes(app: web.Application, settings: Settings) -> None:
             country = permit_service.country_by_code(code)
             return country_label(country, lang).casefold() if country else code
 
-        for code in sorted(permit_service.countries, key=sort_name):
+        ordered_codes = sorted(permit_service.countries, key=sort_name)
+        if "000" in ordered_codes:
+            ordered_codes.remove("000")
+            ordered_codes.insert(0, "000")
+        for code in ordered_codes:
             country = permit_service.country_by_code(code)
             if country:
-                rows.append({"code": code, "name": country_label(country, lang), "iso": ISO_NUMERIC_TO_ALPHA2.get(code, "")})
-        return web.json_response({"ok": True, "countries": rows}, headers={"Cache-Control": "public, max-age=60"})
+                rows.append(
+                    {
+                        "code": code,
+                        "name": country_label(country, lang),
+                        "labels": {
+                            language: country_label(country, language)
+                            for language in ("uz", "ru", "en")
+                        },
+                        "iso": ISO_NUMERIC_TO_ALPHA2.get(code, ""),
+                        "uses_weight": code in {"762", "795"},
+                        "uses_stay_days": is_eu_or_azerbaijan(code),
+                    }
+                )
+        return web.json_response(
+            {"ok": True, "countries": rows},
+            headers={"Cache-Control": "public, max-age=3600, stale-while-revalidate=86400"},
+        )
 
     async def permit_check(request: web.Request) -> web.Response:
         try:

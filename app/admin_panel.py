@@ -22,7 +22,7 @@ from app.services.permission_import import (
     apply_permission_import_changes,
     build_permission_import_preview,
 )
-from app.services.permit import COUNTRY_LABELS, transliterate_cyrillic_to_latin
+from app.services.permit import COUNTRY_LABELS, VID_LABELS, transliterate_cyrillic_to_latin
 
 
 SESSION_COOKIE = "nazorat_admin"
@@ -176,9 +176,9 @@ def _code(value: object) -> str:
 
 def _vid(value: object) -> str:
     text = str(value or "").strip()
-    if text not in {str(i) for i in range(1, 9)}:
-        raise web.HTTPBadRequest(text="Tashuv turi 1-8 oralig'ida bo'lishi kerak.")
-    return text
+    if not text.isdigit() or not 1 <= int(text) <= 99:
+        raise web.HTTPBadRequest(text="Tashuv turi kodi 1-99 oralig'ida bo'lishi kerak.")
+    return str(int(text))
 
 
 def _signed_token(settings: Settings) -> str:
@@ -988,7 +988,7 @@ def setup_admin_routes(app: web.Application, settings: Settings) -> None:
             )
             if len(countries) >= 80:
                 break
-        return web.json_response({"ok": True, "countries": countries, "vid_types": data.get("vid_types", {})})
+        return web.json_response({"ok": True, "countries": countries, "vid_types": data.get("vid_types", {}), "vid_labels": data.get("vid_labels", {})})
 
     async def country_detail(request: web.Request) -> web.Response:
         _require_admin(request, settings)
@@ -1059,6 +1059,92 @@ def setup_admin_routes(app: web.Application, settings: Settings) -> None:
             _write_json(permission_admin_path(), data)
             snapshot = await activate_current_rules("admin:auto:country-delete", {"country_code": code})
         return web.json_response({"ok": True, "version_no": snapshot["version_no"], "active": True})
+
+    def transport_type_rows(data: dict[str, Any]) -> list[dict[str, Any]]:
+        stored_labels = data.get("vid_labels", {})
+        rows = []
+        for vid_cd, source_name in sorted(data.get("vid_types", {}).items(), key=lambda item: int(item[0])):
+            labels = stored_labels.get(vid_cd, {}) if isinstance(stored_labels, dict) else {}
+            rows.append(
+                {
+                    "code": vid_cd,
+                    "uz": str(labels.get("uz") or VID_LABELS["uz"].get(vid_cd) or source_name),
+                    "ru": str(labels.get("ru") or VID_LABELS["ru"].get(vid_cd) or source_name),
+                    "en": str(labels.get("en") or VID_LABELS["en"].get(vid_cd) or source_name),
+                    "base_vid": str(labels.get("base_vid") or (vid_cd if int(vid_cd) <= 8 else "3")),
+                    "auto_detect": bool(labels.get("auto_detect", False)),
+                    "core": int(vid_cd) <= 8,
+                }
+            )
+        return rows
+
+    async def transport_types(request: web.Request) -> web.Response:
+        _require_admin(request, settings)
+        data = _read_json_view(permission_admin_path())
+        return web.json_response({"ok": True, "items": transport_type_rows(data)})
+
+    async def save_transport_type(request: web.Request) -> web.Response:
+        _require_admin(request, settings)
+        body = await request.json()
+        labels = {
+            language: str(body.get(language) or "").strip()[:180]
+            for language in ("uz", "ru", "en")
+        }
+        if not any(labels.values()):
+            return _json_error("Tashuv turi nomini kamida bitta tilda kiriting.")
+        base_vid = str(body.get("base_vid") or "3").strip()
+        if base_vid not in {str(index) for index in range(1, 9)}:
+            return _json_error("Asosiy mantiq 1-8 oralig'idan tanlanishi kerak.")
+        auto_detect = bool(body.get("auto_detect", False))
+        async with permission_write_lock:
+            data = _read_json(permission_admin_path())
+            raw_code = str(body.get("code") or "").strip()
+            if raw_code:
+                vid_cd = _vid(raw_code)
+            else:
+                used = {int(code) for code in data.get("vid_types", {}) if str(code).isdigit()}
+                next_code = next((value for value in range(9, 100) if value not in used), None)
+                if next_code is None:
+                    return _json_error("Yangi tashuv turi uchun bo'sh kod qolmagan.")
+                vid_cd = str(next_code)
+            if int(vid_cd) <= 8:
+                base_vid = vid_cd
+                auto_detect = False
+            label_store = data.setdefault("vid_labels", {})
+            if auto_detect:
+                for other_code, other in label_store.items():
+                    if other_code != vid_cd and isinstance(other, dict) and str(other.get("base_vid")) == base_vid:
+                        other["auto_detect"] = False
+            label_store[vid_cd] = {
+                **labels,
+                "base_vid": base_vid,
+                "auto_detect": auto_detect,
+                "priority": int(time.time()),
+            }
+            data.setdefault("vid_types", {})[vid_cd] = labels["ru"] or labels["uz"] or labels["en"]
+            data.setdefault("source", {})["last_admin_update"] = int(time.time())
+            _write_json(permission_admin_path(), data)
+            snapshot = await activate_current_rules("admin:auto:transport-type-save", {"vid_cd": vid_cd})
+        return web.json_response(
+            {"ok": True, "code": vid_cd, "items": transport_type_rows(data), "version_no": snapshot["version_no"]}
+        )
+
+    async def delete_transport_type(request: web.Request) -> web.Response:
+        _require_admin(request, settings)
+        vid_cd = _vid(request.match_info["vid"])
+        if int(vid_cd) <= 8:
+            return _json_error("Asosiy 1-8 tashuv turini o'chirib bo'lmaydi; faqat nomini tahrirlash mumkin.")
+        async with permission_write_lock:
+            data = _read_json(permission_admin_path())
+            data.get("vid_types", {}).pop(vid_cd, None)
+            data.get("vid_labels", {}).pop(vid_cd, None)
+            for country_rules in data.get("rules", {}).values():
+                if isinstance(country_rules, dict):
+                    country_rules.pop(vid_cd, None)
+            data.setdefault("source", {})["last_admin_update"] = int(time.time())
+            _write_json(permission_admin_path(), data)
+            snapshot = await activate_current_rules("admin:auto:transport-type-delete", {"vid_cd": vid_cd})
+        return web.json_response({"ok": True, "items": transport_type_rows(data), "version_no": snapshot["version_no"]})
 
     async def save_rule(request: web.Request) -> web.Response:
         _require_admin(request, settings)
@@ -1367,6 +1453,9 @@ def setup_admin_routes(app: web.Application, settings: Settings) -> None:
     app.router.add_post("/admin/api/permission/full", save_permission_full)
     app.router.add_post("/admin/api/country", save_country)
     app.router.add_delete("/admin/api/country/{code}", delete_country)
+    app.router.add_get("/admin/api/transport-types", transport_types)
+    app.router.add_post("/admin/api/transport-type", save_transport_type)
+    app.router.add_delete("/admin/api/transport-type/{vid}", delete_transport_type)
     app.router.add_post("/admin/api/rule", save_rule)
     app.router.add_delete("/admin/api/rule/{code}/{vid}", delete_rule)
     app.router.add_get("/admin/api/fees", fees)
