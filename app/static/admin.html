@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>NazoratBot boshqaruvi</title>
+  <link rel="stylesheet" href="/static/webapp/admin.css">
+</head>
+<body>
+  <svg class="icon-sprite" aria-hidden="true">
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.6 2.8 8 7 10 4.2-2 7-5.4 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-5"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5M9 12h6M9 16h6"/></symbol>
+    <symbol id="i-coins" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v5c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 11v5c0 1.7 3.1 3 7 3s7-1.3 7-3v-5"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V4m0 0L7 9m5-5 5 5M5 20h14"/></symbol>
+    <symbol id="i-history" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.3-5.7L4 8.6M4 4v4.6h4.6"/><path d="M12 8v5l3 2"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-save" viewBox="0 0 24 24"><path d="M5 4h12l2 2v14H5zM8 4v6h8V4M8 20v-6h8v6"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M7 7l1 14h8l1-14M10 11v6M14 11v6"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><path d="m4 20 4.5-1 10-10-3.5-3.5-10 10zM13.8 6.7l3.5 3.5"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6.1 8a7 7 0 0 1 11.7-1L20 12M4 12l2.2 5a7 7 0 0 0 11.7-1"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24"><path d="M10 5H5v14h5M14 8l4 4-4 4M8 12h10"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></symbol>
+    <symbol id="i-route" viewBox="0 0 24 24"><circle cx="6" cy="18" r="2"/><circle cx="18" cy="6" r="2"/><path d="M8 18h3a3 3 0 0 0 3-3v-6a3 3 0 0 1 3-3"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+  </svg>
+
+  <div class="government-bar"><span>O'zbekiston Respublikasi bojxona axborot xizmati</span><span id="version-status">Ma'lumotlar faol</span></div>
+  <header class="topbar">
+    <a class="brand" href="/admin/dashboard" aria-label="Bosh sahifa">
+      <img src="/static/webapp/uzbekistan-emblem.png" alt="Bojxona qo'mitasi">
+      <span><strong>NazoratBot Admin</strong><small>Dazvol va chegaradagi yig'imlar</small></span>
+    </a>
+    <div class="header-actions">
+      <span class="live-badge"><span></span>Saqlangan qoida darhol faol</span>
+      <button class="icon-button" id="refresh-button" title="Yangilash"><svg><use href="#i-refresh"/></svg></button>
+      <button class="icon-button" id="logout-button" title="Chiqish"><svg><use href="#i-logout"/></svg></button>
+    </div>
+  </header>
+
+  <div class="app-shell">
+    <aside class="sidebar">
+      <nav id="main-nav">
+        <button class="active" data-screen="permits"><svg><use href="#i-file"/></svg><span>Dazvol qoidalari</span></button>
+        <button data-screen="fees"><svg><use href="#i-coins"/></svg><span>Chegaradagi yig'imlar</span></button>
+        <button data-screen="import"><svg><use href="#i-upload"/></svg><span>Excel import</span></button>
+        <button data-screen="history"><svg><use href="#i-history"/></svg><span>O'zgarishlar tarixi</span></button>
+      </nav>
+      <div class="sidebar-note"><svg><use href="#i-shield"/></svg><span>Har bir saqlashdan keyin bot va Web App bir xil faol bazadan foydalanadi.</span></div>
+    </aside>
+
+    <main>
+      <section class="screen active" id="screen-permits">
+        <div id="country-list-view">
+          <div class="page-heading"><div><p class="eyebrow">DAZVOL</p><h1>Davlat qoidalari</h1><p>Davlatni toping va tashuv turiga tegishli talabni tahrirlang.</p></div><button class="primary" id="add-country"><svg><use href="#i-plus"/></svg>Davlat qo'shish</button></div>
+          <div class="toolbar"><label class="search-box"><svg><use href="#i-search"/></svg><input id="country-search" placeholder="Davlat nomi yoki kodi" autocomplete="off"></label><span id="country-count"></span></div>
+          <div class="country-grid" id="country-grid"></div>
+        </div>
+
+        <div id="country-detail-view" hidden>
+          <div class="detail-top">
+            <button class="back-button" id="back-to-countries"><svg><use href="#i-back"/></svg>Ro'yxatga qaytish</button>
+            <div class="detail-actions"><button class="danger ghost" id="delete-country"><svg><use href="#i-trash"/></svg>Davlatni o'chirish</button><button class="primary" id="save-country"><svg><use href="#i-save"/></svg>Davlatni saqlash</button></div>
+          </div>
+          <section class="panel country-header-panel">
+            <div class="country-identity"><span class="large-flag" id="detail-flag"><svg><use href="#i-globe"/></svg></span><div><p class="eyebrow">DAVLAT</p><h1 id="detail-title">Davlat</h1><p id="detail-subtitle"></p></div></div>
+            <div class="country-fields"><label>Kod<input id="country-code" inputmode="numeric" maxlength="3"></label><label>O'zbekcha nom<input id="country-name-uz"></label><label>Asosiy/Ruscha nom<input id="country-name"></label></div>
+          </section>
+          <div class="section-title"><div><h2>Tashuv turi bo'yicha qoida</h2><p>Faqat tanlangan tashuv turining formasi ko'rsatiladi.</p></div></div>
+          <div class="transport-tabs" id="transport-tabs"></div>
+          <form class="panel rule-editor" id="rule-form">
+            <div class="rule-editor-head"><div><p class="eyebrow">TANLANGAN QOIDA</p><h2 id="rule-title"></h2></div><button class="primary" type="submit"><svg><use href="#i-save"/></svg>Qoidani saqlash</button></div>
+            <div class="form-grid">
+              <label>Ruxsatnoma<select id="permission-cd"><option value="1">Talab etiladi</option><option value="2">Talab etilmaydi</option><option value="3">Taqiqlangan</option></select></label>
+              <label>Yig'im<select id="dues-cd"><option value="0">Belgilanmagan</option><option value="1">Undiriladi</option><option value="2">Undirilmaydi</option><option value="3">Ruxsat turiga bog'liq</option></select></label>
+              <label id="dues-amount-wrap">Yig'im miqdori, USD<input id="dues-amount" inputmode="decimal" placeholder="Masalan: 400"></label>
+              <label>Admin uchun ichki izoh<button class="text-field-button" type="button" data-text-field="admin_note"><span id="admin-note-preview">Izoh yozilmagan</span><svg><use href="#i-edit"/></svg></button></label>
+            </div>
+            <div class="editor-section">
+              <div class="section-title compact"><div><h3>Foydalanuvchiga chiqadigan izoh</h3><p>Bot va Web App uchun uch tildagi matn.</p></div><button class="secondary" type="button" data-open-notes><svg><use href="#i-edit"/></svg>Matnlarni tahrirlash</button></div>
+              <div class="language-preview" id="notes-preview"></div>
+            </div>
+            <div class="editor-section">
+              <div class="section-title compact"><div><h3>Qo'shimcha shartlar</h3><p>Ushbu tashuv turi aniqlanganda javobda avtomatik ko'rsatiladi.</p></div><button class="secondary" id="add-condition" type="button"><svg><use href="#i-plus"/></svg>Shart qo'shish</button></div>
+              <div class="condition-list" id="condition-list"></div>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section class="screen" id="screen-fees">
+        <div class="page-heading"><div><p class="eyebrow">YIG'IMLAR</p><h1>Chegaradagi yig'imlar</h1><p>Yo'nalishni tanlang, keyin yig'imni qo'shing yoki tahrirlang.</p></div><button class="primary" id="add-fee"><svg><use href="#i-plus"/></svg>Yig'im qo'shish</button></div>
+        <div class="segmented" id="fee-directions"><button class="active" data-direction="import">Import</button><button data-direction="export">Eksport</button><button data-direction="transit">Tranzit</button></div>
+        <div class="fee-list" id="fee-list"></div>
+      </section>
+
+      <section class="screen" id="screen-import">
+        <div class="page-heading"><div><p class="eyebrow">EXCEL IMPORT</p><h1>Qoidalarni yangilash</h1><p>Excel fayl tahlil qilinadi. O'zgarishlarni ko'rib, keraklilarini tanlab qo'llaysiz.</p></div></div>
+        <section class="panel upload-panel" id="drop-zone">
+          <svg><use href="#i-upload"/></svg><h2>Excel faylni tanlang</h2><p>Faqat <b>.xlsx</b> format. Amaldagi qo'shimcha shartlar import paytida saqlanadi.</p><label class="primary file-button">Fayl tanlash<input id="import-file" type="file" accept=".xlsx" hidden></label>
+        </section>
+        <section class="panel import-progress" id="import-progress" hidden><div><b id="progress-message">Tahlil qilinmoqda</b><span id="progress-percent">0%</span></div><div class="progress-track"><span id="progress-bar"></span></div></section>
+        <section id="import-preview" hidden><div class="section-title"><div><h2>Aniqlangan o'zgarishlar</h2><p id="import-summary"></p></div><div class="inline-actions"><button class="secondary" id="select-all-changes">Barchasini tanlash</button><button class="primary" id="apply-import"><svg><use href="#i-check"/></svg>Tanlanganlarni qo'llash</button></div></div><div class="change-list" id="change-list"></div></section>
+      </section>
+
+      <section class="screen" id="screen-history">
+        <div class="page-heading"><div><p class="eyebrow">TARIX</p><h1>Faol versiyalar</h1><p>Oldingi holatni tiklash zarur bo'lganda foydalaning.</p></div></div>
+        <div class="version-list" id="version-list"></div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-head"><div><p class="eyebrow" id="modal-eyebrow">TAHRIRLASH</p><h2 id="modal-title">Matn</h2></div><button class="icon-button" id="modal-close" type="button"><svg><use href="#i-x"/></svg></button></div>
+      <div id="modal-body"></div>
+      <div class="modal-actions"><button class="secondary" id="modal-cancel" type="button">Bekor qilish</button><button class="primary" id="modal-save" type="button"><svg><use href="#i-save"/></svg>Saqlash</button></div>
+    </div>
+  </div>
+  <div class="toast" id="toast" hidden></div>
+  <script src="/static/webapp/admin.js"></script>
+</body>
+</html>

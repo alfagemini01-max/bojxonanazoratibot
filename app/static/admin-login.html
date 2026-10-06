@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>NazoratBot Admin</title>
+  <link rel="stylesheet" href="/static/webapp/admin.css">
+</head>
+<body class="login-page">
+  <div class="government-bar"><span>O'zbekiston Respublikasi bojxona axborot xizmati</span><span>Ma'muriy boshqaruv</span></div>
+  <main class="login-shell">
+    <section class="login-brand">
+      <img src="/static/webapp/uzbekistan-emblem.png" alt="Bojxona qo'mitasi">
+      <p class="eyebrow">NAZORATBOT</p>
+      <h1>Qoidalarni sodda va ishonchli boshqarish</h1>
+      <p>Dazvol talablari va chegaradagi yig'imlarni bitta boshqaruv panelida yangilang.</p>
+      <div class="login-features"><span>Dazvol qoidalari</span><span>Chegaradagi yig'imlar</span><span>Excel import</span></div>
+    </section>
+    <form class="panel login-card" method="post" action="/admin/login">
+      <div class="login-icon"><svg viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.6 2.8 8 7 10 4.2-2 7-5.4 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-5"/></svg></div>
+      <p class="eyebrow">XAVFSIZ KIRISH</p>
+      <h2>Admin panel</h2>
+      <p class="login-hint">Login va parolingizni kiriting.</p>
+      <label>Login<input name="username" autocomplete="username" required autofocus></label>
+      <label>Parol<input name="password" type="password" autocomplete="current-password" required></label>
+      <button class="primary" type="submit">Panelga kirish</button>
+      <small>Hisob ma'lumotlarini boshqa shaxslarga bermang.</small>
+    </form>
+  </main>
+</body>
+</html>
