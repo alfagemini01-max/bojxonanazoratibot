@@ -2,11 +2,18 @@ from __future__ import annotations
 
 import unittest
 import ast
+import re
 from pathlib import Path
 
 from app.i18n import t
 from app.services.fee_calculator import FeeCalculator
-from app.services.permit import PermitRuleService
+from app.services.permit import (
+    Country,
+    PermitResult,
+    PermitRuleService,
+    build_permit_message,
+    localized_additional_conditions,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -53,8 +60,49 @@ class PermitRulesTests(unittest.TestCase):
         self.assertIn("Tranzit deklaratsiyasi", message)
         self.assertIn("Tezkor hisob", message)
 
+    def test_additional_conditions_use_language_and_fallback(self) -> None:
+        rule = {
+            "additional_conditions": [
+                {"enabled": True, "uz": "O'zbekcha shart", "ru": "Русское условие", "en": "English condition"},
+                {"enabled": True, "uz": "Faqat o'zbekcha"},
+                {"enabled": False, "uz": "Ko'rinmasligi kerak"},
+            ]
+        }
+        self.assertEqual(
+            localized_additional_conditions(rule, "ru"),
+            ["Русское условие", "Faqat o'zbekcha"],
+        )
+
+    def test_additional_condition_is_in_telegram_message(self) -> None:
+        result = PermitResult(
+            origin=Country("156", "Xitoy"),
+            destination=Country("860", "O'zbekiston"),
+            vehicle_country=Country("156", "Xitoy"),
+            vid_cd="2",
+            vid_name="Ikki tomonlama",
+            rule={
+                "permission_cd": "1",
+                "dues_cd": "2",
+                "additional_conditions": [{"enabled": True, "uz": "Maxsus ikki tomonlama shart"}],
+            },
+            fee_text="",
+            fee_note="",
+            exceptions=[],
+        )
+        self.assertIn("Maxsus ikki tomonlama shart", build_permit_message(result, lang="uz"))
+
 
 class AdminTemplateTests(unittest.TestCase):
+    def test_simple_admin_assets_and_condition_editor_exist(self) -> None:
+        html = (ROOT / "app" / "static" / "admin.html").read_text(encoding="utf-8")
+        login = (ROOT / "app" / "static" / "admin-login.html").read_text(encoding="utf-8")
+        script = (ROOT / "app" / "static" / "admin.js").read_text(encoding="utf-8")
+        self.assertIn('id="transport-tabs"', html)
+        self.assertIn('id="condition-list"', html)
+        self.assertIn("additional_conditions", script)
+        self.assertNotIn("Raw JSON", html)
+        self.assertIn("uzbekistan-emblem.png", login)
+
     def test_rendered_javascript_preserves_apostrophe_escapes(self) -> None:
         tree = ast.parse((ROOT / "app" / "admin_panel.py").read_text(encoding="utf-8"))
         page_function = next(
@@ -68,7 +116,31 @@ class AdminTemplateTests(unittest.TestCase):
             and isinstance(node.value.value, str)
         )
         self.assertIn("Qo\\'shiladi", html)
-        self.assertIn("E\\'lon qilinmagan", html)
+        self.assertIn("Avtomatik faol", html)
+        self.assertNotIn('onclick="publishDraft()"', html)
+        self.assertNotIn('onclick="discardDraft()"', html)
         self.assertNotIn("?'➕ Qo'shiladi'", html)
+
+
+class WebAppAssetTests(unittest.TestCase):
+    def test_country_flags_are_local_and_complete(self) -> None:
+        webapp_source = (ROOT / "app" / "webapp.py").read_text(encoding="utf-8")
+        mapped_codes = set(re.findall(r"(?<!\d)(\d{3}):([A-Z]{2})", webapp_source))
+        alpha2 = {code: iso.lower() for code, iso in mapped_codes}
+        permission = __import__("json").loads(
+            (ROOT / "data" / "permission_rules.json").read_text(encoding="utf-8")
+        )
+        missing = [
+            code for code in permission["countries"]
+            if code != "000" and not (ROOT / "app" / "static" / "flags" / f"{alpha2.get(code, '')}.svg").exists()
+        ]
+        self.assertEqual(missing, [])
+
+    def test_webapp_uses_svg_icons_and_local_flags(self) -> None:
+        html = (ROOT / "app" / "static" / "webapp.html").read_text(encoding="utf-8")
+        script = (ROOT / "app" / "static" / "webapp.js").read_text(encoding="utf-8")
+        self.assertIn('id="icon-file-check"', html)
+        self.assertIn('/static/webapp/flags/${code}.svg', script)
+        self.assertNotIn("flagcdn.com", script)
 if __name__ == "__main__":
     unittest.main()
