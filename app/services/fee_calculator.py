@@ -143,7 +143,13 @@ class FeeCalculator:
         stay_duration: str | None,
     ) -> float:
         custom_amount = str(rule.get("dues_amount_usd") or "").strip()
-        if custom_amount and custom_amount not in {"100/150/200", "130/180/250", "80/280"}:
+        if custom_amount == "100/150/200":
+            return float(self.data["entry_fee"]["tajikistan_by_weight_usd"].get(weight_category or "up_to_10", 100))
+        if custom_amount == "130/180/250":
+            return float(self.data["entry_fee"]["turkmenistan_by_weight_usd"].get(weight_category or "up_to_10", 130))
+        if custom_amount == "80/280":
+            return float(self.data["entry_fee"]["eu_azerbaijan_by_stay_usd"].get(stay_duration or "up_to_14", 80))
+        if custom_amount:
             try:
                 return float(custom_amount.replace(" ", "").replace(",", "."))
             except ValueError:

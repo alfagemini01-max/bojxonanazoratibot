@@ -350,6 +350,19 @@ class PermitRuleService:
             return "2" if vehicle_country.code == origin.code else "5"
         return "3"
 
+    def country_input_profile(self, country_code: str) -> dict[str, bool]:
+        """Return optional inputs required by the country's published fee rules."""
+        self.reload_if_changed()
+        amounts = {
+            str(rule.get("dues_amount_usd") or "").strip()
+            for rule in self.rules.get(str(country_code).zfill(3), {}).values()
+            if isinstance(rule, dict) and str(rule.get("dues_cd") or "") == "1"
+        }
+        return {
+            "uses_weight": bool(amounts & {"100/150/200", "130/180/250"}),
+            "uses_stay_days": "80/280" in amounts,
+        }
+
     def _effective_transport_type(self, base_vid_cd: str) -> str:
         """Return an optional admin-defined transport type mapped to a core route type."""
         candidates: list[tuple[int, int, str]] = []
