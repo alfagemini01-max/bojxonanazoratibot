@@ -249,10 +249,11 @@ def _import_job_response(job: dict[str, Any]) -> dict[str, Any]:
         response["changes"] = job.get("changes", [])
     if job.get("status") == "applied":
         response["applied_count"] = job.get("applied_count", 0)
+        response["version_no"] = job.get("version_no")
     return response
 
 
-def _rule_payload(data: dict[str, Any], rules_data: dict[str, Any]) -> dict[str, str]:
+def _rule_payload(data: dict[str, Any], rules_data: dict[str, Any]) -> dict[str, Any]:
     vid_cd = _vid(data.get("vid_cd"))
     permission_cd = str(data.get("permission_cd") or "2").strip()
     dues_cd = str(data.get("dues_cd") or "2").strip()
@@ -260,6 +261,22 @@ def _rule_payload(data: dict[str, Any], rules_data: dict[str, Any]) -> dict[str,
         raise web.HTTPBadRequest(text="Ruxsatnoma qiymati noto'g'ri.")
     if dues_cd not in DUES_NAMES:
         raise web.HTTPBadRequest(text="Yig'im qiymati noto'g'ri.")
+    raw_conditions = data.get("additional_conditions")
+    conditions: list[dict[str, Any]] = []
+    if raw_conditions is not None and not isinstance(raw_conditions, list):
+        raise web.HTTPBadRequest(text="Qo'shimcha shartlar ro'yxat shaklida bo'lishi kerak.")
+    for item in (raw_conditions or [])[:20]:
+        if not isinstance(item, dict):
+            continue
+        condition = {
+            "id": str(item.get("id") or secrets.token_urlsafe(6))[:80],
+            "enabled": bool(item.get("enabled", True)),
+            "uz": str(item.get("uz") or "").strip()[:1500],
+            "ru": str(item.get("ru") or "").strip()[:1500],
+            "en": str(item.get("en") or "").strip()[:1500],
+        }
+        if condition["uz"] or condition["ru"] or condition["en"]:
+            conditions.append(condition)
     return {
         "vid_cd": vid_cd,
         "vid_name_ru": rules_data.get("vid_types", {}).get(vid_cd, ""),
@@ -273,6 +290,7 @@ def _rule_payload(data: dict[str, Any], rules_data: dict[str, Any]) -> dict[str,
         "dues_amount_note_uz": str(data.get("dues_amount_note_uz") or "").strip(),
         "dues_amount_note_ru": str(data.get("dues_amount_note_ru") or "").strip(),
         "dues_amount_note_en": str(data.get("dues_amount_note_en") or "").strip(),
+        "additional_conditions": conditions,
         "source": "web-admin-panel",
         "admin_note": str(data.get("admin_note") or "").strip(),
     }
@@ -323,6 +341,7 @@ def _fee_item_payload(data: dict[str, Any]) -> dict[str, Any]:
 
 
 def _login_page() -> str:
+    return (Path(__file__).resolve().parent / "static" / "admin-login.html").read_text(encoding="utf-8")
     return """<!doctype html>
 <html lang="uz">
 <head>
@@ -590,7 +609,7 @@ def _admin_page_v2() -> str:
   <main class="main">
     <header class="top glass">
       <div><h2 id="pageTitle">Bosh sahifa</h2><div class="muted">Qoidalarni sodda tahrirlash paneli</div></div>
-      <div class="actions"><span id="draftBadge" class="pill info">Tekshirilmoqda</span><button class="btn primary" onclick="publishDraft()">🚀 E'lon qilish</button><button class="btn" onclick="discardDraft()">↩️ Qoralamani bekor qilish</button><button class="btn" onclick="loadAll()">🔄 Yangilash</button><button class="btn danger" onclick="logout()">🚪 Chiqish</button></div>
+      <div class="actions"><span id="draftBadge" class="pill info">Sinxronlanmoqda</span><button class="btn" onclick="loadAll()">Yangilash</button><button class="btn danger" onclick="logout()">Chiqish</button></div>
     </header>
     <section class="stats">
       <div class="stat glass"><b id="countryCount">0</b><span>Davlatlar</span></div>
@@ -785,14 +804,14 @@ function selectHtml(id,val,opts,onchange=''){return `<select id="${id}" ${onchan
 function toggleFeeFields(vid){const show=document.getElementById('d'+vid)?.value==='1';const amount=document.getElementById('a'+vid);if(amount)amount.closest('.field').style.display=show?'grid':'none';}
 function renderExceptions(){const list=selectedCountry.exceptions||[];exceptionsBox.innerHTML=list.length?list.slice(0,12).map(x=>`<div class="card glass"><b>${esc(x.exception_cd||'')}</b><p class="muted">${esc(x.exception_desc||'')}</p></div>`).join(''):'<div class="card glass muted">Istisno kiritilmagan</div>'}
 async function refreshCountry(code){const d=await api('/admin/api/country/'+encodeURIComponent(code));countryCache[code]=d.country;return d.country}
-async function saveRule(vid){await api('/admin/api/rule',{method:'POST',body:JSON.stringify({country_code:countryCode.value,vid_cd:vid,permission_cd:document.getElementById('p'+vid).value,dues_cd:document.getElementById('d'+vid).value,dues_amount_usd:document.getElementById('a'+vid).value,dues_amount_note_uz:document.getElementById('uz'+vid).value,dues_amount_note_ru:document.getElementById('ru'+vid).value,dues_amount_note_en:document.getElementById('en'+vid).value,exception_cd:'0',exception_name_ru:'',admin_note:document.getElementById('n'+vid).value})});toast('Qoida qoralamaga saqlandi');const [c]=await Promise.all([refreshCountry(countryCode.value),loadSummary(),loadVersionStatus()]);if(c)openCountryPage(countryCode.value)}
-async function saveCountry(){await api('/admin/api/country',{method:'POST',body:JSON.stringify({code:countryCode.value,name:countryName.value,name_uz:countryNameUz.value})});toast('Davlat qoralamaga saqlandi');const [c]=await Promise.all([refreshCountry(countryCode.value),loadSummary(),loadVersionStatus()]);if(c)openCountryPage(countryCode.value)}
+async function saveRule(vid){const d=await api('/admin/api/rule',{method:'POST',body:JSON.stringify({country_code:countryCode.value,vid_cd:vid,permission_cd:document.getElementById('p'+vid).value,dues_cd:document.getElementById('d'+vid).value,dues_amount_usd:document.getElementById('a'+vid).value,dues_amount_note_uz:document.getElementById('uz'+vid).value,dues_amount_note_ru:document.getElementById('ru'+vid).value,dues_amount_note_en:document.getElementById('en'+vid).value,exception_cd:'0',exception_name_ru:'',admin_note:document.getElementById('n'+vid).value})});toast(`Qoida saqlandi va darhol faollashtirildi · v${d.version_no}`);const [c]=await Promise.all([refreshCountry(countryCode.value),loadSummary(),loadVersionStatus()]);if(c)openCountryPage(countryCode.value)}
+async function saveCountry(){const d=await api('/admin/api/country',{method:'POST',body:JSON.stringify({code:countryCode.value,name:countryName.value,name_uz:countryNameUz.value})});toast(`Davlat saqlandi va darhol faollashtirildi · v${d.version_no}`);const [c]=await Promise.all([refreshCountry(countryCode.value),loadSummary(),loadVersionStatus()]);if(c)openCountryPage(countryCode.value)}
 async function deleteCountry(){if(!countryCode.value||!confirm('Davlatni o‘chirasizmi?'))return;await api('/admin/api/country/'+countryCode.value,{method:'DELETE'});toast('Davlat o‘chirildi');await loadAll();backToCountryList()}
 async function loadCountries(){const q=encodeURIComponent(countrySearch.value||'');const d=await api('/admin/api/permission?q='+q);rememberCountries(d.countries);countryCards.innerHTML=d.countries.map(countryCard).join('')||'<div class="card glass">Maʼlumot topilmadi</div>'}
 async function loadFeeItems(){const d=await api('/admin/api/fee-items?direction='+activeDirection);feeItems=d.items;feeCards.innerHTML=feeItems.map(feeCard).join('')||'<div class="card glass">Bu yo‘nalishda yig‘im yo‘q</div>'}
 function feeCard(f){return `<button class="card glass" style="text-align:left" onclick="openFeeModal('${esc(f.id)}')"><h3>${esc(f.title)}</h3><div>${pill(f.enabled?'Faol':'O‘chirilgan',f.enabled?'ok':'bad')} ${pill(activeDirection,'info')}</div><p><b>${esc(f.amount)}</b></p><p class="muted">${esc(f.condition)}</p><p class="muted">${esc(f.basis)}</p></button>`}
 function openFeeModal(id=''){const f=feeItems.find(x=>x.id===id)||{id:'',title:'',amount:'',condition:'',basis:'',enabled:true};feeId.value=f.id;feeDirection.value=activeDirection;feeTitle.value=f.title;feeAmount.value=f.amount;feeCondition.value=f.condition;feeBasis.value=f.basis;feeEnabled.value=String(f.enabled!==false);feeModalTitle.textContent=f.id?'Yig‘imni tahrirlash':'Yangi yig‘im';feeModal.classList.add('show')}
-async function saveFeeItem(){await api('/admin/api/fee-item',{method:'POST',body:JSON.stringify({id:feeId.value,direction:feeDirection.value,title:feeTitle.value,amount:feeAmount.value,condition:feeCondition.value,basis:feeBasis.value,enabled:feeEnabled.value==='true'})});activeDirection=feeDirection.value;closeModal('feeModal');toast('Yig‘im qoralamaga saqlandi');await Promise.all([loadFeeItems(),loadVersionStatus()])}
+async function saveFeeItem(){const d=await api('/admin/api/fee-item',{method:'POST',body:JSON.stringify({id:feeId.value,direction:feeDirection.value,title:feeTitle.value,amount:feeAmount.value,condition:feeCondition.value,basis:feeBasis.value,enabled:feeEnabled.value==='true'})});activeDirection=feeDirection.value;closeModal('feeModal');toast(`Yig‘im saqlandi va darhol faollashtirildi · v${d.version_no}`);await Promise.all([loadFeeItems(),loadVersionStatus()])}
 async function deleteFeeItem(){if(!feeId.value||!confirm('Yig‘imni o‘chirasizmi?'))return;await api(`/admin/api/fee-item/${feeDirection.value}/${feeId.value}`,{method:'DELETE'});closeModal('feeModal');toast('Yig‘im o‘chirildi');await loadFeeItems()}
 function setImportProgress(percent,message){const value=Math.max(0,Math.min(100,Math.round(percent)));importProgress.classList.add('show');importProgressBar.style.width=value+'%';importProgressPercent.textContent=value+'%';importProgressText.textContent=message||'Tahlil qilinmoqda'}
 function importActionLabel(action){return action==='add'?'➕ Qo\'shiladi':action==='delete'?'🗑️ O\'chiriladi':'🔄 Yangilanadi'}
@@ -808,10 +827,8 @@ function toggleImportAmount(){importAmountField.style.display=importDues.value==
 function saveImportEdit(){const change=importChanges.find(item=>item.id===importEditId.value);if(!change)return;if(change.kind==='country'){change.after.name=importCountryName.value.trim()}else{const permissionNames={1:'Обязательно',2:'Не обязательно',3:'Запрещен'};const duesNames={0:'-не выбрано-',1:'Сбор обязательно',2:'Сбор не обязательно',3:'Сбор зависит от вида разрешения'};change.after.permission_cd=importPermission.value;change.after.permission_name_ru=permissionNames[importPermission.value];change.after.dues_cd=importDues.value;change.after.dues_name_ru=duesNames[importDues.value];change.after.dues_amount_usd=importDues.value==='1'?importAmount.value.trim():'';change.after.vid_name_ru=importVidName.value.trim();change.after.admin_note=importAdminNote.value.trim();change.after.dues_amount_note_uz=importNoteUz.value.trim();change.after.dues_amount_note_ru=importNoteRu.value.trim();change.after.dues_amount_note_en=importNoteEn.value.trim()}change.selected=true;closeModal('importEditModal');renderImportChanges();toast('Import o\'zgarishi tahrirlandi')}
 function startPermissionImport(){const file=permissionImportFile.files?.[0];if(!file){toast('Avval .xlsx faylni tanlang');return}if(!file.name.toLowerCase().endsWith('.xlsx')){toast('Faqat .xlsx fayl tanlang');return}if(file.size>10*1024*1024){toast('Fayl 10 MB dan oshmasligi kerak');return}clearTimeout(importPollTimer);importPreview.style.display='none';startImportButton.disabled=true;setImportProgress(1,'Excel serverga yuklanmoqda');const form=new FormData();form.append('file',file);const xhr=new XMLHttpRequest();xhr.open('POST','/admin/api/permission-import');xhr.upload.onprogress=event=>{if(event.lengthComputable)setImportProgress(Math.max(1,event.loaded/event.total*20),'Excel serverga yuklanmoqda')};xhr.onerror=()=>{startImportButton.disabled=false;setImportProgress(0,'Faylni yuborib bo\'lmadi');toast('Server bilan aloqa xatosi')};xhr.onload=()=>{let data;try{data=JSON.parse(xhr.responseText)}catch(e){data={ok:false,error:xhr.responseText||'Server javobi xato'}}if(xhr.status===401){location.href='/admin';return}if(xhr.status<200||xhr.status>=300||data.ok===false){startImportButton.disabled=false;setImportProgress(0,data.error||'Import boshlanmadi');toast(data.error||'Import boshlanmadi');return}importJobId=data.job_id;setImportProgress(20,'Excel qoidalari o\'qilmoqda');pollPermissionImport()};xhr.send(form)}
 async function pollPermissionImport(){try{const job=await api('/admin/api/permission-import/'+importJobId);if(job.status==='queued'||job.status==='processing'){setImportProgress(20+(job.progress||0)*.8,job.message);importPollTimer=setTimeout(pollPermissionImport,500);return}startImportButton.disabled=false;if(job.status==='error'){setImportProgress(0,job.error||job.message);toast(job.error||'Import tahlilida xatolik');return}setImportProgress(100,job.message||'Taqqoslash tayyor');renderImportPreview(job)}catch(e){startImportButton.disabled=false;setImportProgress(0,e.message);toast(e.message)}}
-async function applyPermissionImport(){const selected=importChanges.filter(change=>change.selected);if(!selected.length){toast('Kamida bitta o\'zgarishni tanlang');return}const deletes=selected.filter(change=>change.action==='delete').length;if(deletes&&!confirm(`${deletes} ta qoida o'chiriladi. Davom etasizmi?`))return;applyImportButton.disabled=true;try{const result=await api('/admin/api/permission-import/'+importJobId+'/apply',{method:'POST',body:JSON.stringify({changes:selected.map(change=>({id:change.id,after:change.after}))})});setImportProgress(100,`${result.applied_count} ta o'zgarish qo'llandi`);toast(`${result.applied_count} ta o'zgarish muvaffaqiyatli qo'llandi`);importChanges.forEach(change=>change.selected=false);renderImportChanges();await loadAll()}catch(e){toast(e.message)}finally{applyImportButton.disabled=false}}
-async function loadVersionStatus(){const d=await api('/admin/api/rule-version/status');const storage=d.persistent?'':' · mahalliy saqlash';draftBadge.textContent=(d.dirty?`🟡 Qoralama · faol v${d.active_version||0}`:`🟢 E'lon qilingan · v${d.active_version||0}`)+storage;draftBadge.className='pill '+(d.dirty||!d.persistent?'warn':'ok');return d}
-async function publishDraft(){const status=await loadVersionStatus();if(!status.dirty){toast('E\'lon qilinmagan o\'zgarish yo\'q');return}if(!confirm('Qoralamadagi barcha o\'zgarishlar bot foydalanuvchilariga e\'lon qilinsinmi?'))return;const d=await api('/admin/api/rule-version/publish',{method:'POST',body:JSON.stringify({source:'admin-panel'})});toast(`v${d.version_no} faol qoida sifatida e'lon qilindi`);await Promise.all([loadVersionStatus(),loadGovernance()])}
-async function discardDraft(){const status=await loadVersionStatus();if(!status.dirty){toast('Bekor qilinadigan qoralama yo\'q');return}if(!confirm('Qoralamadagi barcha e\'lon qilinmagan o\'zgarishlar bekor qilinsinmi?'))return;await api('/admin/api/rule-version/discard',{method:'POST',body:'{}'});toast('Qoralama bekor qilindi');countryCache={};await loadAll()}
+async function applyPermissionImport(){const selected=importChanges.filter(change=>change.selected);if(!selected.length){toast('Kamida bitta o\'zgarishni tanlang');return}const deletes=selected.filter(change=>change.action==='delete').length;if(deletes&&!confirm(`${deletes} ta qoida o'chiriladi. Davom etasizmi?`))return;applyImportButton.disabled=true;try{const result=await api('/admin/api/permission-import/'+importJobId+'/apply',{method:'POST',body:JSON.stringify({changes:selected.map(change=>({id:change.id,after:change.after}))})});setImportProgress(100,`${result.applied_count} ta o'zgarish qo'llandi va faollashtirildi`);toast(`${result.applied_count} ta o'zgarish darhol faollashtirildi · v${result.version_no}`);importChanges.forEach(change=>change.selected=false);renderImportChanges();await loadAll()}catch(e){toast(e.message)}finally{applyImportButton.disabled=false}}
+async function loadVersionStatus(){const d=await api('/admin/api/rule-version/status');const storage=d.persistent?'PostgreSQL':'mahalliy saqlash';draftBadge.textContent=`Avtomatik faol · v${d.active_version||0} · ${storage}`;draftBadge.className='pill '+(d.dirty?'warn':'ok');return d}
 async function loadGovernance(){const [versions,audit]=await Promise.all([api('/admin/api/rule-versions'),api('/admin/api/audit')]);versionsBox.innerHTML=versions.versions.map(v=>`<div class="card glass"><h3>${v.status==='active'?'🟢':'⚪'} Versiya ${esc(v.version_no)}</h3><div class="muted">${esc(v.created_at||'')} · ${esc(v.created_by||'')}</div><p>${esc(v.source||'')}</p>${v.status==='active'?pill('Faol','ok'):`<button class="btn" onclick="rollbackVersion(${Number(v.version_no)})">↩️ Qayta e'lon qilish</button>`}</div>`).join('')||'<div class="card glass muted">Versiya topilmadi</div>';auditBody.innerHTML=audit.items.map(item=>`<tr><td>${esc(item.created_at||'')}</td><td>${esc(item.action||'')}</td><td>${esc(item.actor||'')}</td><td><code>${esc(JSON.stringify(item.details||{}))}</code></td></tr>`).join('')||'<tr><td colspan="4">Audit yozuvi yo\'q</td></tr>'}
 async function rollbackVersion(version){if(!confirm(`Versiya ${version} qoidalarini qayta faol qilishni tasdiqlaysizmi?`))return;const d=await api('/admin/api/rule-versions/'+version+'/rollback',{method:'POST',body:'{}'});toast(`Rollback bajarildi. Yangi faol versiya: ${d.version_no}`);countryCache={};await loadAll();await loadGovernance()}
 async function logout(){await fetch('/admin/logout',{method:'POST'});location.href='/admin'}
@@ -840,8 +857,44 @@ def setup_admin_routes(app: web.Application, settings: Settings) -> None:
             version_store.database_url = ""
             version_store.pool = None
             await version_store.initialize(settings.permission_rules_path, settings.fees_rules_path)
-        permission_admin_path()
-        fees_admin_path()
+        active = await version_store.get_active()
+        if active:
+            normalized_fees = active["fees"]
+            before_normalization = json.dumps(normalized_fees, ensure_ascii=False, sort_keys=True)
+            _fee_items(normalized_fees)
+            if json.dumps(normalized_fees, ensure_ascii=False, sort_keys=True) != before_normalization:
+                active = await version_store.publish(
+                    active["permission"],
+                    normalized_fees,
+                    actor="system",
+                    source="system:fee-items-migration",
+                    summary={"migration": "admin_fee_items"},
+                )
+            # The admin panel now edits an automatically activated working copy.
+            # Reset legacy unpublished drafts so an old draft cannot be published
+            # accidentally by the first save after a deployment.
+            _write_json(_draft_path(settings.permission_rules_path), active["permission"])
+            _write_json(_draft_path(settings.fees_rules_path), active["fees"])
+        else:
+            permission_admin_path()
+            fees_admin_path()
+
+    async def activate_current_rules(source: str, details: dict[str, Any] | None = None) -> dict[str, Any]:
+        permission = _read_json(permission_admin_path())
+        fees_data = _read_json(fees_admin_path())
+        summary = {
+            "countries": len(permission.get("countries", {})),
+            "rules": sum(len(item) for item in permission.get("rules", {}).values()),
+            "fee_items": sum(len(item) for item in fees_data.get("admin_fee_items", {}).values()),
+            **(details or {}),
+        }
+        return await version_store.publish(
+            permission,
+            fees_data,
+            actor=settings.admin_username,
+            source=source,
+            summary=summary,
+        )
 
     async def close_rule_versions(_: web.Application) -> None:
         await version_store.close()
@@ -856,7 +909,10 @@ def setup_admin_routes(app: web.Application, settings: Settings) -> None:
         if not _is_authenticated(request, settings):
             response = web.Response(text=_login_page(), content_type="text/html")
         else:
-            response = web.Response(text=_admin_page_v2(), content_type="text/html")
+            response = web.Response(
+                text=(Path(__file__).resolve().parent / "static" / "admin.html").read_text(encoding="utf-8"),
+                content_type="text/html",
+            )
         response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
         response.headers["Pragma"] = "no-cache"
         return response
@@ -965,10 +1021,11 @@ def setup_admin_routes(app: web.Application, settings: Settings) -> None:
         permission = body.get("permission")
         if not isinstance(permission, dict) or "countries" not in permission or "rules" not in permission:
             return _json_error("Permission JSON tuzilmasi noto'g'ri.")
-        permission.setdefault("source", {})["last_admin_update"] = int(time.time())
-        _write_json(permission_admin_path(), permission)
-        await audit("draft_permission_full", {})
-        return web.json_response({"ok": True})
+        async with permission_write_lock:
+            permission.setdefault("source", {})["last_admin_update"] = int(time.time())
+            _write_json(permission_admin_path(), permission)
+            snapshot = await activate_current_rules("admin:auto:permission-full")
+        return web.json_response({"ok": True, "version_no": snapshot["version_no"], "active": True})
 
     async def save_country(request: web.Request) -> web.Response:
         _require_admin(request, settings)
@@ -978,52 +1035,61 @@ def setup_admin_routes(app: web.Application, settings: Settings) -> None:
         name_uz = str(body.get("name_uz") or "").strip()
         if len(name) < 2:
             return _json_error("Davlat nomi kiritilmadi.")
-        data = _read_json(permission_admin_path())
-        data.setdefault("countries", {})[code] = name
-        if name_uz:
-            data.setdefault("country_labels", {}).setdefault(code, {})["uz"] = name_uz
-        data.setdefault("rules", {}).setdefault(code, {})
-        data.setdefault("source", {})["last_admin_update"] = int(time.time())
-        _write_json(permission_admin_path(), data)
-        await audit("draft_country_save", {"country_code": code})
-        return web.json_response({"ok": True, "code": code})
+        async with permission_write_lock:
+            data = _read_json(permission_admin_path())
+            data.setdefault("countries", {})[code] = name
+            if name_uz:
+                data.setdefault("country_labels", {}).setdefault(code, {})["uz"] = name_uz
+            data.setdefault("rules", {}).setdefault(code, {})
+            data.setdefault("source", {})["last_admin_update"] = int(time.time())
+            _write_json(permission_admin_path(), data)
+            snapshot = await activate_current_rules("admin:auto:country-save", {"country_code": code})
+        return web.json_response({"ok": True, "code": code, "version_no": snapshot["version_no"], "active": True})
 
     async def delete_country(request: web.Request) -> web.Response:
         _require_admin(request, settings)
         code = _code(request.match_info["code"])
-        data = _read_json(permission_admin_path())
-        data.get("countries", {}).pop(code, None)
-        data.get("rules", {}).pop(code, None)
-        data.get("exceptions", {}).pop(code, None)
-        data.setdefault("source", {})["last_admin_update"] = int(time.time())
-        _write_json(permission_admin_path(), data)
-        await audit("draft_country_delete", {"country_code": code})
-        return web.json_response({"ok": True})
+        async with permission_write_lock:
+            data = _read_json(permission_admin_path())
+            data.get("countries", {}).pop(code, None)
+            data.get("country_labels", {}).pop(code, None)
+            data.get("rules", {}).pop(code, None)
+            data.get("exceptions", {}).pop(code, None)
+            data.setdefault("source", {})["last_admin_update"] = int(time.time())
+            _write_json(permission_admin_path(), data)
+            snapshot = await activate_current_rules("admin:auto:country-delete", {"country_code": code})
+        return web.json_response({"ok": True, "version_no": snapshot["version_no"], "active": True})
 
     async def save_rule(request: web.Request) -> web.Response:
         _require_admin(request, settings)
         body = await request.json()
         code = _code(body.get("country_code"))
-        data = _read_json(permission_admin_path())
-        if code not in data.get("countries", {}):
-            return _json_error("Avval davlatni qo'shing.")
-        rule = _rule_payload(body, data)
-        data.setdefault("rules", {}).setdefault(code, {})[rule["vid_cd"]] = rule
-        data.setdefault("source", {})["last_admin_update"] = int(time.time())
-        _write_json(permission_admin_path(), data)
-        await audit("draft_rule_save", {"country_code": code, "vid_cd": rule["vid_cd"]})
-        return web.json_response({"ok": True, "rule": rule})
+        async with permission_write_lock:
+            data = _read_json(permission_admin_path())
+            if code not in data.get("countries", {}):
+                return _json_error("Avval davlatni qo'shing.")
+            rule = _rule_payload(body, data)
+            data.setdefault("rules", {}).setdefault(code, {})[rule["vid_cd"]] = rule
+            data.setdefault("source", {})["last_admin_update"] = int(time.time())
+            _write_json(permission_admin_path(), data)
+            snapshot = await activate_current_rules(
+                "admin:auto:rule-save", {"country_code": code, "vid_cd": rule["vid_cd"]}
+            )
+        return web.json_response({"ok": True, "rule": rule, "version_no": snapshot["version_no"], "active": True})
 
     async def delete_rule(request: web.Request) -> web.Response:
         _require_admin(request, settings)
         code = _code(request.match_info["code"])
         vid_cd = _vid(request.match_info["vid"])
-        data = _read_json(permission_admin_path())
-        data.setdefault("rules", {}).setdefault(code, {}).pop(vid_cd, None)
-        data.setdefault("source", {})["last_admin_update"] = int(time.time())
-        _write_json(permission_admin_path(), data)
-        await audit("draft_rule_delete", {"country_code": code, "vid_cd": vid_cd})
-        return web.json_response({"ok": True})
+        async with permission_write_lock:
+            data = _read_json(permission_admin_path())
+            data.setdefault("rules", {}).setdefault(code, {}).pop(vid_cd, None)
+            data.setdefault("source", {})["last_admin_update"] = int(time.time())
+            _write_json(permission_admin_path(), data)
+            snapshot = await activate_current_rules(
+                "admin:auto:rule-delete", {"country_code": code, "vid_cd": vid_cd}
+            )
+        return web.json_response({"ok": True, "version_no": snapshot["version_no"], "active": True})
 
     async def fees(request: web.Request) -> web.Response:
         _require_admin(request, settings)
@@ -1035,10 +1101,11 @@ def setup_admin_routes(app: web.Application, settings: Settings) -> None:
         fees_data = body.get("fees")
         if not isinstance(fees_data, dict) or "entry_fee" not in fees_data:
             return _json_error("Yig'im JSON tuzilmasi noto'g'ri.")
-        fees_data.setdefault("source", {})["last_admin_update"] = int(time.time())
-        _write_json(fees_admin_path(), fees_data)
-        await audit("draft_fees_full", {})
-        return web.json_response({"ok": True})
+        async with permission_write_lock:
+            fees_data.setdefault("source", {})["last_admin_update"] = int(time.time())
+            _write_json(fees_admin_path(), fees_data)
+            snapshot = await activate_current_rules("admin:auto:fees-full")
+        return web.json_response({"ok": True, "version_no": snapshot["version_no"], "active": True})
 
     async def fee_items(request: web.Request) -> web.Response:
         _require_admin(request, settings)
@@ -1055,27 +1122,33 @@ def setup_admin_routes(app: web.Application, settings: Settings) -> None:
         body = await request.json()
         direction = _fee_direction(body.get("direction"))
         item = _fee_item_payload(body)
-        fees_data = _read_json(fees_admin_path())
-        items = _fee_items(fees_data)
-        current = [row for row in items[direction] if row.get("id") != item["id"]]
-        current.append(item)
-        items[direction] = current
-        fees_data.setdefault("source", {})["last_admin_update"] = int(time.time())
-        _write_json(fees_admin_path(), fees_data)
-        await audit("draft_fee_save", {"direction": direction, "item_id": item["id"]})
-        return web.json_response({"ok": True, "item": item})
+        async with permission_write_lock:
+            fees_data = _read_json(fees_admin_path())
+            items = _fee_items(fees_data)
+            current = [row for row in items[direction] if row.get("id") != item["id"]]
+            current.append(item)
+            items[direction] = current
+            fees_data.setdefault("source", {})["last_admin_update"] = int(time.time())
+            _write_json(fees_admin_path(), fees_data)
+            snapshot = await activate_current_rules(
+                "admin:auto:fee-save", {"direction": direction, "item_id": item["id"]}
+            )
+        return web.json_response({"ok": True, "item": item, "version_no": snapshot["version_no"], "active": True})
 
     async def delete_fee_item(request: web.Request) -> web.Response:
         _require_admin(request, settings)
         direction = _fee_direction(request.match_info["direction"])
         item_id = str(request.match_info["item_id"])
-        fees_data = _read_json(fees_admin_path())
-        items = _fee_items(fees_data)
-        items[direction] = [row for row in items[direction] if str(row.get("id")) != item_id]
-        fees_data.setdefault("source", {})["last_admin_update"] = int(time.time())
-        _write_json(fees_admin_path(), fees_data)
-        await audit("draft_fee_delete", {"direction": direction, "item_id": item_id})
-        return web.json_response({"ok": True})
+        async with permission_write_lock:
+            fees_data = _read_json(fees_admin_path())
+            items = _fee_items(fees_data)
+            items[direction] = [row for row in items[direction] if str(row.get("id")) != item_id]
+            fees_data.setdefault("source", {})["last_admin_update"] = int(time.time())
+            _write_json(fees_admin_path(), fees_data)
+            snapshot = await activate_current_rules(
+                "admin:auto:fee-delete", {"direction": direction, "item_id": item_id}
+            )
+        return web.json_response({"ok": True, "version_no": snapshot["version_no"], "active": True})
 
     async def rule_version_status(request: web.Request) -> web.Response:
         _require_admin(request, settings)
@@ -1102,20 +1175,7 @@ def setup_admin_routes(app: web.Application, settings: Settings) -> None:
         body = await request.json() if request.can_read_body else {}
         source = str(body.get("source") or "admin-panel").strip()[:200]
         async with permission_write_lock:
-            permission = _read_json(permission_admin_path())
-            fees_data = _read_json(fees_admin_path())
-            summary = {
-                "countries": len(permission.get("countries", {})),
-                "rules": sum(len(item) for item in permission.get("rules", {}).values()),
-                "fee_items": sum(len(item) for item in fees_data.get("admin_fee_items", {}).values()),
-            }
-            snapshot = await version_store.publish(
-                permission,
-                fees_data,
-                actor=settings.admin_username,
-                source=source,
-                summary=summary,
-            )
+            snapshot = await activate_current_rules(source)
         return web.json_response(
             {"ok": True, "version_no": snapshot["version_no"], "message": "Qoidalar e'lon qilindi."}
         )
@@ -1285,13 +1345,14 @@ def setup_admin_routes(app: web.Application, settings: Settings) -> None:
                 return _json_error(str(exc))
             data.setdefault("source", {})["last_admin_update"] = int(time.time())
             _write_json(draft_path, data)
-            await audit(
-                "draft_excel_import",
+            snapshot = await activate_current_rules(
+                "admin:auto:excel-import",
                 {"filename": job.get("filename"), "applied_count": applied_count},
             )
             job["status"] = "applied"
-            job["message"] = "Tanlangan o'zgarishlar qo'llandi"
+            job["message"] = "Tanlangan o'zgarishlar qo'llandi va faollashtirildi"
             job["applied_count"] = applied_count
+            job["version_no"] = snapshot["version_no"]
             job["base_mtime_ns"] = draft_path.stat().st_mtime_ns
         return web.json_response(_import_job_response(job))
 

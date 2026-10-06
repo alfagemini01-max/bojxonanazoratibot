@@ -16,6 +16,7 @@ from app.services.permit import (
     UZBEKISTAN_CODE,
     PermitRuleService,
     country_label,
+    localized_additional_conditions,
     permit_status_text,
     transport_type_label,
     turkmenistan_extra_fee_applies,
@@ -40,6 +41,23 @@ ISO_NUMERIC_TO_ALPHA2 = dict(
         "434:LY,438:LI,440:LT,442:LU,496:MN,498:MD,528:NL,616:PL,643:RU,703:SK,705:SI,756:CH,"
         "762:TJ,792:TR,795:TM,804:UA,860:UZ"
     ).split(",")
+)
+ISO_NUMERIC_TO_ALPHA2.update(
+    dict(
+        item.split(":")
+        for item in (
+            "275:PS,446:MO,450:MG,454:MW,458:MY,462:MV,466:ML,470:MT,474:MQ,478:MR,480:MU,"
+            "484:MX,492:MC,499:ME,500:MS,504:MA,508:MZ,512:OM,516:NA,520:NR,524:NP,531:CW,"
+            "533:AW,534:SX,535:BQ,540:NC,548:VU,554:NZ,558:NI,562:NE,566:NG,570:NU,574:NF,"
+            "578:NO,580:MP,581:UM,583:FM,584:MH,585:PW,586:PK,591:PA,598:PG,600:PY,604:PE,"
+            "608:PH,612:PN,620:PT,624:GW,626:TL,630:PR,634:QA,638:RE,642:RO,646:RW,652:BL,"
+            "654:SH,659:KN,660:AI,662:LC,663:MF,666:PM,670:VC,674:SM,678:ST,682:SA,686:SN,"
+            "688:RS,690:SC,694:SL,702:SG,704:VN,706:SO,710:ZA,716:ZW,724:ES,728:SS,729:SD,"
+            "732:EH,740:SR,744:SJ,748:SZ,752:SE,760:SY,764:TH,768:TG,772:TK,776:TO,780:TT,"
+            "784:AE,788:TN,796:TC,798:TV,800:UG,807:MK,818:EG,826:GB,831:GG,832:JE,833:IM,"
+            "834:TZ,840:US,850:VI,854:BF,858:UY,862:VE,876:WF,882:WS,887:YE,894:ZM"
+        ).split(",")
+    )
 )
 
 
@@ -163,6 +181,7 @@ def _permit_payload(
         },
         "conditions": {"weight": weight, "stay_days": stay_days, "humanitarian": humanitarian},
         "exceptions": [str(row.get("exception_desc") or "") for row in result.exceptions],
+        "additional_conditions": localized_additional_conditions(rule, lang),
         "notes": {
             "uz": str(rule.get("dues_amount_note_uz") or ""),
             "ru": str(rule.get("dues_amount_note_ru") or ""),
