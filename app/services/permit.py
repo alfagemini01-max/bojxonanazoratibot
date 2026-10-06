@@ -81,6 +81,17 @@ COUNTRY_LABELS.update({
     "804": {"uz": "Ukraina", "ru": "Ukraine", "en": "Ukraine"},
 })
 
+_COUNTRY_NAMES_PATH = Path(__file__).resolve().parents[2] / "data" / "country_names.json"
+try:
+    _generated_country_labels = json.loads(_COUNTRY_NAMES_PATH.read_text(encoding="utf-8"))
+except (OSError, ValueError):
+    _generated_country_labels = {}
+for _country_code, _labels in _generated_country_labels.items():
+    if isinstance(_labels, dict):
+        COUNTRY_LABELS.setdefault(str(_country_code), {}).update(
+            {key: str(value) for key, value in _labels.items() if key in {"uz", "ru", "en"} and value}
+        )
+
 
 COMMON_COUNTRY_ALIASES = {
     "860": ["uzb", "uzbek", "uzbekistan", "ozb", "ozbekiston", "o'zbekiston", "uzbekiston"],
@@ -133,6 +144,8 @@ class PermitResult:
     fee_text: str
     fee_note: str
     exceptions: list[dict[str, str]]
+    base_vid_cd: str = ""
+    vid_labels: dict[str, str] | None = None
 
 
 def localized_additional_conditions(rule: dict[str, Any] | None, lang: str | None = "uz") -> list[str]:
@@ -204,6 +217,7 @@ class PermitRuleService:
         self.rules: dict[str, dict[str, dict[str, str]]] = self.data["rules"]
         self.exceptions: dict[str, list[dict[str, str]]] = self.data.get("exceptions", {})
         self.vid_types: dict[str, str] = self.data["vid_types"]
+        self.vid_labels: dict[str, dict[str, Any]] = dict(self.data.get("vid_labels", {}))
         self.aliases = self._build_aliases()
         self.country_candidates = self._build_country_candidates()
 
@@ -317,7 +331,17 @@ class PermitRuleService:
             return []
         return [f"{country_label(match.country, 'uz')} ({match.country.code})" for match in self.search_countries(text, 0.6, limit)]
 
-    def detect_transport_type(self, origin: Country, destination: Country, vehicle_country: Country) -> str:
+    def detect_transport_type(
+        self,
+        origin: Country,
+        destination: Country,
+        vehicle_country: Country,
+        operation: str = "cargo",
+    ) -> str:
+        if operation == "empty_entry":
+            return "7"
+        if operation == "empty_transit":
+            return "8"
         if origin.code == UZBEKISTAN_CODE and destination.code == UZBEKISTAN_CODE:
             return "6"
         if origin.code == UZBEKISTAN_CODE:
@@ -326,12 +350,47 @@ class PermitRuleService:
             return "2" if vehicle_country.code == origin.code else "5"
         return "3"
 
-    def evaluate(self, origin: Country, destination: Country, vehicle_country: Country) -> PermitResult:
+    def _effective_transport_type(self, base_vid_cd: str) -> str:
+        """Return an optional admin-defined transport type mapped to a core route type."""
+        candidates: list[tuple[int, int, str]] = []
+        for vid_cd, labels in self.vid_labels.items():
+            if not isinstance(labels, dict) or not labels.get("auto_detect"):
+                continue
+            if str(labels.get("base_vid") or "") != base_vid_cd:
+                continue
+            try:
+                priority = int(labels.get("priority") or 0)
+                numeric_code = int(vid_cd)
+            except (TypeError, ValueError):
+                continue
+            candidates.append((priority, numeric_code, vid_cd))
+        return max(candidates, default=(0, 0, base_vid_cd))[2]
+
+    def evaluate(
+        self,
+        origin: Country,
+        destination: Country,
+        vehicle_country: Country,
+        operation: str = "cargo",
+    ) -> PermitResult:
         self.reload_if_changed()
-        vid_cd = self.detect_transport_type(origin, destination, vehicle_country)
+        base_vid_cd = self.detect_transport_type(origin, destination, vehicle_country, operation)
+        vid_cd = self._effective_transport_type(base_vid_cd)
         country_rules = self.rules.get(vehicle_country.code, {})
-        rule = country_rules.get(vid_cd)
+        rule = country_rules.get(vid_cd) or country_rules.get(base_vid_cd)
+        if vehicle_country.code == DEFAULT_RULE_CODE and base_vid_cd in {"2", "3", "5", "7", "8"}:
+            rule = dict(rule or {})
+            rule.update(
+                {
+                    "vid_cd": vid_cd,
+                    "dues_cd": "1",
+                    "dues_name_ru": "Сбор обязательно",
+                    "dues_amount_usd": "400",
+                    "source": rule.get("source") or "fallback:unknown-country",
+                }
+            )
         fee_text, fee_note = self._fee_for_rule(vehicle_country.code, rule)
+        labels = self.vid_labels.get(vid_cd)
         return PermitResult(
             origin=origin,
             destination=destination,
@@ -341,7 +400,9 @@ class PermitRuleService:
             rule=rule,
             fee_text=fee_text,
             fee_note=fee_note,
-            exceptions=self.matching_exceptions(vehicle_country.code, vid_cd),
+            exceptions=self.matching_exceptions(vehicle_country.code, base_vid_cd),
+            base_vid_cd=base_vid_cd,
+            vid_labels=labels if isinstance(labels, dict) else None,
         )
 
     def matching_exceptions(self, country_code: str, vid_cd: str) -> list[dict[str, str]]:
@@ -429,8 +490,17 @@ def country_label(country: Country, lang: str | None = "uz") -> str:
     return country.name.title() if country.name.isupper() else country.name
 
 
-def transport_type_label(vid_cd: str, fallback: str, lang: str | None = "uz") -> str:
+def transport_type_label(
+    vid_cd: str,
+    fallback: str,
+    lang: str | None = "uz",
+    labels: dict[str, str] | None = None,
+) -> str:
     code = _lang(lang)
+    if labels:
+        custom = str(labels.get(code) or labels.get("uz") or labels.get("ru") or labels.get("en") or "").strip()
+        if custom:
+            return custom
     return VID_LABELS.get(code, VID_LABELS["uz"]).get(vid_cd, fallback)
 
 
@@ -746,7 +816,7 @@ def build_permit_message(result: PermitResult, timezone: str = "Asia/Tashkent", 
         f"{labels['destination']}: <b>{_html(country_label(result.destination, code))}</b>",
         f"{labels['vehicle']}: <b>{_html(country_label(result.vehicle_country, code))}</b>",
         "",
-        f"{labels['type']}: <b>{_html(transport_type_label(result.vid_cd, result.vid_name, code))}</b>",
+        f"{labels['type']}: <b>{_html(transport_type_label(result.vid_cd, result.vid_name, code, result.vid_labels))}</b>",
         permit_status_text(rule, code),
         fee_text,
         "",

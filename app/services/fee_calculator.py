@@ -368,7 +368,7 @@ class FeeCalculator:
         if origin and destination:
             lines.append(f"{labels['route']}: <b>{_html(country_label(origin, code))} → {_html(country_label(destination, code))}</b>")
         if permit_result:
-            lines.append(f"{labels['type']}: <b>{_html(transport_type_label(permit_result.vid_cd, permit_result.vid_name, code))}</b>")
+            lines.append(f"{labels['type']}: <b>{_html(transport_type_label(permit_result.vid_cd, permit_result.vid_name, code, permit_result.vid_labels))}</b>")
         lines.append("")
 
         if summaries:
