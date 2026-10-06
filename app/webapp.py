@@ -16,7 +16,6 @@ from app.services.permit import (
     UZBEKISTAN_CODE,
     PermitRuleService,
     country_label,
-    is_eu_or_azerbaijan,
     localized_additional_conditions,
     permit_status_text,
     transport_type_label,
@@ -127,6 +126,10 @@ def _permit_payload(
     if requested_operation not in {"cargo", "cargo_entry", "cargo_exit", "cargo_transit", "empty_entry", "empty_transit"}:
         raise web.HTTPBadRequest(text="Tashuv holati noto'g'ri.")
     operation = requested_operation if requested_operation.startswith("empty_") else "cargo"
+    if operation == "empty_entry" and destination.code != UZBEKISTAN_CODE:
+        raise web.HTTPBadRequest(text="Bo'sh holatda kirishda tashuv tugaydigan davlat O'zbekiston bo'lishi kerak.")
+    if operation == "empty_transit" and (origin.code == UZBEKISTAN_CODE or destination.code == UZBEKISTAN_CODE):
+        raise web.HTTPBadRequest(text="Bo'sh holatda tranzitda boshlanish va tugash davlatlari xorijiy bo'lishi kerak.")
     result = permit_service.evaluate(origin, destination, vehicle, operation=operation)
     rule = result.rule or {}
     permission_code = str(rule.get("permission_cd", "0"))
@@ -372,6 +375,7 @@ def setup_webapp_routes(app: web.Application, settings: Settings) -> None:
         for code in ordered_codes:
             country = permit_service.country_by_code(code)
             if country:
+                profile = permit_service.country_input_profile(code)
                 rows.append(
                     {
                         "code": code,
@@ -381,13 +385,12 @@ def setup_webapp_routes(app: web.Application, settings: Settings) -> None:
                             for language in ("uz", "ru", "en")
                         },
                         "iso": ISO_NUMERIC_TO_ALPHA2.get(code, ""),
-                        "uses_weight": code in {"762", "795"},
-                        "uses_stay_days": is_eu_or_azerbaijan(code),
+                        **profile,
                     }
                 )
         return web.json_response(
             {"ok": True, "countries": rows},
-            headers={"Cache-Control": "public, max-age=3600, stale-while-revalidate=86400"},
+            headers={"Cache-Control": "no-cache, must-revalidate"},
         )
 
     async def permit_check(request: web.Request) -> web.Response:
