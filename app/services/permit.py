@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone as datetime_timezone
 from pathlib import Path
 from time import monotonic
+from typing import Any
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 
@@ -128,10 +129,26 @@ class PermitResult:
     vehicle_country: Country
     vid_cd: str
     vid_name: str
-    rule: dict[str, str] | None
+    rule: dict[str, Any] | None
     fee_text: str
     fee_note: str
     exceptions: list[dict[str, str]]
+
+
+def localized_additional_conditions(rule: dict[str, Any] | None, lang: str | None = "uz") -> list[str]:
+    """Return enabled rule notes in the requested language with a safe fallback."""
+    code = _lang(lang)
+    rows = (rule or {}).get("additional_conditions", [])
+    if not isinstance(rows, list):
+        return []
+    result: list[str] = []
+    for row in rows:
+        if not isinstance(row, dict) or row.get("enabled", True) is False:
+            continue
+        value = str(row.get(code) or row.get("uz") or row.get("ru") or row.get("en") or "").strip()
+        if value:
+            result.append(value)
+    return result
 
 
 def _load_timezone(timezone: str):
@@ -685,6 +702,7 @@ def build_permit_message(result: PermitResult, timezone: str = "Asia/Tashkent", 
             "vehicle": "🚚 Ro'yxat davlati",
             "type": "🧭 Tashuv turi",
             "exceptions_title": "🧾 Istisnolar",
+            "conditions_title": "ℹ️ Qo'shimcha shartlar",
             "border_payments_title": "💳 Chegarada qo'shimcha tekshiriladigan to'lovlar",
             "notes_title": "📌 Eslatma",
             "unknown": "⚠️ Yakuniy huquqiy xulosa emas. Vakolatli tizimda qayta tekshiring.",
@@ -698,6 +716,7 @@ def build_permit_message(result: PermitResult, timezone: str = "Asia/Tashkent", 
             "vehicle": "🚚 Государство регистрации автотранспорта",
             "type": "🧭 Определенный вид перевозки",
             "exceptions_title": "🧾 Исключения, при которых разрешение по данному виду перевозки не требуется",
+            "conditions_title": "ℹ️ Дополнительные условия",
             "border_payments_title": "💳 Дополнительные платежи, проверяемые на границе",
             "notes_title": "📌 Дополнительные примечания",
             "unknown": "⚠️ Данный ответ не является окончательным правовым заключением. Требуется повторная проверка в уполномоченной системе.",
@@ -711,6 +730,7 @@ def build_permit_message(result: PermitResult, timezone: str = "Asia/Tashkent", 
             "vehicle": "🚚 Vehicle registration country",
             "type": "🧭 Detected carriage type",
             "exceptions_title": "🧾 Exceptions where a permit is not required for this carriage type",
+            "conditions_title": "ℹ️ Additional conditions",
             "border_payments_title": "💳 Additional payments checked at the border",
             "notes_title": "📌 Additional notes",
             "unknown": "⚠️ This response is not a final legal conclusion. Re-checking in the authorized system is required.",
@@ -748,6 +768,12 @@ def build_permit_message(result: PermitResult, timezone: str = "Asia/Tashkent", 
                 "ru": f"➕ Еще {more_count} исключений.",
                 "en": f"➕ {more_count} more exceptions.",
             }[code])
+        lines.append("")
+    condition_lines = localized_additional_conditions(rule, code)
+    if condition_lines:
+        lines.append(labels["conditions_title"] + ":")
+        for index, condition in enumerate(condition_lines, start=1):
+            lines.append(f"{index}. {_html(condition)}")
         lines.append("")
     if not rule:
         lines.append(labels["unknown"])

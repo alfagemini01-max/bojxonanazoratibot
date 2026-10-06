@@ -142,7 +142,7 @@ def _integer_text(value: object) -> str:
     return text
 
 
-def _rule_from_row(row: dict[str, str], old_rule: dict[str, Any] | None, source_name: str) -> dict[str, str]:
+def _rule_from_row(row: dict[str, str], old_rule: dict[str, Any] | None, source_name: str) -> dict[str, Any]:
     country_code = _integer_text(row["COUNTRY_CD"]).zfill(3)
     dues_cd = _integer_text(row.get("DUES_CD", ""))
     old_rule = old_rule or {}
@@ -167,6 +167,10 @@ def _rule_from_row(row: dict[str, str], old_rule: dict[str, Any] | None, source_
     for field in PRESERVED_FIELDS:
         if old_rule.get(field):
             rule[field] = str(old_rule[field])
+    if isinstance(old_rule.get("additional_conditions"), list):
+        rule["additional_conditions"] = [
+            dict(item) for item in old_rule["additional_conditions"] if isinstance(item, dict)
+        ]
     return rule
 
 
