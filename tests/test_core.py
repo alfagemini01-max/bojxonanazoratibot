@@ -12,6 +12,7 @@ from app.services.permit import (
     PermitResult,
     PermitRuleService,
     build_permit_message,
+    country_label,
     localized_additional_conditions,
 )
 
@@ -37,6 +38,38 @@ class PermitRulesTests(unittest.TestCase):
         self.assertEqual(self.service.detect_transport_type(china, uzbekistan, china), "2")
         self.assertEqual(self.service.detect_transport_type(china, uzbekistan, kazakhstan), "5")
         self.assertEqual(self.service.detect_transport_type(russia, china, kazakhstan), "3")
+
+    def test_empty_transport_types(self) -> None:
+        uzbekistan = self.service.country_by_code("860")
+        china = self.service.country_by_code("156")
+        self.assertEqual(self.service.detect_transport_type(china, uzbekistan, china, "empty_entry"), "7")
+        self.assertEqual(self.service.detect_transport_type(china, uzbekistan, china, "empty_transit"), "8")
+
+    def test_country_names_follow_language(self) -> None:
+        australia = self.service.country_by_code("036")
+        self.assertEqual(country_label(australia, "uz"), "Avstraliya")
+        self.assertEqual(country_label(australia, "ru"), "Австралия")
+        self.assertEqual(country_label(australia, "en"), "Australia")
+        unknown = self.service.country_by_code("000")
+        self.assertEqual(country_label(unknown, "uz"), "Noma'lum davlat")
+
+    def test_unknown_country_entry_and_transit_use_400_usd(self) -> None:
+        calculator = FeeCalculator(ROOT / "data" / "fees_2026.json", 412000, 12600)
+        for origin_code, destination_code, operation in (
+            ("156", "860", "cargo"),
+            ("156", "643", "cargo"),
+            ("156", "860", "empty_entry"),
+        ):
+            result = self.service.evaluate(
+                self.service.country_by_code(origin_code),
+                self.service.country_by_code(destination_code),
+                self.service.country_by_code("000"),
+                operation,
+            )
+            self.assertEqual(
+                calculator.entry_fee_usd_for_rule(result.rule or {}, "000", "up_to_10", "up_to_14"),
+                400.0,
+            )
 
     def test_new_fee_mode_is_translated(self) -> None:
         for lang in ("uz", "ru", "en"):
@@ -142,5 +175,16 @@ class WebAppAssetTests(unittest.TestCase):
         self.assertIn('id="icon-file-check"', html)
         self.assertIn('/static/webapp/flags/${code}.svg', script)
         self.assertNotIn("flagcdn.com", script)
+        self.assertIn("loading=\"eager\"", script)
+        self.assertIn("permit-operation", html)
+        self.assertIn("uses_weight", (ROOT / "app" / "webapp.py").read_text(encoding="utf-8"))
+
+    def test_admin_can_manage_transport_types(self) -> None:
+        html = (ROOT / "app" / "static" / "admin.html").read_text(encoding="utf-8")
+        script = (ROOT / "app" / "static" / "admin.js").read_text(encoding="utf-8")
+        backend = (ROOT / "app" / "admin_panel.py").read_text(encoding="utf-8")
+        self.assertIn("manage-transport-types", html)
+        self.assertIn("openTransportTypes", script)
+        self.assertIn("/admin/api/transport-type", backend)
 if __name__ == "__main__":
     unittest.main()
