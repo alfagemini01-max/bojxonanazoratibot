@@ -8,16 +8,24 @@ const icon=name=>`<svg aria-hidden="true"><use href="#i-${name}"/></svg>`;
 
 async function api(url,options={}){
   const config={...options,headers:{...(options.headers||{})}};
+  const controller=new AbortController();
+  const timeout=setTimeout(()=>controller.abort(),25000);
+  config.signal=options.signal||controller.signal;
   const csrf=document.cookie.split('; ').find(row=>row.startsWith('nazorat_csrf='))?.split('=').slice(1).join('=');
   if(csrf&&config.method&&config.method!=='GET')config.headers['X-CSRF-Token']=decodeURIComponent(csrf);
   if(config.body&&!(config.body instanceof FormData)){config.headers['Content-Type']='application/json';config.body=JSON.stringify(config.body)}
-  const response=await fetch(url,config);
-  const contentType=response.headers.get('content-type')||'';
-  const payload=contentType.includes('application/json')?await response.json():{error:await response.text()};
-  if(response.status===401){location.href='/admin';throw new Error('Kirish muddati tugadi.')}
-  if(!response.ok||payload.ok===false)throw new Error(payload.error||'Amal bajarilmadi.');
-  if(url.startsWith('/admin/api/analytics')){state.analytics=payload;renderOperationalDetails(payload)}
-  return payload;
+  try{
+    const response=await fetch(url,config);
+    const contentType=response.headers.get('content-type')||'';
+    const payload=contentType.includes('application/json')?await response.json():{error:await response.text()};
+    if(response.status===401){location.href='/admin';throw new Error('Kirish muddati tugadi.')}
+    if(!response.ok||payload.ok===false)throw new Error(payload.error||'Amal bajarilmadi.');
+    if(url.startsWith('/admin/api/analytics')){state.analytics=payload;renderOperationalDetails(payload)}
+    return payload;
+  }catch(error){
+    if(error.name==='AbortError')throw new Error("Server 25 soniyada javob bermadi. Internet va ma'lumotlar bazasi ulanishini tekshiring.");
+    throw error;
+  }finally{clearTimeout(timeout)}
 }
 function toast(message,error=false){const el=$('toast');el.textContent=message;el.className='toast'+(error?' error':'');el.hidden=false;clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.hidden=true,3200)}
 function busy(button,value){if(!button)return;button.disabled=value;button.classList.toggle('loading',value)}
