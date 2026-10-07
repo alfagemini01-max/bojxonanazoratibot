@@ -318,6 +318,22 @@ class WebAppAssetTests(unittest.TestCase):
         self.assertNotIn("const UZ_BORDER", script)
         self.assertIn("leaflet@1.9.4", html)
         self.assertNotIn("integrity=", html)
+        self.assertIn("World_Imagery", script)
+        self.assertIn("postVisual", script)
+        for post_type in ("CHBP", "TIF", "AERO", "RW", "PORT"):
+            self.assertIn(post_type, script)
+
+    def test_admin_post_editor_supports_map_coordinates(self) -> None:
+        html = (ROOT / "app" / "static" / "admin.html").read_text(encoding="utf-8")
+        script = (ROOT / "app" / "static" / "admin.js").read_text(encoding="utf-8")
+        self.assertIn("leaflet@1.9.4", html)
+        self.assertIn("parseCoordinates", script)
+        self.assertIn('id="post-coordinates"', script)
+        self.assertIn('id="post-coordinate-map"', script)
+        self.assertIn("openCoordinatePicker", script)
+        self.assertIn("World_Imagery", script)
+        self.assertNotIn('id="post-lat"', script)
+        self.assertNotIn('id="post-lon"', script)
 
     def test_uzbekistan_border_is_valid_multipolygon(self) -> None:
         import json
