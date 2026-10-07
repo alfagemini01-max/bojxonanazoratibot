@@ -164,6 +164,32 @@ def localized_additional_conditions(rule: dict[str, Any] | None, lang: str | Non
     return result
 
 
+def localized_exception_text(exception: dict[str, Any], lang: str | None = "uz") -> str:
+    """Return an exception in the requested language without losing its source text."""
+    code = _lang(lang)
+    translated = str(exception.get(f"exception_desc_{code}") or "").strip()
+    if translated:
+        return translated
+    source_language = str(exception.get("source_language") or "ru")
+    source = str(
+        exception.get(f"exception_desc_{source_language}")
+        or exception.get("exception_desc")
+        or ""
+    ).strip()
+    if not source or code == source_language:
+        return source
+    markers = {
+        ("uz", "ru"): "[Ruscha manba]",
+        ("uz", "en"): "[Inglizcha manba]",
+        ("ru", "uz"): "[Источник на узбекском]",
+        ("ru", "en"): "[Источник на английском]",
+        ("en", "uz"): "[Uzbek source]",
+        ("en", "ru"): "[Russian source]",
+    }
+    marker = markers.get((code, source_language), "[Source text]")
+    return f"{marker} {source}"
+
+
 def _load_timezone(timezone: str):
     try:
         return ZoneInfo(timezone)
@@ -890,7 +916,7 @@ def build_permit_message(
             if item.exceptions:
                 lines.append(labels["exceptions_title"] + ":")
                 for index, exception in enumerate(item.exceptions[:MAX_EXCEPTIONS_IN_MESSAGE], start=1):
-                    lines.append(f"{index}. {_html(exception.get('exception_desc'))}")
+                    lines.append(f"{index}. {_html(localized_exception_text(exception, code))}")
                 if len(item.exceptions) > MAX_EXCEPTIONS_IN_MESSAGE:
                     remaining = len(item.exceptions) - MAX_EXCEPTIONS_IN_MESSAGE
                     lines.append({
@@ -912,7 +938,7 @@ def build_permit_message(
         lines.append(labels["exceptions_title"] + ":")
         shown_exceptions = result.exceptions[:MAX_EXCEPTIONS_IN_MESSAGE]
         for index, item in enumerate(shown_exceptions, start=1):
-            lines.append(f"{index}. {_html(item.get('exception_desc'))}")
+            lines.append(f"{index}. {_html(localized_exception_text(item, code))}")
         if len(result.exceptions) > len(shown_exceptions):
             more_count = len(result.exceptions) - len(shown_exceptions)
             lines.append({
