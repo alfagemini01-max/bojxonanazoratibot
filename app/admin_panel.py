@@ -1564,18 +1564,30 @@ def setup_admin_routes(app: web.Application, settings: Settings, portal_store: P
         if not portal_store:
             return _json_error("Postlar ombori ishga tushmagan.", 503)
         try:
-            item = await portal_store.save_post(await request.json())
+            item = await asyncio.wait_for(portal_store.save_post(await request.json()), timeout=20)
         except (ValueError, TypeError) as exc:
             return _json_error(str(exc))
-        await audit("customs_post_save", {"code": item["code"]})
+        except TimeoutError:
+            logger.error("Customs post save timed out")
+            return _json_error("Ma'lumotlar bazasi vaqtida javob bermadi. Qayta urinib ko'ring.", 503)
+        except Exception:
+            logger.exception("Customs post could not be saved")
+            return _json_error("Postni saqlashda ma'lumotlar bazasi xatosi yuz berdi.", 500)
+        asyncio.create_task(audit("customs_post_save", {"code": item["code"]}))
         return web.json_response({"ok": True, "item": item})
 
     async def post_delete(request: web.Request) -> web.Response:
         _require_admin(request, settings)
         if not portal_store:
             return _json_error("Postlar ombori ishga tushmagan.", 503)
-        await portal_store.delete_post(request.match_info["code"])
-        await audit("customs_post_disable", {"code": request.match_info["code"]})
+        try:
+            await asyncio.wait_for(portal_store.delete_post(request.match_info["code"]), timeout=20)
+        except TimeoutError:
+            return _json_error("Ma'lumotlar bazasi vaqtida javob bermadi. Qayta urinib ko'ring.", 503)
+        except Exception:
+            logger.exception("Customs post could not be disabled")
+            return _json_error("Postni o'chirishda ma'lumotlar bazasi xatosi yuz berdi.", 500)
+        asyncio.create_task(audit("customs_post_disable", {"code": request.match_info["code"]}))
         return web.json_response({"ok": True})
 
     app.router.add_get("/admin", admin_index)
