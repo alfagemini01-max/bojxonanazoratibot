@@ -5,6 +5,8 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: python -m app.main
     envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.10
       - key: BOT_TOKEN
         sync: false
       - key: BOT_MODE
@@ -13,6 +15,8 @@ services:
         value: https://bojxonanazoratibot.onrender.com
       - key: WEBHOOK_PATH
         value: /webhook
+      - key: WEBHOOK_SECRET
+        generateValue: true
       - key: PERMISSION_RULES_PATH
         value: data/permission_rules.json
       - key: TZ
@@ -20,4 +24,14 @@ services:
       - key: DATABASE_PATH
         value: data/bot_data.sqlite3
       - key: USER_DATABASE_URL
+        sync: false
+      - key: ADMIN_USERNAME
+        sync: false
+      - key: DATABASE_QUOTA_MB
+        value: "0"
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: ADMIN_SESSION_SECRET
+        generateValue: true
+      - key: YANDEX_MAPS_API_KEY
         sync: false

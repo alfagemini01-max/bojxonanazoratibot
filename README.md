@@ -1,5 +1,33 @@
 # NazoratBot Telegram Python
 
+## 2026 portal yangilanishi
+
+Bot, Web App va admin panel bitta faol qoida versiyasidan foydalanadi. Admin panelda qoida saqlanishi bilan bot va Web App uchun darhol faol bo'ladi.
+
+Yangi xizmatlar:
+
+- saqlangan yo'nalish qoidasi o'zgarganda Telegram bildirishnomasi;
+- foydalanish va server holati analitikasi;
+- chegara va bojxona postlari xaritasi hamda admin CRUD boshqaruvi;
+- natijaga bog'langan "Xato ma'lumot haqida xabar berish" murojaatlari;
+- Web App bayroqlarini kechiktirib yuklash, davlatlar keshi va API rate-limit;
+- webhook maxfiy tokeni, admin CSRF himoyasi va login rate-limit;
+- PostgreSQL mavjud muhitda vaqtinchalik SQLite'ga jim o'tmaslik.
+
+Render Environment Variables ichida quyidagilar majburiy:
+
+```text
+BOT_TOKEN
+USER_DATABASE_URL
+ADMIN_USERNAME
+ADMIN_PASSWORD
+ADMIN_SESSION_SECRET     # kamida 24 ta tasodifiy belgi
+WEBHOOK_SECRET           # tasodifiy maxfiy qiymat
+DATABASE_QUOTA_MB        # ixtiyoriy: provayder bergan baza limiti, masalan 512
+```
+
+`YANDEX_MAPS_API_KEY` hozir majburiy emas: postlar xaritasi OpenStreetMap/Leaflet orqali ishlaydi. Admin analitikasidagi baza hajmi PostgreSQL ishlatgan aniq joyni ko'rsatadi. `DATABASE_QUOTA_MB` kiritilsa ishlatilgan va bo'sh kvota ham hisoblanadi; qiymat `0` bo'lsa tizim provayder limitini taxmin qilmaydi.
+
 Bu papka xorijiy yuk avtotransport vositalarining O'zbekiston Respublikasiga kirishi yoki hududi orqali tranzit o'tishi bo'yicha ruxsatnoma va yig'im shartlarini tekshiradigan Telegram bot uchun tayyorlandi.
 
 Bot oqimi:
@@ -9,7 +37,7 @@ Bot oqimi:
 3. `Dazvol` tugmasi orqali tashuv boshlangan davlat, tashuv tugaydigan davlat va avtotransport ro'yxatdan o'tgan davlat ketma-ket kiritiladi.
 4. `Chegaradagi yig'imlar` tugmasida tezkor yoki batafsil hisoblash usuli tanlanadi.
 5. Ko'p ishlatiladigan davlatlar bir bosishda tanlanadi; boshqa davlat nomi yozilganda bot mos variantlarni kod va nomi bilan chiqaradi.
-6. Davlatlar tanlangandan keyin bot yukli tashuv turini avtomatik aniqlaydi. Javobda tanlangan yo'nalish bilan birga yuksiz kirish, yuksiz tranzit va ichki tashuv qoidalari ham ko'rsatiladi.
+6. Davlatlar tanlangandan keyin bot yukli tashuv turini avtomatik aniqlaydi. Javobda transport ro'yxatdan o'tgan davlat uchun 1-8 tashuv turining ruxsatnoma, istisno va yig'im qoidalari to'liq ko'rsatiladi.
 
 Bot O'zbek, Rus va Ingliz tillarida ishlaydi. Tilni asosiy menyudagi `Tilni o'zgartirish` tugmasi yoki `/language` buyrug'i orqali almashtirish mumkin.
 
@@ -48,6 +76,7 @@ USD_FALLBACK_RATE=12600
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=kuchli_parol_kiriting
 ADMIN_SESSION_SECRET=uzun_tasodifiy_secret_kiriting
+DATABASE_QUOTA_MB=0
 ```
 
 Tavsiya qilingan servis turi: `Web Service`.
@@ -74,7 +103,7 @@ https://SIZNING-RENDER-NOMINGIZ.onrender.com/app
 Web App imkoniyatlari:
 
 1. Dazvol bo'limida tashuv boshlangan, tugaydigan va transport ro'yxatdan o'tgan davlatlar tanlanadi.
-2. Yukli tashuv turi avtomatik aniqlanib, shu transport davlati bo'yicha asosiy yo'nalish, yuksiz kirish, yuksiz tranzit va ichki tashuv tartiblari birga ko'rsatiladi.
+2. Yukli tashuv turi avtomatik aniqlanib, shu transport davlati bo'yicha barcha 1-8 tashuv turi tartiblari birga ko'rsatiladi; tanlangan yo'nalish natijada alohida ajratiladi.
 3. Chegaradagi yig'imlar bo'limida kirish, tranzit yoki chiqish yo'nalishi bo'yicha hisob-kitob qilinadi.
 4. Transport turi, yuk qiymati, og'irlik, bo'lish muddati va qo'shimcha holatlar hisobga olinadi.
 5. Natija O'zbek, Rus va Ingliz tillarida ko'rsatiladi, nusxalanadi yoki PDF sifatida chop etiladi.
