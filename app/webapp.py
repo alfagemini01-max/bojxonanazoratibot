@@ -575,6 +575,15 @@ def setup_webapp_routes(app: web.Application, settings: Settings, portal_store: 
             row["name"] = row.get(f"name_{lang}") or row.get("name_uz")
         return web.json_response({"ok": True, "posts": rows}, headers={"Cache-Control": "public, max-age=120"})
 
+    async def uzbekistan_border(_: web.Request) -> web.StreamResponse:
+        border_path = settings.permission_rules_path.parent / "uzbekistan_border.geojson"
+        if not border_path.exists():
+            raise web.HTTPServiceUnavailable(text="O'zbekiston chegarasi fayli topilmadi.")
+        return web.FileResponse(
+            border_path,
+            headers={"Cache-Control": "public, max-age=86400, immutable"},
+        )
+
     async def feedback(request: web.Request) -> web.Response:
         if not portal_store:
             raise web.HTTPServiceUnavailable(text="Murojaatlar ombori ishga tushmagan.")
@@ -605,6 +614,7 @@ def setup_webapp_routes(app: web.Application, settings: Settings, portal_store: 
     app.router.add_post("/api/webapp/permit", permit_check)
     app.router.add_post("/api/webapp/fees", fee_check)
     app.router.add_get("/api/webapp/posts", public_posts)
+    app.router.add_get("/api/webapp/uzbekistan-border", uzbekistan_border)
     app.router.add_post("/api/webapp/feedback", feedback)
     app.router.add_post("/api/webapp/saved-routes", save_route)
     app.router.add_static("/static/webapp", STATIC_DIR, show_index=False, append_version=True)
