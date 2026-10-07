@@ -9,7 +9,7 @@ Bot oqimi:
 3. `Dazvol` tugmasi orqali tashuv boshlangan davlat, tashuv tugaydigan davlat va avtotransport ro'yxatdan o'tgan davlat ketma-ket kiritiladi.
 4. `Chegaradagi yig'imlar` tugmasida tezkor yoki batafsil hisoblash usuli tanlanadi.
 5. Ko'p ishlatiladigan davlatlar bir bosishda tanlanadi; boshqa davlat nomi yozilganda bot mos variantlarni kod va nomi bilan chiqaradi.
-6. Davlatlar tanlangandan keyin bot tashuv turini avtomatik aniqlaydi va ruxsatnoma hamda yig'im bo'yicha javob qaytaradi.
+6. Davlatlar tanlangandan keyin bot yukli tashuv turini avtomatik aniqlaydi. Javobda tanlangan yo'nalish bilan birga yuksiz kirish, yuksiz tranzit va ichki tashuv qoidalari ham ko'rsatiladi.
 
 Bot O'zbek, Rus va Ingliz tillarida ishlaydi. Tilni asosiy menyudagi `Tilni o'zgartirish` tugmasi yoki `/language` buyrug'i orqali almashtirish mumkin.
 
@@ -74,7 +74,7 @@ https://SIZNING-RENDER-NOMINGIZ.onrender.com/app
 Web App imkoniyatlari:
 
 1. Dazvol bo'limida tashuv boshlangan, tugaydigan va transport ro'yxatdan o'tgan davlatlar tanlanadi.
-2. Tashuv turi avtomatik aniqlanib, ruxsatnoma talabi, kirish yoki tranzit yig'imi va istisnolar ko'rsatiladi.
+2. Yukli tashuv turi avtomatik aniqlanib, shu transport davlati bo'yicha asosiy yo'nalish, yuksiz kirish, yuksiz tranzit va ichki tashuv tartiblari birga ko'rsatiladi.
 3. Chegaradagi yig'imlar bo'limida kirish, tranzit yoki chiqish yo'nalishi bo'yicha hisob-kitob qilinadi.
 4. Transport turi, yuk qiymati, og'irlik, bo'lish muddati va qo'shimcha holatlar hisobga olinadi.
 5. Natija O'zbek, Rus va Ingliz tillarida ko'rsatiladi, nusxalanadi yoki PDF sifatida chop etiladi.
