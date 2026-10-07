@@ -96,6 +96,42 @@ def _country(service: PermitRuleService, value: object):
     return country
 
 
+def _route_rule_set_compatible(
+    service: PermitRuleService,
+    origin: object,
+    destination: object,
+    vehicle: object,
+) -> list[object]:
+    """Support rolling deploys where webapp.py starts before permit.py is updated."""
+    route_rule_set = getattr(service, "route_rule_set", None)
+    if callable(route_rule_set):
+        return list(route_rule_set(origin, destination, vehicle))
+
+    logger.warning(
+        "Permit service is missing route_rule_set; using compatibility fallback. "
+        "Deploy app/services/permit.py from the same release."
+    )
+    results = [service.evaluate(origin, destination, vehicle)]
+    for operation in ("empty_entry", "empty_transit"):
+        try:
+            results.append(service.evaluate(origin, destination, vehicle, operation))
+        except TypeError:
+            logger.warning(
+                "Permit service does not support operation=%s; update app/services/permit.py",
+                operation,
+            )
+
+    uzbekistan = service.country_by_code(UZBEKISTAN_CODE)
+    if uzbekistan:
+        results.append(service.evaluate(uzbekistan, uzbekistan, vehicle))
+
+    unique: dict[str, object] = {}
+    for item in results:
+        code = str(getattr(item, "base_vid_cd", None) or getattr(item, "vid_cd", ""))
+        unique.setdefault(code, item)
+    return list(unique.values())
+
+
 def _weight_category(weight: float) -> str:
     if weight <= 10:
         return "up_to_10"
@@ -162,7 +198,7 @@ def _permit_payload(
         warnings.append("other_country")
 
     related_rules = []
-    for item in permit_service.route_rule_set(origin, destination, vehicle):
+    for item in _route_rule_set_compatible(permit_service, origin, destination, vehicle):
         item_rule = item.rule or {}
         item_dues_code = str(item_rule.get("dues_cd", "0"))
         item_base_fee = 0.0

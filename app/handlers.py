@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import html
+import inspect
 import logging
 import re
 from time import perf_counter
@@ -41,6 +42,60 @@ QUICK_COUNTRIES = {
     "ru": [("860", "🇺🇿 Узбекистан"), ("398", "🇰🇿 Казахстан"), ("417", "🇰🇬 Кыргызстан"), ("643", "🇷🇺 Россия"), ("156", "🇨🇳 Китай"), ("795", "🇹🇲 Туркменистан"), ("762", "🇹🇯 Таджикистан"), ("004", "🇦🇫 Афганистан")],
     "en": [("860", "🇺🇿 Uzbekistan"), ("398", "🇰🇿 Kazakhstan"), ("417", "🇰🇬 Kyrgyzstan"), ("643", "🇷🇺 Russia"), ("156", "🇨🇳 China"), ("795", "🇹🇲 Turkmenistan"), ("762", "🇹🇯 Tajikistan"), ("004", "🇦🇫 Afghanistan")],
 }
+
+
+def _route_rule_set_compatible(
+    service: PermitRuleService,
+    origin: object,
+    destination: object,
+    vehicle: object,
+) -> list[object]:
+    """Keep Telegram checks alive while Render replaces modules during a deploy."""
+    route_rule_set = getattr(service, "route_rule_set", None)
+    if callable(route_rule_set):
+        return list(route_rule_set(origin, destination, vehicle))
+
+    logger.warning(
+        "Permit service is missing route_rule_set; using compatibility fallback. "
+        "Deploy app/services/permit.py from the same release."
+    )
+    results = [service.evaluate(origin, destination, vehicle)]
+    for operation in ("empty_entry", "empty_transit"):
+        try:
+            results.append(service.evaluate(origin, destination, vehicle, operation))
+        except TypeError:
+            logger.warning(
+                "Permit service does not support operation=%s; update app/services/permit.py",
+                operation,
+            )
+
+    uzbekistan = service.country_by_code(UZBEKISTAN_CODE)
+    if uzbekistan:
+        results.append(service.evaluate(uzbekistan, uzbekistan, vehicle))
+
+    unique: dict[str, object] = {}
+    for item in results:
+        code = str(getattr(item, "base_vid_cd", None) or getattr(item, "vid_cd", ""))
+        unique.setdefault(code, item)
+    return list(unique.values())
+
+
+def _build_permit_message_compatible(
+    result: object,
+    timezone: str,
+    lang: str,
+    related_results: list[object],
+) -> str:
+    parameters = inspect.signature(build_permit_message).parameters
+    if "related_results" in parameters:
+        return build_permit_message(
+            result,
+            timezone=timezone,
+            lang=lang,
+            related_results=related_results,
+        )
+    logger.warning("Permit message builder is outdated; update app/services/permit.py")
+    return build_permit_message(result, timezone, lang)
 
 
 def language_keyboard() -> InlineKeyboardMarkup:
@@ -272,10 +327,20 @@ def build_router(user_storage: UserStorage, settings: Settings) -> Router:
                 result.rule.get("dues_cd") if result.rule else None,
             )
             await state.clear()
-            related_results = permit_service.route_rule_set(origin, destination, vehicle_country)
+            related_results = _route_rule_set_compatible(
+                permit_service,
+                origin,
+                destination,
+                vehicle_country,
+            )
             await answer_long(
                 message,
-                build_permit_message(result, settings.timezone, lang, related_results[1:]),
+                _build_permit_message_compatible(
+                    result,
+                    settings.timezone,
+                    lang,
+                    related_results[1:],
+                ),
                 reply_markup=main_menu_keyboard(lang),
             )
         except Exception:
