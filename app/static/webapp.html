@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#0b3151">
   <title>Ruxsatnoma va chegara yig'imlari</title>
-  <link rel="stylesheet" href="/static/webapp/webapp.css?v=8">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQ3ynhMrD5tDqJkCIFk5MZVzN+M0aEU=" crossorigin="">
+  <link rel="stylesheet" href="/static/webapp/webapp.css?v=9">
 </head>
 <body>
   <svg class="icon-sprite" aria-hidden="true">
@@ -20,6 +21,10 @@
     <symbol id="icon-printer" viewBox="0 0 24 24"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></symbol>
     <symbol id="icon-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
     <symbol id="icon-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/></symbol>
+    <symbol id="icon-map" viewBox="0 0 24 24"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3zM9 3v15M15 6v15"/></symbol>
+    <symbol id="icon-pin" viewBox="0 0 24 24"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2"/></symbol>
+    <symbol id="icon-bookmark" viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></symbol>
+    <symbol id="icon-alert" viewBox="0 0 24 24"><path d="M10.3 3.7 2.7 17a2 2 0 0 0 1.7 3h15.2a2 2 0 0 0 1.7-3L13.7 3.7a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></symbol>
   </svg>
   <div class="government-bar"><span><svg class="icon"><use href="#icon-building"/></svg><span data-t="republic">O'zbekiston Respublikasi</span></span><span data-t="advisory">Axborot-tavsiyaviy xizmat</span></div>
   <header class="topbar">
@@ -42,6 +47,7 @@
     <nav class="service-tabs" aria-label="Xizmatlar">
       <button type="button" class="service-tab active" data-view="permit"><span class="tab-icon"><svg class="icon"><use href="#icon-file-check"/></svg></span><span><b data-t="permitTab">Dazvol</b><small data-t="permitTabSub">Ruxsatnoma va kirish yig'imi</small></span></button>
       <button type="button" class="service-tab" data-view="fees"><span class="tab-icon"><svg class="icon"><use href="#icon-receipt"/></svg></span><span><b data-t="feesTab">Chegaradagi yig'imlar</b><small data-t="feesTabSub">Kirish, tranzit va chiqish hisobi</small></span></button>
+      <button type="button" class="service-tab" data-view="posts"><span class="tab-icon"><svg class="icon"><use href="#icon-map"/></svg></span><span><b data-t="postsTab">Chegara postlari</b><small data-t="postsTabSub">Xarita, ish vaqti va aloqa</small></span></button>
     </nav>
 
     <section id="permit-view" class="view active">
@@ -103,11 +109,22 @@
       </form>
       <section id="fees-result" class="result" hidden></section>
     </section>
+
+    <section id="posts-view" class="view">
+      <div class="glass map-card">
+        <div class="section-head"><span class="step"><svg class="icon"><use href="#icon-pin"/></svg></span><div><h2 data-t="postsTitle">Chegara va bojxona postlari</h2><p data-t="postsHint">Xaritadagi belgini bosing yoki ro'yxatdan postni tanlang.</p></div></div>
+        <label class="map-search"><svg class="icon"><use href="#icon-search"/></svg><input id="post-search-public" data-t-placeholder="postSearch" placeholder="Post nomi, kodi yoki hududi"></label>
+        <div class="post-layout"><div id="posts-map" class="posts-map" aria-label="O'zbekiston chegara postlari xaritasi"></div><div id="public-post-list" class="public-post-list"></div></div>
+        <div id="post-error" class="form-error" hidden></div>
+      </div>
+    </section>
   </main>
 
-  <nav class="mobile-nav"><button class="active" data-view="permit"><svg class="icon"><use href="#icon-file-check"/></svg><b data-t="permitTab">Dazvol</b></button><button data-view="fees"><svg class="icon"><use href="#icon-receipt"/></svg><b data-t="feesTab">Chegaradagi yig'imlar</b></button></nav>
+  <nav class="mobile-nav"><button class="active" data-view="permit"><svg class="icon"><use href="#icon-file-check"/></svg><b data-t="permitTab">Dazvol</b></button><button data-view="fees"><svg class="icon"><use href="#icon-receipt"/></svg><b data-t="feesTab">Chegaradagi yig'imlar</b></button><button data-view="posts"><svg class="icon"><use href="#icon-map"/></svg><b data-t="postsTab">Postlar</b></button></nav>
+  <div class="dialog-backdrop" id="feedback-dialog" hidden><form class="dialog-card" id="feedback-form"><div class="dialog-head"><div><small data-t="feedbackEyebrow">MA'LUMOTNI ANIQLASHTIRISH</small><h2 data-t="feedbackTitle">Xato ma'lumot haqida xabar berish</h2></div><button type="button" class="icon-button" id="feedback-close"><svg class="icon"><use href="#icon-x"/></svg></button></div><p data-t="feedbackHint">Xato yoki eskirgan joyni qisqa va aniq yozing. Yo'nalish hamda qoida versiyasi avtomatik biriktiriladi.</p><textarea id="feedback-message" minlength="5" maxlength="2000" required></textarea><div class="dialog-actions"><button type="button" id="feedback-cancel" data-t="cancel">Bekor qilish</button><button type="submit" class="primary-action"><svg class="icon"><use href="#icon-alert"/></svg><span data-t="send">Yuborish</span></button></div></form></div>
   <div class="toast" id="toast" hidden></div>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="/static/webapp/webapp.js?v=8"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="/static/webapp/webapp.js?v=9"></script>
 </body>
 </html>

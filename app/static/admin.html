@@ -28,6 +28,9 @@
     <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></symbol>
     <symbol id="i-route" viewBox="0 0 24 24"><circle cx="6" cy="18" r="2"/><circle cx="18" cy="6" r="2"/><path d="M8 18h3a3 3 0 0 0 3-3v-6a3 3 0 0 1 3-3"/></symbol>
     <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></symbol>
+    <symbol id="i-map" viewBox="0 0 24 24"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3zM9 3v15M15 6v15"/></symbol>
+    <symbol id="i-message" viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4z"/><path d="M8 9h8M8 12h5"/></symbol>
   </svg>
 
   <div class="government-bar"><span>O'zbekiston Respublikasi bojxona axborot xizmati</span><span id="version-status">Ma'lumotlar faol</span></div>
@@ -50,6 +53,9 @@
         <button data-screen="fees"><svg><use href="#i-coins"/></svg><span>Chegaradagi yig'imlar</span></button>
         <button data-screen="import"><svg><use href="#i-upload"/></svg><span>Excel import</span></button>
         <button data-screen="history"><svg><use href="#i-history"/></svg><span>O'zgarishlar tarixi</span></button>
+        <button data-screen="analytics"><svg><use href="#i-chart"/></svg><span>Analitika</span></button>
+        <button data-screen="posts"><svg><use href="#i-map"/></svg><span>Chegara postlari</span></button>
+        <button data-screen="feedback"><svg><use href="#i-message"/></svg><span>Xato xabarlari</span></button>
       </nav>
       <div class="sidebar-note"><svg><use href="#i-shield"/></svg><span>Har bir saqlashdan keyin bot va Web App bir xil faol bazadan foydalanadi.</span></div>
     </aside>
@@ -111,6 +117,24 @@
       <section class="screen" id="screen-history">
         <div class="page-heading"><div><p class="eyebrow">TARIX</p><h1>Faol versiyalar</h1><p>Oldingi holatni tiklash zarur bo'lganda foydalaning.</p></div></div>
         <div class="version-list" id="version-list"></div>
+      </section>
+
+      <section class="screen" id="screen-analytics">
+        <div class="page-heading"><div><p class="eyebrow">TAHLIL</p><h1>Foydalanish analitikasi</h1><p>Oxirgi 30 kundagi tekshiruvlar, topilmagan qoidalar va tizim xatolari.</p></div><button class="secondary" id="refresh-analytics"><svg><use href="#i-refresh"/></svg>Yangilash</button></div>
+        <div class="stat-grid" id="analytics-stats"></div>
+        <section class="panel system-panel"><div class="section-title compact"><div><h2>Server va dastur holati</h2><p>Ulanishlar, resurslar, foydalanuvchilar va javob tezligi.</p></div><span class="live-badge"><span></span>Jonli holat</span></div><div class="system-grid" id="system-status"></div><div class="system-subtitle">Xizmatlar va sig'im</div><div class="system-grid" id="operational-details"></div></section>
+        <div class="analytics-grid"><section class="panel"><h2>Ko'p tekshirilgan davlatlar</h2><div class="ranking-list" id="analytics-countries"></div></section><section class="panel"><h2>Ko'p tekshirilgan yo'nalishlar</h2><div class="ranking-list" id="analytics-routes"></div></section><section class="panel"><h2>Xatolar</h2><div class="ranking-list" id="analytics-errors"></div></section><section class="panel"><h2>Ma'lumotlar sifati</h2><div class="ranking-list" id="analytics-quality"></div></section></div>
+      </section>
+
+      <section class="screen" id="screen-posts">
+        <div class="page-heading"><div><p class="eyebrow">XARITA</p><h1>Chegara va bojxona postlari</h1><p>Foydalanuvchi xaritasida chiqadigan postlarni boshqaring.</p></div><button class="primary" id="add-post"><svg><use href="#i-plus"/></svg>Post qo'shish</button></div>
+        <div class="toolbar"><label class="search-box"><svg><use href="#i-search"/></svg><input id="post-search" placeholder="Post nomi, kodi yoki hududi"></label><span id="post-count"></span></div>
+        <div class="post-admin-grid" id="post-list"></div>
+      </section>
+
+      <section class="screen" id="screen-feedback">
+        <div class="page-heading"><div><p class="eyebrow">MUROJAATLAR</p><h1>Xato ma'lumot haqida xabarlar</h1><p>Har bir xabar yo'nalish, tashuv turi va qoida versiyasi bilan birga saqlanadi.</p></div></div>
+        <div class="feedback-list" id="feedback-list"></div>
       </section>
     </main>
   </div>
