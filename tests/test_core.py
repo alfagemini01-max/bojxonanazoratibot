@@ -46,13 +46,14 @@ class PermitRulesTests(unittest.TestCase):
         self.assertEqual(self.service.detect_transport_type(china, uzbekistan, china, "empty_entry"), "7")
         self.assertEqual(self.service.detect_transport_type(china, uzbekistan, china, "empty_transit"), "8")
 
-    def test_route_rule_set_contains_loaded_empty_and_domestic_rules(self) -> None:
+    def test_route_rule_set_contains_all_eight_rules(self) -> None:
         china = self.service.country_by_code("156")
         uzbekistan = self.service.country_by_code("860")
         kazakhstan = self.service.country_by_code("398")
         results = self.service.route_rule_set(china, uzbekistan, kazakhstan)
-        self.assertEqual([result.base_vid_cd for result in results], ["5", "7", "8", "6"])
-        self.assertEqual(results[-1].rule.get("permission_cd"), "3")
+        self.assertEqual([result.base_vid_cd for result in results], ["5", "1", "2", "3", "4", "6", "7", "8"])
+        domestic = next(result for result in results if result.base_vid_cd == "6")
+        self.assertEqual(domestic.rule.get("permission_cd"), "3")
 
     def test_every_country_has_all_eight_core_rules(self) -> None:
         expected = {str(index) for index in range(1, 9)}
@@ -70,6 +71,24 @@ class PermitRulesTests(unittest.TestCase):
             )
         )
 
+    def test_afghanistan_reference_table_matches_all_published_rows(self) -> None:
+        expected = {
+            "1": ("2", "2"),
+            "2": ("2", "1"),
+            "3": ("2", "1"),
+            "4": ("2", "1"),
+            "5": ("2", "1"),
+            "6": ("3", "0"),
+            "7": ("2", "1"),
+            "8": ("2", "1"),
+        }
+        actual = {
+            vid: (str(rule.get("permission_cd")), str(rule.get("dues_cd")))
+            for vid, rule in self.service.rules["004"].items()
+            if vid in expected
+        }
+        self.assertEqual(actual, expected)
+
     def test_related_rules_are_in_telegram_message(self) -> None:
         china = self.service.country_by_code("156")
         uzbekistan = self.service.country_by_code("860")
@@ -86,7 +105,13 @@ class PermitRulesTests(unittest.TestCase):
         turkmenistan = self.service.country_by_code("795")
         results = self.service.route_rule_set(china, uzbekistan, turkmenistan)
         self.assertTrue(turkmenistan_extra_fee_applies(results[0]))
-        self.assertTrue(all(not turkmenistan_extra_fee_applies(item) for item in results[1:]))
+        self.assertTrue(
+            all(
+                not turkmenistan_extra_fee_applies(item)
+                for item in results[1:]
+                if item.base_vid_cd not in {"4", "5"}
+            )
+        )
 
     def test_country_input_profile_comes_from_rules(self) -> None:
         self.assertEqual(
@@ -236,6 +261,8 @@ class WebAppAssetTests(unittest.TestCase):
         self.assertNotIn("permit-operation", html)
         self.assertNotIn("data-operation=", html)
         self.assertIn("related_rules", script)
+        self.assertIn("permit_exempt_goods", (ROOT / "app" / "webapp.py").read_text(encoding="utf-8"))
+        self.assertIn("rule-detail-grid", script)
         self.assertIn("country_input_profile", (ROOT / "app" / "webapp.py").read_text(encoding="utf-8"))
 
     def test_admin_can_manage_transport_types(self) -> None:
