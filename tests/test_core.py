@@ -14,6 +14,7 @@ from app.services.permit import (
     build_permit_message,
     country_label,
     localized_additional_conditions,
+    turkmenistan_extra_fee_applies,
 )
 
 
@@ -44,6 +45,48 @@ class PermitRulesTests(unittest.TestCase):
         china = self.service.country_by_code("156")
         self.assertEqual(self.service.detect_transport_type(china, uzbekistan, china, "empty_entry"), "7")
         self.assertEqual(self.service.detect_transport_type(china, uzbekistan, china, "empty_transit"), "8")
+
+    def test_route_rule_set_contains_loaded_empty_and_domestic_rules(self) -> None:
+        china = self.service.country_by_code("156")
+        uzbekistan = self.service.country_by_code("860")
+        kazakhstan = self.service.country_by_code("398")
+        results = self.service.route_rule_set(china, uzbekistan, kazakhstan)
+        self.assertEqual([result.base_vid_cd for result in results], ["5", "7", "8", "6"])
+        self.assertEqual(results[-1].rule.get("permission_cd"), "3")
+
+    def test_every_country_has_all_eight_core_rules(self) -> None:
+        expected = {str(index) for index in range(1, 9)}
+        incomplete = {
+            code: sorted(expected - set(country_rules))
+            for code, country_rules in self.service.rules.items()
+            if not expected.issubset(country_rules)
+        }
+        self.assertEqual(incomplete, {})
+        self.assertTrue(
+            all(
+                country_rules["6"].get("permission_cd") == "3"
+                for code, country_rules in self.service.rules.items()
+                if code != "860"
+            )
+        )
+
+    def test_related_rules_are_in_telegram_message(self) -> None:
+        china = self.service.country_by_code("156")
+        uzbekistan = self.service.country_by_code("860")
+        kazakhstan = self.service.country_by_code("398")
+        results = self.service.route_rule_set(china, uzbekistan, kazakhstan)
+        message = build_permit_message(results[0], lang="uz", related_results=results[1:])
+        self.assertIn("Majburiyatnoma asosida yuksiz kirish", message)
+        self.assertIn("Majburiyatnoma asosida yuksiz tranzit", message)
+        self.assertIn("Ichki tashuv", message)
+
+    def test_turkmenistan_extra_fee_only_applies_to_third_country_loaded_rule(self) -> None:
+        china = self.service.country_by_code("156")
+        uzbekistan = self.service.country_by_code("860")
+        turkmenistan = self.service.country_by_code("795")
+        results = self.service.route_rule_set(china, uzbekistan, turkmenistan)
+        self.assertTrue(turkmenistan_extra_fee_applies(results[0]))
+        self.assertTrue(all(not turkmenistan_extra_fee_applies(item) for item in results[1:]))
 
     def test_country_input_profile_comes_from_rules(self) -> None:
         self.assertEqual(
@@ -190,9 +233,9 @@ class WebAppAssetTests(unittest.TestCase):
         self.assertIn('/static/webapp/flags/${code}.svg', script)
         self.assertNotIn("flagcdn.com", script)
         self.assertIn("loading=\"eager\"", script)
-        self.assertIn("permit-operation", html)
-        self.assertIn('data-operation="cargo"', html)
-        self.assertNotIn('data-operation="cargo_entry"', html)
+        self.assertNotIn("permit-operation", html)
+        self.assertNotIn("data-operation=", html)
+        self.assertIn("related_rules", script)
         self.assertIn("country_input_profile", (ROOT / "app" / "webapp.py").read_text(encoding="utf-8"))
 
     def test_admin_can_manage_transport_types(self) -> None:
