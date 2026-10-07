@@ -310,6 +310,8 @@ class WebAppAssetTests(unittest.TestCase):
         self.assertIn('/api/webapp/posts', backend)
         self.assertIn('/api/webapp/feedback', backend)
         self.assertIn('/api/webapp/saved-routes', backend)
+        self.assertIn("leaflet@1.9.4", html)
+        self.assertNotIn("integrity=", html)
 
     def test_admin_has_operations_dashboard(self) -> None:
         html = (ROOT / "app" / "static" / "admin.html").read_text(encoding="utf-8")
