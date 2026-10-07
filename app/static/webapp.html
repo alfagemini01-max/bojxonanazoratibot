@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#0b3151">
   <title>Ruxsatnoma va chegara yig'imlari</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="/static/webapp/webapp.css?v=9">
+  <link rel="stylesheet" href="/static/webapp/leaflet-local.css?v=1">
+  <link rel="stylesheet" href="/static/webapp/webapp.css?v=10">
 </head>
 <body>
   <svg class="icon-sprite" aria-hidden="true">
@@ -112,9 +112,9 @@
 
     <section id="posts-view" class="view">
       <div class="glass map-card">
-        <div class="section-head"><span class="step"><svg class="icon"><use href="#icon-pin"/></svg></span><div><h2 data-t="postsTitle">Chegara va bojxona postlari</h2><p data-t="postsHint">Xaritadagi belgini bosing yoki ro'yxatdan postni tanlang.</p></div></div>
+        <div class="section-head"><span class="step"><svg class="icon"><use href="#icon-pin"/></svg></span><div><h2 data-t="postsTitle">Chegara va bojxona postlari</h2><p data-t="postsHint">Post ma'lumotlarini ko'rish uchun xaritadagi belgini bosing.</p></div></div>
         <label class="map-search"><svg class="icon"><use href="#icon-search"/></svg><input id="post-search-public" data-t-placeholder="postSearch" placeholder="Post nomi, kodi yoki hududi"></label>
-        <div class="post-layout"><div id="posts-map" class="posts-map" aria-label="O'zbekiston chegara postlari xaritasi"></div><div id="public-post-list" class="public-post-list"></div></div>
+        <div class="post-layout"><div id="posts-map" class="posts-map" aria-label="O'zbekiston chegara postlari xaritasi"></div></div>
         <div id="post-error" class="form-error" hidden></div>
       </div>
     </section>
@@ -124,7 +124,7 @@
   <div class="dialog-backdrop" id="feedback-dialog" hidden><form class="dialog-card" id="feedback-form"><div class="dialog-head"><div><small data-t="feedbackEyebrow">MA'LUMOTNI ANIQLASHTIRISH</small><h2 data-t="feedbackTitle">Xato ma'lumot haqida xabar berish</h2></div><button type="button" class="icon-button" id="feedback-close"><svg class="icon"><use href="#icon-x"/></svg></button></div><p data-t="feedbackHint">Xato yoki eskirgan joyni qisqa va aniq yozing. Yo'nalish hamda qoida versiyasi avtomatik biriktiriladi.</p><textarea id="feedback-message" minlength="5" maxlength="2000" required></textarea><div class="dialog-actions"><button type="button" id="feedback-cancel" data-t="cancel">Bekor qilish</button><button type="submit" class="primary-action"><svg class="icon"><use href="#icon-alert"/></svg><span data-t="send">Yuborish</span></button></div></form></div>
   <div class="toast" id="toast" hidden></div>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="/static/webapp/webapp.js?v=9"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js'"></script>
+  <script src="/static/webapp/webapp.js?v=10"></script>
 </body>
 </html>
