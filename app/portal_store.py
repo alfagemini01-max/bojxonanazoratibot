@@ -5,7 +5,7 @@ import json
 import logging
 import os
 import shutil
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -51,6 +51,15 @@ def _now() -> str:
 
 def _json(value: Any) -> str:
     return json.dumps(value or {}, ensure_ascii=False, separators=(",", ":"))
+
+
+def _public_record(row: Any) -> dict[str, Any]:
+    """Convert database records to values accepted by aiohttp's JSON encoder."""
+    result = dict(row)
+    for key, value in result.items():
+        if isinstance(value, (datetime, date)):
+            result[key] = value.isoformat()
+    return result
 
 
 class PortalStore:
@@ -346,7 +355,7 @@ class PortalStore:
             async with aiosqlite.connect(self.sqlite_path) as db:
                 db.row_factory = aiosqlite.Row
                 rows = await (await db.execute("SELECT * FROM portal_feedback ORDER BY id DESC LIMIT ?", (limit,))).fetchall()
-        return [dict(row) for row in rows]
+        return [_public_record(row) for row in rows]
 
     async def set_feedback_status(self, feedback_id: int, status: str) -> None:
         if status not in {"new", "reviewing", "resolved", "rejected"}:
@@ -369,7 +378,7 @@ class PortalStore:
             async with aiosqlite.connect(self.sqlite_path) as db:
                 db.row_factory = aiosqlite.Row
                 rows = await (await db.execute(query)).fetchall()
-        return [dict(row) for row in rows]
+        return [_public_record(row) for row in rows]
 
     async def save_post(self, body: dict[str, Any]) -> dict[str, Any]:
         code = str(body.get("code") or "").strip()
