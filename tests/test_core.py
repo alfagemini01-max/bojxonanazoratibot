@@ -6,6 +6,7 @@ import re
 from pathlib import Path
 
 from app.i18n import t
+from app.rule_normalization import repair_broken_rule_labels
 from app.services.fee_calculator import FeeCalculator
 from app.services.permit import (
     Country,
@@ -19,6 +20,30 @@ from app.services.permit import (
 
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+class RuleDataMigrationTests(unittest.TestCase):
+    def test_broken_derived_labels_are_repaired_from_codes(self) -> None:
+        permission = {
+            "rules": {
+                "398": {
+                    "3": {
+                        "permission_cd": "2",
+                        "permission_name_ru": "????",
+                        "exception_cd": "2",
+                        "exception_name_ru": "????????",
+                        "dues_cd": "1",
+                        "dues_name_ru": "????",
+                    }
+                }
+            }
+        }
+        self.assertEqual(repair_broken_rule_labels(permission), 1)
+        rule = permission["rules"]["398"]["3"]
+        self.assertEqual(rule["permission_name_ru"], "Не обязательно")
+        self.assertEqual(rule["exception_name_ru"], "Перечень в соответствии Соглашения")
+        self.assertEqual(rule["dues_name_ru"], "Сбор обязательно")
+        self.assertEqual(repair_broken_rule_labels(permission), 0)
 
 
 class PermitRulesTests(unittest.TestCase):
@@ -257,7 +282,8 @@ class WebAppAssetTests(unittest.TestCase):
         self.assertIn('id="icon-file-check"', html)
         self.assertIn('/static/webapp/flags/${code}.svg', script)
         self.assertNotIn("flagcdn.com", script)
-        self.assertIn("loading=\"eager\"", script)
+        self.assertIn("loading=\"lazy\"", script)
+        self.assertNotIn("preloadFlags", script)
         self.assertNotIn("permit-operation", html)
         self.assertNotIn("data-operation=", html)
         self.assertIn("related_rules", script)
@@ -272,5 +298,27 @@ class WebAppAssetTests(unittest.TestCase):
         self.assertIn("manage-transport-types", html)
         self.assertIn("openTransportTypes", script)
         self.assertIn("/admin/api/transport-type", backend)
+
+    def test_portal_services_are_available(self) -> None:
+        html = (ROOT / "app" / "static" / "webapp.html").read_text(encoding="utf-8")
+        script = (ROOT / "app" / "static" / "webapp.js").read_text(encoding="utf-8")
+        backend = (ROOT / "app" / "webapp.py").read_text(encoding="utf-8")
+        self.assertIn('data-view="posts"', html)
+        self.assertIn('id="posts-map"', html)
+        self.assertIn("saveCurrentRoute", script)
+        self.assertIn("openFeedback", script)
+        self.assertIn('/api/webapp/posts', backend)
+        self.assertIn('/api/webapp/feedback', backend)
+        self.assertIn('/api/webapp/saved-routes', backend)
+
+    def test_admin_has_operations_dashboard(self) -> None:
+        html = (ROOT / "app" / "static" / "admin.html").read_text(encoding="utf-8")
+        script = (ROOT / "app" / "static" / "admin.js").read_text(encoding="utf-8")
+        backend = (ROOT / "app" / "admin_panel.py").read_text(encoding="utf-8")
+        for screen in ("analytics", "posts", "feedback"):
+            self.assertIn(f'id="screen-{screen}"', html)
+        self.assertIn("loadAnalytics", script)
+        self.assertIn("system-status", html)
+        self.assertIn('/admin/api/analytics', backend)
 if __name__ == "__main__":
     unittest.main()
