@@ -15,6 +15,7 @@ from app.services.permit import (
     build_permit_message,
     country_label,
     localized_additional_conditions,
+    localized_exception_text,
     turkmenistan_extra_fee_applies,
 )
 
@@ -95,6 +96,56 @@ class PermitRulesTests(unittest.TestCase):
                 if code != "860"
             )
         )
+
+    def test_full_reference_dataset_is_loaded(self) -> None:
+        self.assertEqual(len(self.service.countries), 251)
+        self.assertEqual(sum(len(rules) for rules in self.service.rules.values()), 2008)
+        self.assertEqual(sum(len(rows) for rows in self.service.exceptions.values()), 245)
+        self.assertEqual(
+            self.service.data.get("source", {}).get("dataset_revision"),
+            "2026-10-07-full-permission-v1",
+        )
+
+    def test_every_published_country_has_three_language_names(self) -> None:
+        for code in self.service.countries:
+            country = self.service.country_by_code(code)
+            self.assertIsNotNone(country, code)
+            for lang in ("uz", "ru", "en"):
+                self.assertTrue(country_label(country, lang).strip(), (code, lang))
+
+    def test_newly_added_country_rule_is_available(self) -> None:
+        bosnia = self.service.country_by_code("070")
+        uzbekistan = self.service.country_by_code("860")
+        result = self.service.evaluate(bosnia, uzbekistan, bosnia)
+        self.assertEqual(result.base_vid_cd, "2")
+        self.assertEqual(result.rule.get("permission_cd"), "2")
+        self.assertEqual(result.rule.get("dues_cd"), "1")
+
+    def test_exception_text_uses_requested_language(self) -> None:
+        row = {
+            "exception_desc": "Исходный текст",
+            "exception_desc_uz": "O'zbekcha matn",
+            "exception_desc_ru": "Русский текст",
+            "exception_desc_en": "English text",
+        }
+        self.assertEqual(localized_exception_text(row, "uz"), "O'zbekcha matn")
+        self.assertEqual(localized_exception_text(row, "ru"), "Русский текст")
+        self.assertEqual(localized_exception_text(row, "en"), "English text")
+
+    def test_untranslated_exception_is_marked_as_source_text(self) -> None:
+        russian = {
+            "exception_desc": "перевозка почты",
+            "exception_desc_ru": "перевозка почты",
+            "source_language": "ru",
+        }
+        uzbek = {
+            "exception_desc": "Почта жўнатмалари",
+            "exception_desc_uz": "Почта жўнатмалари",
+            "source_language": "uz",
+        }
+        self.assertEqual(localized_exception_text(russian, "ru"), "перевозка почты")
+        self.assertTrue(localized_exception_text(russian, "uz").startswith("[Ruscha manba]"))
+        self.assertTrue(localized_exception_text(uzbek, "ru").startswith("[Источник на узбекском]"))
 
     def test_afghanistan_reference_table_matches_all_published_rows(self) -> None:
         expected = {
