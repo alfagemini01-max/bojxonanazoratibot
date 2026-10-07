@@ -4,7 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>NazoratBot boshqaruvi</title>
-  <link rel="stylesheet" href="/static/webapp/admin.css">
+  <link rel="stylesheet" href="/static/webapp/leaflet-local.css?v=1">
+  <link rel="stylesheet" href="/static/webapp/admin.css?v=11">
 </head>
 <body>
   <svg class="icon-sprite" aria-hidden="true">
@@ -147,6 +148,7 @@
     </div>
   </div>
   <div class="toast" id="toast" hidden></div>
-  <script src="/static/webapp/admin.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js'"></script>
+  <script src="/static/webapp/admin.js?v=11"></script>
 </body>
 </html>
