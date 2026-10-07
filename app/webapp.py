@@ -220,15 +220,8 @@ def _permit_payload(
         primary_code = result.base_vid_cd or result.vid_cd
         related_rules.append(
             {
-                "role": (
-                    "route"
-                    if base_code == primary_code
-                    else "empty_entry"
-                    if base_code == "7"
-                    else "empty_transit"
-                    if base_code == "8"
-                    else "domestic"
-                ),
+                "role": "route" if base_code == primary_code else "reference",
+                "selected": base_code == primary_code,
                 "transport_type": {
                     "code": item.vid_cd,
                     "base_code": base_code,
@@ -237,6 +230,11 @@ def _permit_payload(
                 "permission": {
                     "code": str(item_rule.get("permission_cd", "0")),
                     "text": permit_status_text(item.rule, lang),
+                },
+                "permit_exempt_goods": {
+                    "code": str(item_rule.get("exception_cd", "0")),
+                    "listed": bool(item.exceptions),
+                    "count": len(item.exceptions),
                 },
                 "fee": {
                     "dues_code": item_dues_code,

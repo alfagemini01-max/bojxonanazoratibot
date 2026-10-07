@@ -16,7 +16,7 @@ from app.storage import UserStorage, create_user_storage
 from app.webapp import setup_webapp_routes, webapp_page
 
 logger = logging.getLogger(__name__)
-APP_VERSION = "2026-10-07-permit-compat-v7"
+APP_VERSION = "2026-10-07-all-permit-rules-v8"
 
 
 def create_bot(settings: Settings) -> Bot:
