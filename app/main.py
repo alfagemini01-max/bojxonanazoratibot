@@ -19,7 +19,7 @@ from app.portal_store import PortalStore
 from app.webapp import setup_webapp_routes, webapp_page
 
 logger = logging.getLogger(__name__)
-APP_VERSION = "2026-10-07-accurate-border-v12"
+APP_VERSION = "2026-10-07-post-map-tools-v13"
 
 
 def create_http_middlewares(settings: Settings):
