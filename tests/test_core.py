@@ -326,12 +326,16 @@ class WebAppAssetTests(unittest.TestCase):
     def test_admin_post_editor_supports_map_coordinates(self) -> None:
         html = (ROOT / "app" / "static" / "admin.html").read_text(encoding="utf-8")
         script = (ROOT / "app" / "static" / "admin.js").read_text(encoding="utf-8")
+        backend = (ROOT / "app" / "admin_panel.py").read_text(encoding="utf-8")
         self.assertIn("leaflet@1.9.4", html)
         self.assertIn("parseCoordinates", script)
         self.assertIn('id="post-coordinates"', script)
         self.assertIn('id="post-coordinate-map"', script)
         self.assertIn("openCoordinatePicker", script)
         self.assertIn("World_Imagery", script)
+        self.assertIn("AbortController", script)
+        self.assertIn("asyncio.wait_for(portal_store.save_post", backend)
+        self.assertIn('asyncio.create_task(audit("customs_post_save"', backend)
         self.assertNotIn('id="post-lat"', script)
         self.assertNotIn('id="post-lon"', script)
 
