@@ -272,9 +272,10 @@ def build_router(user_storage: UserStorage, settings: Settings) -> Router:
                 result.rule.get("dues_cd") if result.rule else None,
             )
             await state.clear()
+            related_results = permit_service.route_rule_set(origin, destination, vehicle_country)
             await answer_long(
                 message,
-                build_permit_message(result, settings.timezone, lang),
+                build_permit_message(result, settings.timezone, lang, related_results[1:]),
                 reply_markup=main_menu_keyboard(lang),
             )
         except Exception:

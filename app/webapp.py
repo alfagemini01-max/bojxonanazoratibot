@@ -122,15 +122,7 @@ def _permit_payload(
     if origin.code == destination.code == vehicle.code and origin.code != UZBEKISTAN_CODE:
         raise web.HTTPBadRequest(text="Ushbu tashuv O'zbekiston hududiga aloqador emas.")
 
-    requested_operation = str(body.get("operation") or "cargo").strip().lower()
-    if requested_operation not in {"cargo", "cargo_entry", "cargo_exit", "cargo_transit", "empty_entry", "empty_transit"}:
-        raise web.HTTPBadRequest(text="Tashuv holati noto'g'ri.")
-    operation = requested_operation if requested_operation.startswith("empty_") else "cargo"
-    if operation == "empty_entry" and destination.code != UZBEKISTAN_CODE:
-        raise web.HTTPBadRequest(text="Bo'sh holatda kirishda tashuv tugaydigan davlat O'zbekiston bo'lishi kerak.")
-    if operation == "empty_transit" and (origin.code == UZBEKISTAN_CODE or destination.code == UZBEKISTAN_CODE):
-        raise web.HTTPBadRequest(text="Bo'sh holatda tranzitda boshlanish va tugash davlatlari xorijiy bo'lishi kerak.")
-    result = permit_service.evaluate(origin, destination, vehicle, operation=operation)
+    result = permit_service.evaluate(origin, destination, vehicle)
     rule = result.rule or {}
     permission_code = str(rule.get("permission_cd", "0"))
     dues_code = str(rule.get("dues_cd", "0"))
@@ -169,6 +161,59 @@ def _permit_payload(
     if vehicle.code == "000":
         warnings.append("other_country")
 
+    related_rules = []
+    for item in permit_service.route_rule_set(origin, destination, vehicle):
+        item_rule = item.rule or {}
+        item_dues_code = str(item_rule.get("dues_cd", "0"))
+        item_base_fee = 0.0
+        if item_dues_code == "1":
+            item_base_fee = fee_calculator.entry_fee_usd_for_rule(
+                item_rule,
+                vehicle.code,
+                _weight_category(weight),
+                _stay_duration(stay_days),
+            )
+            if humanitarian:
+                item_base_fee *= 0.5
+        item_extra_fee = (
+            float(fee_calculator.data["entry_fee"]["turkmenistan_extra_usd"])
+            if turkmenistan_extra_fee_applies(item)
+            else 0.0
+        )
+        base_code = item.base_vid_cd or item.vid_cd
+        primary_code = result.base_vid_cd or result.vid_cd
+        related_rules.append(
+            {
+                "role": (
+                    "route"
+                    if base_code == primary_code
+                    else "empty_entry"
+                    if base_code == "7"
+                    else "empty_transit"
+                    if base_code == "8"
+                    else "domestic"
+                ),
+                "transport_type": {
+                    "code": item.vid_cd,
+                    "base_code": base_code,
+                    "name": transport_type_label(item.vid_cd, item.vid_name, lang, item.vid_labels),
+                },
+                "permission": {
+                    "code": str(item_rule.get("permission_cd", "0")),
+                    "text": permit_status_text(item.rule, lang),
+                },
+                "fee": {
+                    "dues_code": item_dues_code,
+                    "known": item_dues_code in {"1", "2"},
+                    "base_usd": round(item_base_fee, 2),
+                    "extra_usd": round(item_extra_fee, 2),
+                    "total_usd": round(item_base_fee + item_extra_fee, 2),
+                },
+                "additional_conditions": localized_additional_conditions(item.rule, lang),
+                "exceptions": [str(row.get("exception_desc") or "") for row in item.exceptions],
+            }
+        )
+
     return {
         "ok": True,
         "lang": lang,
@@ -181,7 +226,7 @@ def _permit_payload(
             "code": result.vid_cd,
             "base_code": result.base_vid_cd or result.vid_cd,
             "name": transport_type_label(result.vid_cd, result.vid_name, lang, result.vid_labels),
-            "operation": requested_operation,
+            "operation": "cargo",
         },
         "permission": {"code": permission_code, "text": permit_status_text(result.rule, lang)},
         "fee": {
@@ -202,6 +247,7 @@ def _permit_payload(
             "en": str(rule.get("dues_amount_note_en") or ""),
         },
         "warnings": warnings,
+        "related_rules": related_rules,
     }
 
 
