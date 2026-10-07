@@ -19,7 +19,7 @@ from app.portal_store import PortalStore
 from app.webapp import setup_webapp_routes, webapp_page
 
 logger = logging.getLogger(__name__)
-APP_VERSION = "2026-10-07-post-save-fix-v14"
+APP_VERSION = "2026-10-07-full-permission-reference-v15"
 
 
 def create_http_middlewares(settings: Settings):

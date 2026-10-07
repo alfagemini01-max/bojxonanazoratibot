@@ -845,6 +845,10 @@ def setup_admin_routes(app: web.Application, settings: Settings, portal_store: P
         return _ensure_draft(settings.fees_rules_path)
 
     async def initialize_rule_versions(_: web.Application) -> None:
+        # Keep the packaged reference snapshot before RuleVersionStore syncs the
+        # currently active database version back to the local JSON files.
+        packaged_permission = _read_json(settings.permission_rules_path)
+        packaged_fees = _read_json(settings.fees_rules_path)
         try:
             await version_store.initialize(settings.permission_rules_path, settings.fees_rules_path)
         except Exception:
@@ -856,6 +860,27 @@ def setup_admin_routes(app: web.Application, settings: Settings, portal_store: P
             version_store.pool = None
             await version_store.initialize(settings.permission_rules_path, settings.fees_rules_path)
         active = await version_store.get_active()
+        packaged_revision = str(
+            packaged_permission.get("source", {}).get("dataset_revision") or ""
+        )
+        active_revision = str(
+            (active or {}).get("permission", {}).get("source", {}).get("dataset_revision") or ""
+        )
+        if packaged_revision and packaged_revision != active_revision:
+            active = await version_store.publish(
+                packaged_permission,
+                (active or {}).get("fees") or packaged_fees,
+                actor="system",
+                source=f"system:packaged-reference:{packaged_revision}",
+                summary={
+                    "migration": "packaged_permission_reference",
+                    "dataset_revision": packaged_revision,
+                    "countries": len(packaged_permission.get("countries", {})),
+                    "rules": sum(
+                        len(item) for item in packaged_permission.get("rules", {}).values()
+                    ),
+                },
+            )
         if active:
             normalized_permission = deepcopy(active["permission"])
             normalized_fees = deepcopy(active["fees"])
