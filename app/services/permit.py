@@ -386,8 +386,19 @@ class PermitRuleService:
         vehicle_country: Country,
         operation: str = "cargo",
     ) -> PermitResult:
-        self.reload_if_changed()
         base_vid_cd = self.detect_transport_type(origin, destination, vehicle_country, operation)
+        return self.evaluate_type(origin, destination, vehicle_country, base_vid_cd)
+
+    def evaluate_type(
+        self,
+        origin: Country,
+        destination: Country,
+        vehicle_country: Country,
+        base_vid_cd: str,
+    ) -> PermitResult:
+        """Evaluate one explicit reference-book carriage type for a vehicle country."""
+        self.reload_if_changed()
+        base_vid_cd = str(base_vid_cd)
         vid_cd = self._effective_transport_type(base_vid_cd)
         country_rules = self.rules.get(vehicle_country.code, {})
         rule = country_rules.get(vid_cd) or country_rules.get(base_vid_cd)
@@ -417,6 +428,29 @@ class PermitRuleService:
             base_vid_cd=base_vid_cd,
             vid_labels=labels if isinstance(labels, dict) else None,
         )
+
+    def route_rule_set(
+        self,
+        origin: Country,
+        destination: Country,
+        vehicle_country: Country,
+    ) -> list[PermitResult]:
+        """Return the selected route first, followed by every published carriage rule."""
+        primary_vid = self.detect_transport_type(origin, destination, vehicle_country, "cargo")
+        country_vids = self.rules.get(vehicle_country.code, {}).keys()
+        ordered_vids = list(
+            dict.fromkeys(
+                (
+                    primary_vid,
+                    *[str(index) for index in range(1, 9)],
+                    *sorted(country_vids, key=lambda value: int(value) if str(value).isdigit() else 9999),
+                )
+            )
+        )
+        return [
+            self.evaluate_type(origin, destination, vehicle_country, vid_cd)
+            for vid_cd in ordered_vids
+        ]
 
     def matching_exceptions(self, country_code: str, vid_cd: str) -> list[dict[str, str]]:
         self.reload_if_changed()
@@ -553,6 +587,8 @@ def permit_status_text(rule: dict[str, str] | None, lang: str | None = "uz") -> 
 
 def turkmenistan_extra_fee_applies(result: PermitResult) -> bool:
     if result.vehicle_country.code != TURKMENISTAN_CODE:
+        return False
+    if (result.base_vid_cd or result.vid_cd) not in {"4", "5"}:
         return False
     if result.origin.code == UZBEKISTAN_CODE and result.destination.code != UZBEKISTAN_CODE:
         return True
@@ -772,7 +808,12 @@ def border_payment_table(result: PermitResult, lang: str | None = "uz") -> str:
     return table(rows, ("To'lov turi", "Miqdor", "Shart"))
 
 
-def build_permit_message(result: PermitResult, timezone: str = "Asia/Tashkent", lang: str | None = "uz") -> str:
+def build_permit_message(
+    result: PermitResult,
+    timezone: str = "Asia/Tashkent",
+    lang: str | None = "uz",
+    related_results: list[PermitResult] | None = None,
+) -> str:
     code = _lang(lang)
     now = datetime.now(_load_timezone(timezone)).strftime("%d.%m.%Y, %H:%M")
     rule = result.rule
@@ -784,6 +825,7 @@ def build_permit_message(result: PermitResult, timezone: str = "Asia/Tashkent", 
             "destination": "🏁 Tugash",
             "vehicle": "🚚 Ro'yxat davlati",
             "type": "🧭 Tashuv turi",
+            "related_rules_title": "📚 Shu transport davlati bo'yicha boshqa tartiblar",
             "exceptions_title": "🧾 Istisnolar",
             "conditions_title": "ℹ️ Qo'shimcha shartlar",
             "border_payments_title": "💳 Chegarada qo'shimcha tekshiriladigan to'lovlar",
@@ -798,6 +840,7 @@ def build_permit_message(result: PermitResult, timezone: str = "Asia/Tashkent", 
             "destination": "🏁 Государство окончания перевозки",
             "vehicle": "🚚 Государство регистрации автотранспорта",
             "type": "🧭 Определенный вид перевозки",
+            "related_rules_title": "📚 Другие правила для государства регистрации транспорта",
             "exceptions_title": "🧾 Исключения, при которых разрешение по данному виду перевозки не требуется",
             "conditions_title": "ℹ️ Дополнительные условия",
             "border_payments_title": "💳 Дополнительные платежи, проверяемые на границе",
@@ -812,6 +855,7 @@ def build_permit_message(result: PermitResult, timezone: str = "Asia/Tashkent", 
             "destination": "🏁 Country where carriage ends",
             "vehicle": "🚚 Vehicle registration country",
             "type": "🧭 Detected carriage type",
+            "related_rules_title": "📚 Other rules for the vehicle registration country",
             "exceptions_title": "🧾 Exceptions where a permit is not required for this carriage type",
             "conditions_title": "ℹ️ Additional conditions",
             "border_payments_title": "💳 Additional payments checked at the border",
@@ -834,6 +878,31 @@ def build_permit_message(result: PermitResult, timezone: str = "Asia/Tashkent", 
         fee_text,
         "",
     ]
+    if related_results:
+        lines.append(labels["related_rules_title"] + ":")
+        for item in related_results:
+            item_fee_text, _ = fee_status_lines(item, code)
+            lines.append(
+                f"<b>{_html(transport_type_label(item.vid_cd, item.vid_name, code, item.vid_labels))}</b>"
+            )
+            lines.append(permit_status_text(item.rule, code))
+            lines.append(item_fee_text)
+            if item.exceptions:
+                lines.append(labels["exceptions_title"] + ":")
+                for index, exception in enumerate(item.exceptions[:MAX_EXCEPTIONS_IN_MESSAGE], start=1):
+                    lines.append(f"{index}. {_html(exception.get('exception_desc'))}")
+                if len(item.exceptions) > MAX_EXCEPTIONS_IN_MESSAGE:
+                    remaining = len(item.exceptions) - MAX_EXCEPTIONS_IN_MESSAGE
+                    lines.append({
+                        "uz": f"➕ Yana {remaining} ta istisno bor.",
+                        "ru": f"➕ Еще {remaining} исключений.",
+                        "en": f"➕ {remaining} more exceptions.",
+                    }[code])
+            conditions = localized_additional_conditions(item.rule, code)
+            if conditions:
+                lines.append(labels["conditions_title"] + ":")
+                lines.extend(f"{index}. {_html(value)}" for index, value in enumerate(conditions, start=1))
+        lines.append("")
     border_payments = border_payment_table(result, code)
     if border_payments:
         lines.append(labels["border_payments_title"] + ":")
