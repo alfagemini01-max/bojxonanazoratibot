@@ -313,8 +313,19 @@ class WebAppAssetTests(unittest.TestCase):
         self.assertIn('/api/webapp/posts', backend)
         self.assertIn('/api/webapp/feedback', backend)
         self.assertIn('/api/webapp/saved-routes', backend)
+        self.assertIn('/api/webapp/uzbekistan-border', backend)
+        self.assertIn("L.geoJSON", script)
+        self.assertNotIn("const UZ_BORDER", script)
         self.assertIn("leaflet@1.9.4", html)
         self.assertNotIn("integrity=", html)
+
+    def test_uzbekistan_border_is_valid_multipolygon(self) -> None:
+        import json
+
+        border = json.loads((ROOT / "data" / "uzbekistan_border.geojson").read_text(encoding="utf-8"))
+        self.assertEqual(border["type"], "FeatureCollection")
+        self.assertTrue(border["features"])
+        self.assertIn(border["features"][0]["geometry"]["type"], {"Polygon", "MultiPolygon"})
 
     def test_admin_has_operations_dashboard(self) -> None:
         html = (ROOT / "app" / "static" / "admin.html").read_text(encoding="utf-8")
