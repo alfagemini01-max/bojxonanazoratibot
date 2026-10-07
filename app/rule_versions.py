@@ -154,6 +154,7 @@ class RuleVersionStore:
         if self.pool is not None:
             async with self.pool.acquire() as connection:
                 async with connection.transaction():
+                    await connection.execute("SELECT pg_advisory_xact_lock(7042026)")
                     version_no = int(await connection.fetchval("SELECT COALESCE(MAX(version_no), 0) + 1 FROM rule_versions"))
                     await connection.execute("UPDATE rule_versions SET status = 'archived' WHERE status = 'active'")
                     await connection.execute(
@@ -174,6 +175,12 @@ class RuleVersionStore:
                         actor,
                         json.dumps({"version_no": version_no, "source": source}, ensure_ascii=False),
                     )
+                    await connection.execute(
+                        """DELETE FROM rule_versions WHERE id IN (
+                               SELECT id FROM rule_versions WHERE status='archived'
+                               ORDER BY version_no DESC OFFSET 29
+                           )"""
+                    )
             self._active_cache = None
             snapshot = await self.get_active()
         else:
@@ -192,6 +199,9 @@ class RuleVersionStore:
             _write_json(self.local_dir / "active.json", snapshot)
             self._active_cache = snapshot
             await self.audit("publish", actor, {"version_no": version_no, "source": source})
+            archived = sorted(self.local_dir.glob("version_*.json"), reverse=True)[30:]
+            for path in archived:
+                path.unlink(missing_ok=True)
         if self.permission_path and self.fees_path:
             _write_json(self.permission_path, permission)
             _write_json(self.fees_path, fees)

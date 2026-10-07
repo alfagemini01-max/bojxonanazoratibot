@@ -1,14 +1,22 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 import math
+import hashlib
+import hmac
+import json
+import time
+from time import monotonic
 from pathlib import Path
 from typing import Any
+from urllib.parse import parse_qsl
 
 from aiohttp import web
 
 from app.config import Settings
 from app.metrics import metrics
+from app.portal_store import PortalStore
 from app.services.fee_calculator import FeeCalculator
 from app.services.permit import (
     IRAN_CODE,
@@ -436,13 +444,45 @@ async def webapp_page(_: web.Request) -> web.FileResponse:
     )
 
 
-def setup_webapp_routes(app: web.Application, settings: Settings) -> None:
+def _telegram_user_id(init_data: str, bot_token: str) -> int | None:
+    if not init_data or not bot_token:
+        return None
+    values = dict(parse_qsl(init_data, keep_blank_values=True))
+    supplied = values.pop("hash", "")
+    try:
+        if time.time() - int(values.get("auth_date", "0")) > 86400:
+            return None
+    except ValueError:
+        return None
+    check = "\n".join(f"{key}={values[key]}" for key in sorted(values))
+    secret = hmac.new(b"WebAppData", bot_token.encode(), hashlib.sha256).digest()
+    expected = hmac.new(secret, check.encode(), hashlib.sha256).hexdigest()
+    if not supplied or not hmac.compare_digest(supplied, expected):
+        return None
+    try:
+        return int(json.loads(values.get("user", "{}"))["id"])
+    except (KeyError, TypeError, ValueError, json.JSONDecodeError):
+        return None
+
+
+def setup_webapp_routes(app: web.Application, settings: Settings, portal_store: PortalStore | None = None) -> None:
     permit_service = PermitRuleService(settings.permission_rules_path)
     fee_calculator = FeeCalculator(settings.fees_rules_path, settings.bhm_value, settings.usd_fallback_rate)
+    countries_cache: dict[str, tuple[int, dict[str, Any]]] = {}
+
+    def rule_version() -> int:
+        try:
+            return int(settings.permission_rules_path.stat().st_mtime_ns)
+        except OSError:
+            return 0
 
     async def countries(request: web.Request) -> web.Response:
         lang = _lang(request.query.get("lang"))
         permit_service.reload_if_changed()
+        current_version = rule_version()
+        cached = countries_cache.get(lang)
+        if cached and cached[0] == current_version:
+            return web.json_response(cached[1], headers={"Cache-Control": "public, max-age=300", "ETag": f'"countries-{lang}-{current_version}"'})
         rows = []
         def sort_name(code: str) -> str:
             country = permit_service.country_by_code(code)
@@ -468,40 +508,103 @@ def setup_webapp_routes(app: web.Application, settings: Settings) -> None:
                         **profile,
                     }
                 )
-        return web.json_response(
-            {"ok": True, "countries": rows},
-            headers={"Cache-Control": "no-cache, must-revalidate"},
-        )
+        payload = {"ok": True, "countries": rows, "version": current_version}
+        countries_cache[lang] = (current_version, payload)
+        return web.json_response(payload, headers={"Cache-Control": "public, max-age=300", "ETag": f'"countries-{lang}-{current_version}"'})
 
     async def permit_check(request: web.Request) -> web.Response:
+        started = monotonic()
         try:
             body = await request.json()
             response = _permit_payload(body, permit_service, fee_calculator)
+            response["rule_version"] = rule_version()
             metrics.increment("webapp_permit_checks")
+            if portal_store:
+                asyncio.create_task(portal_store.record_event(
+                    "permit_check", origin_code=body.get("origin"), destination_code=body.get("destination"),
+                    vehicle_code=body.get("vehicle"), transport_type=response["transport_type"]["base_code"],
+                    rule_version=response["rule_version"],
+                    error_code="rule_missing" if "rule_missing" in response.get("warnings", []) else None,
+                    metadata={"visitor_id": body.get("visitor_id"), "lang": body.get("lang")},
+                ))
             return web.json_response(response)
-        except web.HTTPException:
+        except web.HTTPException as exc:
+            if portal_store:
+                asyncio.create_task(portal_store.record_event("error", error_code=f"http_{exc.status}"))
             raise
         except Exception:
             metrics.increment("errors")
+            if portal_store:
+                asyncio.create_task(portal_store.record_event("error", error_code="permit_internal"))
             logger.exception("Web App permit check failed")
             raise web.HTTPInternalServerError(text="Tekshiruv vaqtida texnik xatolik yuz berdi.")
+        finally:
+            metrics.observe("webapp_permit", monotonic() - started)
 
     async def fee_check(request: web.Request) -> web.Response:
+        started = monotonic()
         try:
             body = await request.json()
             response = _fee_payload(body, permit_service, fee_calculator)
+            response["rule_version"] = rule_version()
             metrics.increment("webapp_fee_checks")
+            if portal_store:
+                asyncio.create_task(portal_store.record_event(
+                    "fee_check", origin_code=body.get("origin"), destination_code=body.get("destination"),
+                    vehicle_code=body.get("vehicle_country"), transport_type=(response.get("transport_type") or {}).get("base_code"),
+                    rule_version=response["rule_version"], metadata={"visitor_id": body.get("visitor_id"), "lang": body.get("lang")},
+                ))
             return web.json_response(response)
         except web.HTTPException:
             raise
         except Exception:
             metrics.increment("errors")
+            if portal_store:
+                asyncio.create_task(portal_store.record_event("error", error_code="fees_internal"))
             logger.exception("Web App fee calculation failed")
             raise web.HTTPInternalServerError(text="Hisoblash vaqtida texnik xatolik yuz berdi.")
+        finally:
+            metrics.observe("webapp_fees", monotonic() - started)
+
+    async def public_posts(request: web.Request) -> web.Response:
+        if not portal_store:
+            raise web.HTTPServiceUnavailable(text="Postlar katalogi ishga tushmagan.")
+        lang = _lang(request.query.get("lang"))
+        rows = await portal_store.list_posts()
+        for row in rows:
+            row["name"] = row.get(f"name_{lang}") or row.get("name_uz")
+        return web.json_response({"ok": True, "posts": rows}, headers={"Cache-Control": "public, max-age=120"})
+
+    async def feedback(request: web.Request) -> web.Response:
+        if not portal_store:
+            raise web.HTTPServiceUnavailable(text="Murojaatlar ombori ishga tushmagan.")
+        body = await request.json()
+        body["telegram_user_id"] = _telegram_user_id(str(body.get("init_data") or ""), settings.bot_token)
+        try:
+            feedback_id = await portal_store.create_feedback(body)
+        except ValueError as exc:
+            raise web.HTTPBadRequest(text=str(exc)) from exc
+        await portal_store.record_event("feedback", origin_code=body.get("origin"), destination_code=body.get("destination"), vehicle_code=body.get("vehicle"), transport_type=body.get("transport_type"), rule_version=body.get("rule_version"), metadata={"visitor_id": body.get("visitor_id")})
+        return web.json_response({"ok": True, "id": feedback_id})
+
+    async def save_route(request: web.Request) -> web.Response:
+        if not portal_store:
+            raise web.HTTPServiceUnavailable(text="Yo'nalishlar ombori ishga tushmagan.")
+        body = await request.json()
+        user_id = _telegram_user_id(str(body.get("init_data") or ""), settings.bot_token)
+        if not user_id:
+            raise web.HTTPUnauthorized(text="Yo'nalishni saqlash faqat Telegram ichida mavjud.")
+        for key in ("origin", "destination", "vehicle"):
+            _country(permit_service, body.get(key))
+        await portal_store.save_route(user_id, body)
+        return web.json_response({"ok": True})
 
     app.router.add_get("/app", webapp_page)
     app.router.add_get("/webapp", webapp_page)
     app.router.add_get("/api/webapp/countries", countries)
     app.router.add_post("/api/webapp/permit", permit_check)
     app.router.add_post("/api/webapp/fees", fee_check)
+    app.router.add_get("/api/webapp/posts", public_posts)
+    app.router.add_post("/api/webapp/feedback", feedback)
+    app.router.add_post("/api/webapp/saved-routes", save_route)
     app.router.add_static("/static/webapp", STATIC_DIR, show_index=False, append_version=True)

@@ -16,6 +16,8 @@ from aiohttp import web
 
 from app.config import Settings
 from app.metrics import metrics
+from app.portal_store import PortalStore
+from app.rule_normalization import DUES_NAMES, PERMISSION_NAMES, repair_broken_rule_labels
 from app.rule_versions import RuleVersionStore
 from app.services.permission_import import (
     PermissionImportError,
@@ -26,6 +28,7 @@ from app.services.permit import COUNTRY_LABELS, VID_LABELS, transliterate_cyrill
 
 
 SESSION_COOKIE = "nazorat_admin"
+CSRF_COOKIE = "nazorat_csrf"
 SESSION_TTL_SECONDS = 12 * 60 * 60
 MAX_IMPORT_FILE_BYTES = 10 * 1024 * 1024
 IMPORT_JOB_TTL_SECONDS = 60 * 60
@@ -33,19 +36,7 @@ MAX_IMPORT_JOBS = 10
 IMPORT_JOBS: dict[str, dict[str, Any]] = {}
 IMPORT_TASKS: set[asyncio.Task[Any]] = set()
 logger = logging.getLogger(__name__)
-
-PERMISSION_NAMES = {
-    "1": "Обязательно",
-    "2": "Не обязательно",
-    "3": "Запрещен",
-}
-
-DUES_NAMES = {
-    "0": "-не выбрано-",
-    "1": "Сбор обязательно",
-    "2": "Сбор не обязательно",
-    "3": "Сбор зависит от вида разрешения",
-}
+LOGIN_ATTEMPTS: dict[str, list[float]] = {}
 
 DEFAULT_FEE_ITEMS = {
     "import": [
@@ -211,6 +202,11 @@ def _is_authenticated(request: web.Request, settings: Settings) -> bool:
 def _require_admin(request: web.Request, settings: Settings) -> None:
     if not _is_authenticated(request, settings):
         raise web.HTTPUnauthorized(text="Admin login talab qilinadi.")
+    if request.method not in {"GET", "HEAD", "OPTIONS"}:
+        cookie_token = request.cookies.get(CSRF_COOKIE, "")
+        header_token = request.headers.get("X-CSRF-Token", "")
+        if not cookie_token or not hmac.compare_digest(cookie_token, header_token):
+            raise web.HTTPForbidden(text="Xavfsizlik belgisi noto'g'ri. Sahifani yangilang.")
 
 
 def _json_error(message: str, status: int = 400) -> web.Response:
@@ -838,7 +834,7 @@ loadAll().catch(e=>toast(e.message));
 </body></html>"""
 
 
-def setup_admin_routes(app: web.Application, settings: Settings) -> None:
+def setup_admin_routes(app: web.Application, settings: Settings, portal_store: PortalStore | None = None) -> None:
     permission_write_lock = asyncio.Lock()
     version_store = RuleVersionStore(settings.user_database_url, settings.permission_rules_path.parent)
 
@@ -852,23 +848,32 @@ def setup_admin_routes(app: web.Application, settings: Settings) -> None:
         try:
             await version_store.initialize(settings.permission_rules_path, settings.fees_rules_path)
         except Exception:
-            logger.exception("PostgreSQL rule version storage failed; local version storage will be used")
+            logger.exception("Rule version storage initialization failed")
             await version_store.close()
+            if settings.user_database_url:
+                raise
             version_store.database_url = ""
             version_store.pool = None
             await version_store.initialize(settings.permission_rules_path, settings.fees_rules_path)
         active = await version_store.get_active()
         if active:
-            normalized_fees = active["fees"]
+            normalized_permission = deepcopy(active["permission"])
+            normalized_fees = deepcopy(active["fees"])
+            repaired_rules = repair_broken_rule_labels(normalized_permission)
             before_normalization = json.dumps(normalized_fees, ensure_ascii=False, sort_keys=True)
             _fee_items(normalized_fees)
-            if json.dumps(normalized_fees, ensure_ascii=False, sort_keys=True) != before_normalization:
+            fees_changed = json.dumps(normalized_fees, ensure_ascii=False, sort_keys=True) != before_normalization
+            if repaired_rules or fees_changed:
                 active = await version_store.publish(
-                    active["permission"],
+                    normalized_permission,
                     normalized_fees,
                     actor="system",
-                    source="system:fee-items-migration",
-                    summary={"migration": "admin_fee_items"},
+                    source="system:data-normalization-migration",
+                    summary={
+                        "migration": "rule_labels_and_fee_items",
+                        "repaired_rules": repaired_rules,
+                        "fee_items_added": fees_changed,
+                    },
                 )
             # The admin panel now edits an automatically activated working copy.
             # Reset legacy unpublished drafts so an old draft cannot be published
@@ -888,13 +893,21 @@ def setup_admin_routes(app: web.Application, settings: Settings) -> None:
             "fee_items": sum(len(item) for item in fees_data.get("admin_fee_items", {}).values()),
             **(details or {}),
         }
-        return await version_store.publish(
+        snapshot = await version_store.publish(
             permission,
             fees_data,
             actor=settings.admin_username,
             source=source,
             summary=summary,
         )
+        if portal_store:
+            changed_codes = list((details or {}).get("changed_codes") or [])
+            if (details or {}).get("country_code"):
+                changed_codes.append(str((details or {})["country_code"]))
+            await portal_store.enqueue_rule_notifications(
+                int(snapshot["version_no"]), changed_codes, source
+            )
+        return snapshot
 
     async def close_rule_versions(_: web.Application) -> None:
         await version_store.close()
@@ -906,6 +919,11 @@ def setup_admin_routes(app: web.Application, settings: Settings) -> None:
             logger.exception("Admin audit could not be saved: %s", action)
 
     async def admin_index(request: web.Request) -> web.Response:
+        if not settings.admin_username or not settings.admin_password or len(settings.admin_session_secret) < 24:
+            return web.Response(
+                text="Admin panel sozlanmagan. Render Environment ichida ADMIN_USERNAME, ADMIN_PASSWORD va kamida 24 belgili ADMIN_SESSION_SECRET kiriting.",
+                status=503,
+            )
         if not _is_authenticated(request, settings):
             response = web.Response(text=_login_page(), content_type="text/html")
         else:
@@ -913,11 +931,25 @@ def setup_admin_routes(app: web.Application, settings: Settings) -> None:
                 text=(Path(__file__).resolve().parent / "static" / "admin.html").read_text(encoding="utf-8"),
                 content_type="text/html",
             )
+            if not request.cookies.get(CSRF_COOKIE):
+                response.set_cookie(
+                    CSRF_COOKIE,
+                    secrets.token_urlsafe(24),
+                    max_age=SESSION_TTL_SECONDS,
+                    secure=bool(settings.webhook_url.startswith("https://")),
+                    samesite="Strict",
+                )
         response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
         response.headers["Pragma"] = "no-cache"
         return response
 
     async def login(request: web.Request) -> web.Response:
+        address = request.remote or "unknown"
+        now = time.monotonic()
+        attempts = [stamp for stamp in LOGIN_ATTEMPTS.get(address, []) if stamp > now - 600]
+        LOGIN_ATTEMPTS[address] = attempts
+        if len(attempts) >= 8:
+            return web.Response(text="Kirish urinishlari ko'p. 10 daqiqadan keyin qayta urinib ko'ring.", status=429)
         form = await request.post()
         username = str(form.get("username") or "")
         password = str(form.get("password") or "")
@@ -925,7 +957,9 @@ def setup_admin_routes(app: web.Application, settings: Settings) -> None:
             hmac.compare_digest(username, settings.admin_username)
             and hmac.compare_digest(password, settings.admin_password)
         ):
+            attempts.append(now)
             return web.Response(text=_login_page(), content_type="text/html", status=403)
+        LOGIN_ATTEMPTS.pop(address, None)
         response = web.HTTPFound("/admin/dashboard")
         response.set_cookie(
             SESSION_COOKIE,
@@ -935,11 +969,20 @@ def setup_admin_routes(app: web.Application, settings: Settings) -> None:
             secure=bool(settings.webhook_url.startswith("https://")),
             samesite="Lax",
         )
+        response.set_cookie(
+            CSRF_COOKIE,
+            secrets.token_urlsafe(24),
+            max_age=SESSION_TTL_SECONDS,
+            secure=bool(settings.webhook_url.startswith("https://")),
+            samesite="Strict",
+        )
         raise response
 
-    async def logout(_: web.Request) -> web.Response:
+    async def logout(request: web.Request) -> web.Response:
+        _require_admin(request, settings)
         response = web.json_response({"ok": True})
         response.del_cookie(SESSION_COOKIE)
+        response.del_cookie(CSRF_COOKIE)
         return response
 
     async def summary(request: web.Request) -> web.Response:
@@ -1294,6 +1337,10 @@ def setup_admin_routes(app: web.Application, settings: Settings) -> None:
                 return _json_error(str(exc), 404)
             _write_json(permission_admin_path(), snapshot["permission"])
             _write_json(fees_admin_path(), snapshot["fees"])
+            if portal_store:
+                await portal_store.enqueue_rule_notifications(
+                    int(snapshot["version_no"]), [], f"rollback:{version_no}"
+                )
         return web.json_response({"ok": True, "version_no": snapshot["version_no"]})
 
     async def admin_audit(request: web.Request) -> web.Response:
@@ -1433,7 +1480,17 @@ def setup_admin_routes(app: web.Application, settings: Settings) -> None:
             _write_json(draft_path, data)
             snapshot = await activate_current_rules(
                 "admin:auto:excel-import",
-                {"filename": job.get("filename"), "applied_count": applied_count},
+                {
+                    "filename": job.get("filename"),
+                    "applied_count": applied_count,
+                    "changed_codes": sorted(
+                        {
+                            str(change.get("country_code") or change.get("after", {}).get("country_code") or "")
+                            for change in submitted_changes
+                            if change.get("country_code") or change.get("after", {}).get("country_code")
+                        }
+                    ),
+                },
             )
             job["status"] = "applied"
             job["message"] = "Tanlangan o'zgarishlar qo'llandi va faollashtirildi"
@@ -1441,6 +1498,85 @@ def setup_admin_routes(app: web.Application, settings: Settings) -> None:
             job["version_no"] = snapshot["version_no"]
             job["base_mtime_ns"] = draft_path.stat().st_mtime_ns
         return web.json_response(_import_job_response(job))
+
+    async def portal_analytics(request: web.Request) -> web.Response:
+        _require_admin(request, settings)
+        if not portal_store:
+            return _json_error("Analitika ombori ishga tushmagan.", 503)
+        days = int(request.query.get("days", "30"))
+        data = await portal_store.analytics_summary(days)
+        data["system"] = await portal_store.system_status()
+        data["runtime"] = metrics.snapshot()
+        active_version = await version_store.get_active()
+        data["rules_storage"] = {
+            "ok": bool(active_version),
+            "backend": "postgresql" if version_store.pool else "local",
+            "active_version": int((active_version or {}).get("version_no", 0)),
+        }
+        data["services"] = {
+            "telegram": bool(request.app.get("telegram_ready")),
+            "webapp": True,
+            "portal_database": bool(request.app.get("portal_ready")),
+        }
+        permission = _read_json_view(permission_admin_path())
+        fallback_rules = 0
+        suspicious_rules = 0
+        for rules in permission.get("rules", {}).values():
+            for rule in rules.values():
+                source = str(rule.get("source") or "")
+                if source.startswith("fallback:"):
+                    fallback_rules += 1
+                if "????" in json.dumps(rule, ensure_ascii=False):
+                    suspicious_rules += 1
+        data["data_quality"] = {
+            "fallback_rules": fallback_rules,
+            "suspicious_rules": suspicious_rules,
+            "countries": len(permission.get("countries", {})),
+            "rules": sum(len(rows) for rows in permission.get("rules", {}).values()),
+        }
+        return web.json_response({"ok": True, **data})
+
+    async def feedback_list(request: web.Request) -> web.Response:
+        _require_admin(request, settings)
+        if not portal_store:
+            return _json_error("Murojaatlar ombori ishga tushmagan.", 503)
+        return web.json_response({"ok": True, "items": await portal_store.list_feedback()})
+
+    async def feedback_status(request: web.Request) -> web.Response:
+        _require_admin(request, settings)
+        if not portal_store:
+            return _json_error("Murojaatlar ombori ishga tushmagan.", 503)
+        body = await request.json()
+        try:
+            await portal_store.set_feedback_status(int(request.match_info["feedback_id"]), str(body.get("status") or ""))
+        except ValueError as exc:
+            return _json_error(str(exc))
+        return web.json_response({"ok": True})
+
+    async def posts_list(request: web.Request) -> web.Response:
+        _require_admin(request, settings)
+        if not portal_store:
+            return _json_error("Postlar ombori ishga tushmagan.", 503)
+        return web.json_response({"ok": True, "items": await portal_store.list_posts(include_inactive=True)})
+
+    async def post_save(request: web.Request) -> web.Response:
+        _require_admin(request, settings)
+        if not portal_store:
+            return _json_error("Postlar ombori ishga tushmagan.", 503)
+        try:
+            item = await portal_store.save_post(await request.json())
+        except (ValueError, TypeError) as exc:
+            return _json_error(str(exc))
+        await audit("customs_post_save", {"code": item["code"]})
+        return web.json_response({"ok": True, "item": item})
+
+    async def post_delete(request: web.Request) -> web.Response:
+        _require_admin(request, settings)
+        if not portal_store:
+            return _json_error("Postlar ombori ishga tushmagan.", 503)
+        await portal_store.delete_post(request.match_info["code"])
+        await audit("customs_post_disable", {"code": request.match_info["code"]})
+        return web.json_response({"ok": True})
 
     app.router.add_get("/admin", admin_index)
     app.router.add_get("/admin/dashboard", admin_index)
@@ -1472,5 +1608,11 @@ def setup_admin_routes(app: web.Application, settings: Settings) -> None:
     app.router.add_get("/admin/api/rule-versions", rule_versions)
     app.router.add_post("/admin/api/rule-versions/{version_no}/rollback", rollback_rule_version)
     app.router.add_get("/admin/api/audit", admin_audit)
+    app.router.add_get("/admin/api/analytics", portal_analytics)
+    app.router.add_get("/admin/api/feedback", feedback_list)
+    app.router.add_post("/admin/api/feedback/{feedback_id}/status", feedback_status)
+    app.router.add_get("/admin/api/posts", posts_list)
+    app.router.add_post("/admin/api/posts", post_save)
+    app.router.add_delete("/admin/api/posts/{code}", post_delete)
     app.on_startup.append(initialize_rule_versions)
     app.on_cleanup.append(close_rule_versions)

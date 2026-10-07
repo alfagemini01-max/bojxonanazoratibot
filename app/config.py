@@ -35,11 +35,13 @@ class Settings:
     bot_mode: str
     webhook_url: str
     webhook_path: str
+    webhook_secret: str
     web_host: str
     web_port: int
     data_source: str
     database_path: Path
     user_database_url: str
+    database_quota_mb: int
     permission_rules_path: Path
     fees_rules_path: Path
     bhm_value: int
@@ -47,6 +49,7 @@ class Settings:
     admin_username: str
     admin_password: str
     admin_session_secret: str
+    yandex_maps_api_key: str
     sql_connection_string: str
     sql_query_path: Path
     timezone: str = "Asia/Tashkent"
@@ -66,18 +69,21 @@ def get_settings() -> Settings:
         bot_mode=bot_mode,
         webhook_url=webhook_url,
         webhook_path=_normalize_webhook_path(os.getenv("WEBHOOK_PATH", "/webhook")),
+        webhook_secret=os.getenv("WEBHOOK_SECRET", "").strip(),
         web_host=os.getenv("WEB_SERVER_HOST", "0.0.0.0").strip(),
         web_port=int(os.getenv("PORT", "8080")),
         data_source=os.getenv("DATA_SOURCE", "demo").strip().lower(),
         database_path=BASE_DIR / os.getenv("DATABASE_PATH", "data/bot_data.sqlite3"),
         user_database_url=(os.getenv("USER_DATABASE_URL") or os.getenv("DATABASE_URL") or "").strip(),
+        database_quota_mb=max(0, int(os.getenv("DATABASE_QUOTA_MB", "0"))),
         permission_rules_path=BASE_DIR / os.getenv("PERMISSION_RULES_PATH", "data/permission_rules.json"),
         fees_rules_path=BASE_DIR / os.getenv("FEES_RULES_PATH", "data/fees_2026.json"),
         bhm_value=int(os.getenv("BHM_VALUE", "412000")),
         usd_fallback_rate=float(os.getenv("USD_FALLBACK_RATE", "12600")),
-        admin_username=os.getenv("ADMIN_USERNAME", "admin").strip(),
-        admin_password=os.getenv("ADMIN_PASSWORD", "nazorat2026").strip(),
-        admin_session_secret=os.getenv("ADMIN_SESSION_SECRET", "change-this-admin-secret").strip(),
+        admin_username=os.getenv("ADMIN_USERNAME", "").strip(),
+        admin_password=os.getenv("ADMIN_PASSWORD", "").strip(),
+        admin_session_secret=os.getenv("ADMIN_SESSION_SECRET", "").strip(),
+        yandex_maps_api_key=os.getenv("YANDEX_MAPS_API_KEY", "").strip(),
         sql_connection_string=os.getenv("SQL_CONNECTION_STRING", "").strip(),
         sql_query_path=BASE_DIR / os.getenv(
             "SQL_QUERY_PATH",

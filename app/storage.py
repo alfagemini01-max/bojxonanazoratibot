@@ -447,10 +447,9 @@ class PostgresUserStorage(TimezoneMixin):
 
 def create_user_storage(database_path: Path, timezone: str = "Asia/Tashkent", database_url: str = "") -> UserStorage:
     if database_url:
-        backend: UserStorage = ResilientUserStorage(
-            PostgresUserStorage(database_url, timezone),
-            SQLiteUserStorage(database_path, timezone),
-        )
+        # A silent fallback on Render splits users between persistent PostgreSQL
+        # and an ephemeral local file. Fail readiness instead of losing identity.
+        backend: UserStorage = PostgresUserStorage(database_url, timezone)
     else:
         backend = SQLiteUserStorage(database_path, timezone)
     return CachedUserStorage(backend)
