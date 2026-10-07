@@ -1,4 +1,159 @@
 {
+  "000": {
+    "uz": "Noma'lum davlat",
+    "ru": "Неизвестное государство",
+    "en": "Unknown country"
+  },
+  "004": {
+    "uz": "Afgʻoniston",
+    "ru": "Афганистан",
+    "en": "Afghanistan"
+  },
+  "008": {
+    "uz": "Albaniya",
+    "ru": "Албания",
+    "en": "Albania"
+  },
+  "010": {
+    "uz": "Antarktida",
+    "ru": "Антарктида",
+    "en": "Antarctica"
+  },
+  "012": {
+    "uz": "Jazoir",
+    "ru": "Алжир",
+    "en": "Algeria"
+  },
+  "016": {
+    "uz": "Amerika Samoasi",
+    "ru": "Американское Самоа",
+    "en": "American Samoa"
+  },
+  "020": {
+    "uz": "Andorra",
+    "ru": "Андорра",
+    "en": "Andorra"
+  },
+  "024": {
+    "uz": "Angola",
+    "ru": "Ангола",
+    "en": "Angola"
+  },
+  "028": {
+    "uz": "Antigua va Barbuda",
+    "ru": "Антигуа и Барбуда",
+    "en": "Antigua & Barbuda"
+  },
+  "031": {
+    "uz": "Ozarbayjon",
+    "ru": "Азербайджан",
+    "en": "Azerbaijan"
+  },
+  "032": {
+    "uz": "Argentina",
+    "ru": "Аргентина",
+    "en": "Argentina"
+  },
+  "036": {
+    "uz": "Avstraliya",
+    "ru": "Австралия",
+    "en": "Australia"
+  },
+  "040": {
+    "uz": "Avstriya",
+    "ru": "Австрия",
+    "en": "Austria"
+  },
+  "044": {
+    "uz": "Bagama orollari",
+    "ru": "Багамы",
+    "en": "Bahamas"
+  },
+  "048": {
+    "uz": "Bahrayn",
+    "ru": "Бахрейн",
+    "en": "Bahrain"
+  },
+  "050": {
+    "uz": "Bangladesh",
+    "ru": "Бангладеш",
+    "en": "Bangladesh"
+  },
+  "051": {
+    "uz": "Armaniston",
+    "ru": "Армения",
+    "en": "Armenia"
+  },
+  "052": {
+    "uz": "Barbados",
+    "ru": "Барбадос",
+    "en": "Barbados"
+  },
+  "056": {
+    "uz": "Belgiya",
+    "ru": "Бельгия",
+    "en": "Belgium"
+  },
+  "060": {
+    "uz": "Bermuda orollari",
+    "ru": "Бермудские о-ва",
+    "en": "Bermuda"
+  },
+  "064": {
+    "uz": "Butan",
+    "ru": "Бутан",
+    "en": "Bhutan"
+  },
+  "068": {
+    "uz": "Boliviya",
+    "ru": "Боливия",
+    "en": "Bolivia"
+  },
+  "070": {
+    "uz": "Bosniya va Gersegovina",
+    "ru": "Босния и Герцеговина",
+    "en": "Bosnia and Herzegovina"
+  },
+  "072": {
+    "uz": "Botsvana",
+    "ru": "Ботсвана",
+    "en": "Botswana"
+  },
+  "074": {
+    "uz": "Buve oroli",
+    "ru": "о-в Буве",
+    "en": "Bouvet Island"
+  },
+  "076": {
+    "uz": "Braziliya",
+    "ru": "Бразилия",
+    "en": "Brazil"
+  },
+  "084": {
+    "uz": "Beliz",
+    "ru": "Белиз",
+    "en": "Belize"
+  },
+  "086": {
+    "uz": "Britaniyaning Hind okeanidagi hududi",
+    "ru": "Британская территория в Индийском океане",
+    "en": "British Indian Ocean Territory"
+  },
+  "090": {
+    "uz": "Solomon orollari",
+    "ru": "Соломоновы о-ва",
+    "en": "Solomon Islands"
+  },
+  "092": {
+    "uz": "Britaniya Virgin orollari",
+    "ru": "Виргинские о-ва (Великобритания)",
+    "en": "British Virgin Islands"
+  },
+  "096": {
+    "uz": "Bruney",
+    "ru": "Бруней",
+    "en": "Brunei"
+  },
   "100": {
     "uz": "Bolgariya",
     "ru": "Болгария",
@@ -93,6 +248,11 @@
     "uz": "Komor orollari",
     "ru": "Коморы",
     "en": "Comoros"
+  },
+  "175": {
+    "uz": "Mayotta",
+    "ru": "Майотта",
+    "en": "Mayotte"
   },
   "178": {
     "uz": "Kongo – Brazzavil",
@@ -194,6 +354,11 @@
     "ru": "Фолклендские о-ва",
     "en": "Falkland Islands"
   },
+  "239": {
+    "uz": "Janubiy Georgiya va Janubiy Sendvich orollari",
+    "ru": "Южная Георгия и Южные Сандвичевы острова",
+    "en": "South Georgia and the South Sandwich Islands"
+  },
   "242": {
     "uz": "Fiji",
     "ru": "Фиджи",
@@ -203,6 +368,11 @@
     "uz": "Finlandiya",
     "ru": "Финляндия",
     "en": "Finland"
+  },
+  "248": {
+    "uz": "Aland orollari",
+    "ru": "Аландские острова",
+    "en": "Åland Islands"
   },
   "250": {
     "uz": "Fransiya",
@@ -539,6 +709,11 @@
     "ru": "Мексика",
     "en": "Mexico"
   },
+  "488": {
+    "uz": "Miduey orollari",
+    "ru": "Острова Мидуэй",
+    "en": "Midway Islands"
+  },
   "492": {
     "uz": "Monako",
     "ru": "Монако",
@@ -598,6 +773,11 @@
     "uz": "Niderlandiya",
     "ru": "Нидерланды",
     "en": "Netherlands"
+  },
+  "530": {
+    "uz": "Niderlandiya Antil orollari",
+    "ru": "Нидерландские Антильские острова",
+    "en": "Netherlands Antilles"
   },
   "531": {
     "uz": "Kyurasao",
@@ -904,6 +1084,11 @@
     "ru": "Западная Сахара",
     "en": "Western Sahara"
   },
+  "736": {
+    "uz": "Sudan",
+    "ru": "Судан",
+    "en": "Sudan"
+  },
   "740": {
     "uz": "Surinam",
     "ru": "Суринам",
@@ -1019,6 +1204,11 @@
     "ru": "Великобритания",
     "en": "United Kingdom"
   },
+  "830": {
+    "uz": "Normand orollari",
+    "ru": "Нормандские острова",
+    "en": "Channel Islands"
+  },
   "831": {
     "uz": "Gernsi",
     "ru": "Гернси",
@@ -1069,6 +1259,11 @@
     "ru": "Венесуэла",
     "en": "Venezuela"
   },
+  "872": {
+    "uz": "Ueyk oroli",
+    "ru": "Остров Уэйк",
+    "en": "Wake Island"
+  },
   "876": {
     "uz": "Uollis va Futuna",
     "ru": "Уоллис и Футуна",
@@ -1084,154 +1279,14 @@
     "ru": "Йемен",
     "en": "Yemen"
   },
+  "891": {
+    "uz": "Yugoslaviya",
+    "ru": "Югославия",
+    "en": "Yugoslavia"
+  },
   "894": {
     "uz": "Zambiya",
     "ru": "Замбия",
     "en": "Zambia"
-  },
-  "000": {
-    "uz": "Noma'lum davlat",
-    "ru": "Неизвестное государство",
-    "en": "Unknown country"
-  },
-  "004": {
-    "uz": "Afgʻoniston",
-    "ru": "Афганистан",
-    "en": "Afghanistan"
-  },
-  "008": {
-    "uz": "Albaniya",
-    "ru": "Албания",
-    "en": "Albania"
-  },
-  "010": {
-    "uz": "Antarktida",
-    "ru": "Антарктида",
-    "en": "Antarctica"
-  },
-  "012": {
-    "uz": "Jazoir",
-    "ru": "Алжир",
-    "en": "Algeria"
-  },
-  "016": {
-    "uz": "Amerika Samoasi",
-    "ru": "Американское Самоа",
-    "en": "American Samoa"
-  },
-  "020": {
-    "uz": "Andorra",
-    "ru": "Андорра",
-    "en": "Andorra"
-  },
-  "024": {
-    "uz": "Angola",
-    "ru": "Ангола",
-    "en": "Angola"
-  },
-  "028": {
-    "uz": "Antigua va Barbuda",
-    "ru": "Антигуа и Барбуда",
-    "en": "Antigua & Barbuda"
-  },
-  "031": {
-    "uz": "Ozarbayjon",
-    "ru": "Азербайджан",
-    "en": "Azerbaijan"
-  },
-  "032": {
-    "uz": "Argentina",
-    "ru": "Аргентина",
-    "en": "Argentina"
-  },
-  "036": {
-    "uz": "Avstraliya",
-    "ru": "Австралия",
-    "en": "Australia"
-  },
-  "040": {
-    "uz": "Avstriya",
-    "ru": "Австрия",
-    "en": "Austria"
-  },
-  "044": {
-    "uz": "Bagama orollari",
-    "ru": "Багамы",
-    "en": "Bahamas"
-  },
-  "048": {
-    "uz": "Bahrayn",
-    "ru": "Бахрейн",
-    "en": "Bahrain"
-  },
-  "050": {
-    "uz": "Bangladesh",
-    "ru": "Бангладеш",
-    "en": "Bangladesh"
-  },
-  "051": {
-    "uz": "Armaniston",
-    "ru": "Армения",
-    "en": "Armenia"
-  },
-  "052": {
-    "uz": "Barbados",
-    "ru": "Барбадос",
-    "en": "Barbados"
-  },
-  "056": {
-    "uz": "Belgiya",
-    "ru": "Бельгия",
-    "en": "Belgium"
-  },
-  "060": {
-    "uz": "Bermuda orollari",
-    "ru": "Бермудские о-ва",
-    "en": "Bermuda"
-  },
-  "064": {
-    "uz": "Butan",
-    "ru": "Бутан",
-    "en": "Bhutan"
-  },
-  "068": {
-    "uz": "Boliviya",
-    "ru": "Боливия",
-    "en": "Bolivia"
-  },
-  "074": {
-    "uz": "Buve oroli",
-    "ru": "о-в Буве",
-    "en": "Bouvet Island"
-  },
-  "076": {
-    "uz": "Braziliya",
-    "ru": "Бразилия",
-    "en": "Brazil"
-  },
-  "084": {
-    "uz": "Beliz",
-    "ru": "Белиз",
-    "en": "Belize"
-  },
-  "086": {
-    "uz": "Britaniyaning Hind okeanidagi hududi",
-    "ru": "Британская территория в Индийском океане",
-    "en": "British Indian Ocean Territory"
-  },
-  "090": {
-    "uz": "Solomon orollari",
-    "ru": "Соломоновы о-ва",
-    "en": "Solomon Islands"
-  },
-  "092": {
-    "uz": "Britaniya Virgin orollari",
-    "ru": "Виргинские о-ва (Великобритания)",
-    "en": "British Virgin Islands"
-  },
-  "096": {
-    "uz": "Bruney",
-    "ru": "Бруней",
-    "en": "Brunei"
   }
 }
