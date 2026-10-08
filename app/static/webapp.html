@@ -5,8 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#0b3151">
   <title>Ruxsatnoma va chegara yig'imlari</title>
-  <link rel="stylesheet" href="/static/webapp/leaflet-local.css?v=1">
-  <link rel="stylesheet" href="/static/webapp/webapp.css?v=11">
+  <link rel="stylesheet" href="/static/webapp/webapp.css?v=15">
 </head>
 <body>
   <svg class="icon-sprite" aria-hidden="true">
@@ -29,6 +28,8 @@
     <symbol id="icon-anchor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><path d="M12 7v14M5 12H2a10 10 0 0 0 20 0h-3M8 21h8"/></symbol>
     <symbol id="icon-bookmark" viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></symbol>
     <symbol id="icon-alert" viewBox="0 0 24 24"><path d="M10.3 3.7 2.7 17a2 2 0 0 0 1.7 3h15.2a2 2 0 0 0 1.7-3L13.7 3.7a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></symbol>
+    <symbol id="icon-truck" viewBox="0 0 24 24"><path d="M3 5h11v12H3zM14 9h4l3 3v5h-7z"/><circle cx="7" cy="19" r="2"/><circle cx="18" cy="19" r="2"/></symbol>
+    <symbol id="icon-route" viewBox="0 0 24 24"><circle cx="6" cy="19" r="3"/><circle cx="18" cy="5" r="3"/><path d="M6 16c0-6 12-2 12-8"/></symbol>
   </svg>
   <div class="government-bar"><span><svg class="icon"><use href="#icon-building"/></svg><span data-t="republic">O'zbekiston Respublikasi</span></span><span data-t="advisory">Axborot-tavsiyaviy xizmat</span></div>
   <header class="topbar">
@@ -52,6 +53,7 @@
       <button type="button" class="service-tab active" data-view="permit"><span class="tab-icon"><svg class="icon"><use href="#icon-file-check"/></svg></span><span><b data-t="permitTab">Dazvol</b><small data-t="permitTabSub">Ruxsatnoma va kirish yig'imi</small></span></button>
       <button type="button" class="service-tab" data-view="fees"><span class="tab-icon"><svg class="icon"><use href="#icon-receipt"/></svg></span><span><b data-t="feesTab">Chegaradagi yig'imlar</b><small data-t="feesTabSub">Kirish, tranzit va chiqish hisobi</small></span></button>
       <button type="button" class="service-tab" data-view="posts"><span class="tab-icon"><svg class="icon"><use href="#icon-map"/></svg></span><span><b data-t="postsTab">Chegara postlari</b><small data-t="postsTabSub">Xarita, ish vaqti va aloqa</small></span></button>
+      <button type="button" class="service-tab" data-view="oversize"><span class="tab-icon"><svg class="icon"><use href="#icon-truck"/></svg></span><span><b data-t="oversizeTab">Og'irlik va gabarit</b><small data-t="oversizeTabSub">Marshrut va maxsus to'lovlar</small></span></button>
     </nav>
 
     <section id="permit-view" class="view active">
@@ -122,13 +124,56 @@
         <div id="post-error" class="form-error" hidden></div>
       </div>
     </section>
+
+    <section id="oversize-view" class="view">
+      <form id="oversize-form" class="glass form-card oversize-card">
+        <div class="section-head"><span class="step">1</span><div><h2 data-t="oversizeRouteTitle">O'zbekiston bo'ylab marshrut</h2><p data-t="oversizeRouteHint">Xaritada avval boshlanish, keyin tugash nuqtasini bosing va yo'l variantini tanlang.</p></div></div>
+        <div class="oversize-map-shell">
+          <div id="oversize-map" class="oversize-map" aria-label="Og'ir transport marshruti"></div>
+          <div class="route-map-status" id="route-map-status" data-t="pickStart">Boshlanish nuqtasini belgilang</div>
+        </div>
+        <div class="route-points">
+          <div><small data-t="startPoint">Boshlanish</small><b id="oversize-start">—</b></div>
+          <div><small data-t="finishPoint">Tugash</small><b id="oversize-finish">—</b></div>
+          <button type="button" id="oversize-reset-route" class="secondary-action" data-t="resetRoute">Tozalash</button>
+          <button type="button" id="oversize-find-routes" class="secondary-action accent" data-t="findRoutes" disabled>Yo'llarni topish</button>
+        </div>
+        <div id="oversize-route-options" class="route-options" hidden></div>
+        <label class="manual-distance"><input id="oversize-manual-mode" type="checkbox"><span data-t="manualDistance">Marshrut ishlamasa, masofani qo'lda kiritish</span></label>
+        <div class="field distance-field"><label for="oversize-distance" data-t="distanceKm">O'zbekiston hududidagi masofa, km</label><input id="oversize-distance" type="number" min="0.1" max="10000" step="0.01" readonly required></div>
+
+        <div class="section-divider"></div>
+        <div class="section-head"><span class="step">2</span><div><h2 data-t="vehicleParameters">Transport parametrlari</h2><p data-t="vehicleParametersHint">Transportni yuk bilan o'lchangan haqiqiy ko'rsatkichlarda kiriting.</p></div></div>
+        <div class="segmented two" id="oversize-carrier"><button type="button" class="active" data-value="local" data-t="localCarrier">Mahalliy tashuvchi</button><button type="button" data-value="foreign" data-t="foreignCarrier">Xorijiy tashuvchi</button></div>
+        <div class="oversize-fields">
+          <div class="field"><label for="oversize-configuration" data-t="configuration">Transport tarkibi</label><select id="oversize-configuration"><option value="single" data-t="singleVehicle">Yakka transport</option><option value="one_trailer" selected data-t="oneTrailer">Bir tirkamali/yarim tirkamali</option><option value="multi_trailer" data-t="multiTrailer">Ikki yoki undan ortiq tirkamali</option></select></div>
+          <div class="field"><label for="oversize-body" data-t="bodyType">Kuzov turi</label><select id="oversize-body"><option value="standard" data-t="standardBody">Oddiy kuzov</option><option value="isothermal" data-t="isothermalBody">Izotermik/refrijerator</option></select></div>
+          <div class="field"><label for="oversize-axle-count" data-t="axleCount">O'qlar soni</label><input id="oversize-axle-count" type="number" value="5" min="2" max="20" step="1" required></div>
+          <div class="field"><label for="oversize-gross" data-t="grossMass">Yuk bilan umumiy massa, t</label><input id="oversize-gross" type="number" value="40" min="0.1" max="500" step="0.01" required></div>
+          <div class="field"><label for="oversize-length" data-t="lengthM">Umumiy uzunlik, m</label><input id="oversize-length" type="number" value="18" min="0.1" max="100" step="0.01" required></div>
+          <div class="field"><label for="oversize-width" data-t="widthM">Eng katta kenglik, m</label><input id="oversize-width" type="number" value="2.55" min="0.1" max="20" step="0.01" required></div>
+          <div class="field"><label for="oversize-height" data-t="heightM">Yo'l sathidan balandlik, m</label><input id="oversize-height" type="number" value="4" min="0.1" max="20" step="0.01" required></div>
+        </div>
+
+        <div class="axle-head"><div><h3 data-t="axleLoads">O'qlar bo'yicha yuklama</h3><p data-t="axleHint">Har bir o'qning tarozida o'lchangan yuklamasi va shu yo'l uchun ruxsat etilgan me'yorini kiriting.</p></div><span data-t="defaultAxle">Standart me'yor: 10 t</span></div>
+        <div id="oversize-axles" class="axle-grid"></div>
+        <div class="checks oversize-checks">
+          <label><input id="oversize-railway" type="checkbox"><span data-t="railwayCrossing">Marshrut temiryo'l kesishmasidan o'tadi</span></label>
+          <label><input id="oversize-inspection" type="checkbox"><span data-t="specialInspection">Vakolatli organ maxsus ko'rik va texnik xulosa talab qilgan</span></label>
+          <label><input id="oversize-unauthorized" type="checkbox"><span data-t="unauthorizedMovement">Ruxsatnomasiz harakat allaqachon amalga oshirilgan</span></label>
+        </div>
+        <div class="legal-preview"><svg class="icon"><use href="#icon-info"/></svg><p data-t="oversizeLegalPreview">Hisob VMQ-86 qarorining 25-ilovasi, VMQ-710 va VMQ-342 me'yorlari asosida bajariladi. Yakuniy ruxsat va yo'nalishni vakolatli organ tasdiqlaydi.</p></div>
+        <div class="form-error" id="oversize-error" hidden></div>
+        <button class="primary-action" type="submit"><svg class="icon"><use href="#icon-calculator"/></svg><span data-t="calculateOversize">Hisoblash</span></button>
+      </form>
+      <section id="oversize-result" class="result" hidden></section>
+    </section>
   </main>
 
-  <nav class="mobile-nav"><button class="active" data-view="permit"><svg class="icon"><use href="#icon-file-check"/></svg><b data-t="permitTab">Dazvol</b></button><button data-view="fees"><svg class="icon"><use href="#icon-receipt"/></svg><b data-t="feesTab">Chegaradagi yig'imlar</b></button><button data-view="posts"><svg class="icon"><use href="#icon-map"/></svg><b data-t="postsTab">Postlar</b></button></nav>
+  <nav class="mobile-nav"><button class="active" data-view="permit"><svg class="icon"><use href="#icon-file-check"/></svg><b data-t="permitTab">Dazvol</b></button><button data-view="fees"><svg class="icon"><use href="#icon-receipt"/></svg><b data-t="feesTab">Yig'imlar</b></button><button data-view="posts"><svg class="icon"><use href="#icon-map"/></svg><b data-t="postsTab">Postlar</b></button><button data-view="oversize"><svg class="icon"><use href="#icon-truck"/></svg><b data-t="oversizeTab">Gabarit</b></button></nav>
   <div class="dialog-backdrop" id="feedback-dialog" hidden><form class="dialog-card" id="feedback-form"><div class="dialog-head"><div><small data-t="feedbackEyebrow">MA'LUMOTNI ANIQLASHTIRISH</small><h2 data-t="feedbackTitle">Xato ma'lumot haqida xabar berish</h2></div><button type="button" class="icon-button" id="feedback-close"><svg class="icon"><use href="#icon-x"/></svg></button></div><p data-t="feedbackHint">Xato yoki eskirgan joyni qisqa va aniq yozing. Yo'nalish hamda qoida versiyasi avtomatik biriktiriladi.</p><textarea id="feedback-message" minlength="5" maxlength="2000" required></textarea><div class="dialog-actions"><button type="button" id="feedback-cancel" data-t="cancel">Bekor qilish</button><button type="submit" class="primary-action"><svg class="icon"><use href="#icon-alert"/></svg><span data-t="send">Yuborish</span></button></div></form></div>
   <div class="toast" id="toast" hidden></div>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js'"></script>
-  <script src="/static/webapp/webapp.js?v=11"></script>
+  <script src="/static/webapp/webapp.js?v=15"></script>
 </body>
 </html>
