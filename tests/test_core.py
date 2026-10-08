@@ -563,6 +563,14 @@ class WebAppAssetTests(unittest.TestCase):
         self.assertIn('direction in {"entry", "transit"} and _bool(body.get("transit_declaration"))', backend)
         self.assertIn('direction in {"entry", "transit"} and _bool(body.get("customs_escort"))', backend)
 
+    def test_custom_country_pickers_use_visible_validation(self) -> None:
+        html = (ROOT / "app" / "static" / "webapp.html").read_text(encoding="utf-8")
+        script = (ROOT / "app" / "static" / "webapp.js").read_text(encoding="utf-8")
+        self.assertNotIn('data-t-placeholder="countrySearch" required', html)
+        self.assertIn("function requiredPickerValues", script)
+        self.assertIn("['permit-origin','permit-destination','permit-vehicle']", script)
+        self.assertIn("names=cargo?['fee-vehicle','fee-origin','fee-destination']:['fee-vehicle']", script)
+
     def test_admin_can_manage_transport_types(self) -> None:
         html = (ROOT / "app" / "static" / "admin.html").read_text(encoding="utf-8")
         script = (ROOT / "app" / "static" / "admin.js").read_text(encoding="utf-8")
