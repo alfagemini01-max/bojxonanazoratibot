@@ -8,6 +8,7 @@ from pathlib import Path
 from app.i18n import t
 from app.rule_normalization import repair_broken_rule_labels
 from app.services.fee_calculator import FeeCalculator
+from app.services.oversize_calculator import OversizeCalculator, OversizeInputError
 from app.services.permit import (
     Country,
     PermitResult,
@@ -233,6 +234,8 @@ class PermitRulesTests(unittest.TestCase):
         for lang in ("uz", "ru", "en"):
             self.assertNotEqual(t(lang, "ask_fee_mode"), "ask_fee_mode")
             self.assertNotEqual(t(lang, "button_fee_quick"), "button_fee_quick")
+            self.assertNotEqual(t(lang, "button_oversize"), "button_oversize")
+            self.assertNotEqual(t(lang, "oversize_open_button"), "oversize_open_button")
 
     def test_quick_fee_still_includes_transit_declaration(self) -> None:
         calculator = FeeCalculator(ROOT / "data" / "fees_2026.json", 412000, 12600)
@@ -281,6 +284,100 @@ class PermitRulesTests(unittest.TestCase):
             exceptions=[],
         )
         self.assertIn("Maxsus ikki tomonlama shart", build_permit_message(result, lang="uz"))
+
+
+class OversizeCalculatorTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.calculator = OversizeCalculator(ROOT / "data" / "oversize_rules.json", 440000, 12600)
+
+    @staticmethod
+    def payload(**changes):
+        payload = {
+            "carrier": "local",
+            "distance_km": 100,
+            "configuration": "one_trailer",
+            "body_type": "standard",
+            "axle_count": 5,
+            "gross_mass_t": 40,
+            "length_m": 20,
+            "width_m": 2.55,
+            "height_m": 4,
+            "axles": [{"actual_t": 8, "allowed_t": 10} for _ in range(5)],
+        }
+        payload.update(changes)
+        return payload
+
+    def test_vehicle_within_limits_has_no_special_payment(self) -> None:
+        result = self.calculator.calculate(self.payload())
+        self.assertFalse(result["special_permit_required"])
+        self.assertEqual(result["components"], [])
+        self.assertEqual(result["totals"]["uzs"], 0)
+
+    def test_local_mass_excess_uses_annex_25_rates(self) -> None:
+        result = self.calculator.calculate(
+            self.payload(gross_mass_t=45, axles=[{"actual_t": 9, "allowed_t": 10} for _ in range(5)])
+        )
+        amounts = {item["key"]: item["amount"] for item in result["components"]}
+        self.assertEqual(amounts["application_review"], 0)
+        self.assertEqual(amounts["permit"], 237600)
+        self.assertEqual(amounts["gross_mass"], 35200)
+        self.assertEqual(result["totals"]["uzs"], 272800)
+        review = next(item for item in result["components"] if item["key"] == "application_review")
+        self.assertEqual(review["basis"], "VMQ-86, 25-ilova, 6-band")
+        self.assertEqual(result["totals"]["bhm"], 440000)
+
+    def test_foreign_dimension_excess_is_charged_in_usd(self) -> None:
+        result = self.calculator.calculate(
+            self.payload(carrier="foreign", length_m=21)
+        )
+        amounts = {item["key"]: item["amount"] for item in result["components"]}
+        self.assertEqual(amounts, {"application_review": 0.0, "permit": 25.0, "dimension": 15.0})
+        self.assertEqual(result["totals"]["usd"], 40.0)
+
+    def test_each_overloaded_axle_is_calculated_separately(self) -> None:
+        result = self.calculator.calculate(
+            self.payload(gross_mass_t=55, axles=[{"actual_t": 11, "allowed_t": 10} for _ in range(5)])
+        )
+        axle_items = [item for item in result["components"] if item["key"] == "axle"]
+        self.assertEqual(len(axle_items), 5)
+        self.assertTrue(all(item["amount"] == 110000 for item in axle_items))
+
+    def test_special_inspection_uses_twenty_percent_from_100_t(self) -> None:
+        result = self.calculator.calculate(
+            self.payload(
+                configuration="multi_trailer",
+                axle_count=12,
+                gross_mass_t=120,
+                axles=[{"actual_t": 10, "allowed_t": 10} for _ in range(12)],
+                distance_km=10,
+                special_inspection=True,
+            )
+        )
+        inspection = next(item for item in result["components"] if item["key"] == "special_inspection")
+        self.assertEqual(inspection["amount"], 880000)
+
+    def test_special_inspection_is_detected_automatically(self) -> None:
+        result = self.calculator.calculate(self.payload(width_m=3.6, distance_km=10))
+        self.assertTrue(result["special_inspection_required"])
+        inspection = next(item for item in result["components"] if item["key"] == "special_inspection")
+        self.assertEqual(inspection["amount"], 660000)
+        self.assertIn("escort_vehicle", result["coordination"])
+
+    def test_measurement_tolerance_matches_current_resolution_342(self) -> None:
+        result = self.calculator.calculate(self.payload())
+        self.assertEqual(
+            result["measurement_tolerance"],
+            {
+                "stationary_or_up_to_5_kmh_percent": 5,
+                "over_5_kmh_percent": 10,
+                "basis": "VMQ-342 bilan tasdiqlangan qoidalar, 5-band",
+            },
+        )
+
+    def test_axle_sum_must_match_gross_mass(self) -> None:
+        with self.assertRaises(OversizeInputError):
+            self.calculator.calculate(self.payload(gross_mass_t=50))
 
 
 class AdminTemplateTests(unittest.TestCase):
@@ -357,7 +454,7 @@ class WebAppAssetTests(unittest.TestCase):
         self.assertIn('data-view="posts"', html)
         self.assertIn('id="posts-map"', html)
         self.assertNotIn('id="public-post-list"', html)
-        self.assertIn('/static/webapp/leaflet-local.css', html)
+        self.assertNotIn('/static/webapp/leaflet-local.css', html)
         self.assertIn("map-mode", script)
         self.assertIn("saveCurrentRoute", script)
         self.assertIn("openFeedback", script)
@@ -365,25 +462,44 @@ class WebAppAssetTests(unittest.TestCase):
         self.assertIn('/api/webapp/feedback', backend)
         self.assertIn('/api/webapp/saved-routes', backend)
         self.assertIn('/api/webapp/uzbekistan-border', backend)
-        self.assertIn("L.geoJSON", script)
+        self.assertIn("loadYandexMaps", script)
+        self.assertIn("ymaps.geoQuery", script)
         self.assertNotIn("const UZ_BORDER", script)
-        self.assertIn("leaflet@1.9.4", html)
+        self.assertNotIn("leaflet@1.9.4", html)
         self.assertNotIn("integrity=", html)
-        self.assertIn("World_Imagery", script)
+        self.assertIn("api-maps.yandex.ru/2.1", script)
+        self.assertIn("/api/webapp/map-config", backend)
         self.assertIn("postVisual", script)
         for post_type in ("CHBP", "TIF", "AERO", "RW", "PORT"):
             self.assertIn(post_type, script)
+
+    def test_oversize_webapp_service_is_available(self) -> None:
+        html = (ROOT / "app" / "static" / "webapp.html").read_text(encoding="utf-8")
+        script = (ROOT / "app" / "static" / "webapp.js").read_text(encoding="utf-8")
+        backend = (ROOT / "app" / "webapp.py").read_text(encoding="utf-8")
+        self.assertIn('data-view="oversize"', html)
+        self.assertIn('id="oversize-map"', html)
+        self.assertIn("renderOversizeRoutes", script)
+        self.assertIn("new URLSearchParams(window.location.search).get('view')", script)
+        self.assertIn("/api/webapp/oversize/routes", backend)
+        self.assertIn("/api/webapp/oversize/calculate", backend)
+
+    def test_telegram_exposes_oversize_calculator(self) -> None:
+        handlers = (ROOT / "app" / "handlers.py").read_text(encoding="utf-8")
+        self.assertIn('button_texts("button_oversize")', handlers)
+        self.assertIn('/app?view=oversize', handlers)
 
     def test_admin_post_editor_supports_map_coordinates(self) -> None:
         html = (ROOT / "app" / "static" / "admin.html").read_text(encoding="utf-8")
         script = (ROOT / "app" / "static" / "admin.js").read_text(encoding="utf-8")
         backend = (ROOT / "app" / "admin_panel.py").read_text(encoding="utf-8")
-        self.assertIn("leaflet@1.9.4", html)
+        self.assertNotIn("leaflet@1.9.4", html)
         self.assertIn("parseCoordinates", script)
         self.assertIn('id="post-coordinates"', script)
         self.assertIn('id="post-coordinate-map"', script)
         self.assertIn("openCoordinatePicker", script)
-        self.assertIn("World_Imagery", script)
+        self.assertIn("loadAdminYandex", script)
+        self.assertIn("ymaps.geoQuery", script)
         self.assertIn("AbortController", script)
         self.assertIn("asyncio.wait_for(portal_store.save_post", backend)
         self.assertIn('asyncio.create_task(audit("customs_post_save"', backend)
@@ -406,6 +522,8 @@ class WebAppAssetTests(unittest.TestCase):
             self.assertIn(f'id="screen-{screen}"', html)
         self.assertIn("loadAnalytics", script)
         self.assertIn("system-status", html)
+        self.assertIn("database-capacity", html)
         self.assertIn('/admin/api/analytics', backend)
+        self.assertNotIn("Lokal disk", script)
 if __name__ == "__main__":
     unittest.main()
