@@ -580,9 +580,18 @@ def setup_webapp_routes(app: web.Application, settings: Settings, portal_store: 
         body = await request.json()
         start = _coordinate(body.get("start"), "Boshlanish nuqtasi")
         finish = _coordinate(body.get("finish"), "Tugash nuqtasi")
+        raw_waypoints = body.get("waypoints") or []
+        if not isinstance(raw_waypoints, list) or len(raw_waypoints) > 5:
+            raise web.HTTPBadRequest(text="Oraliq nuqtalar soni 5 tadan oshmasligi kerak.")
+        waypoints = [
+            _coordinate(point, f"{index}-oraliq nuqta")
+            for index, point in enumerate(raw_waypoints, 1)
+        ]
+        route_points = [start, *waypoints, finish]
         cache_key = ":".join(
             f"{value:.5f}"
-            for value in (start["lat"], start["lon"], finish["lat"], finish["lon"])
+            for point in route_points
+            for value in (point["lat"], point["lon"])
         )
         cached = route_cache.get(cache_key)
         if cached and cached[0] > time.time():
@@ -591,14 +600,14 @@ def setup_webapp_routes(app: web.Application, settings: Settings, portal_store: 
             return web.json_response(cached[1], headers={"Cache-Control": "private, max-age=300"})
         url = (
             f"{settings.routing_base_url}/route/v1/driving/"
-            f"{start['lon']},{start['lat']};{finish['lon']},{finish['lat']}"
+            + ";".join(f"{point['lon']},{point['lat']}" for point in route_points)
         )
         try:
             client = await routing_client()
             async with client.get(
                 url,
                 params={
-                    "alternatives": "3",
+                    "alternatives": "false" if waypoints else "3",
                     "steps": "false",
                     "overview": "simplified",
                     "geometries": "geojson",
@@ -643,6 +652,7 @@ def setup_webapp_routes(app: web.Application, settings: Settings, portal_store: 
         result = {
             "ok": True,
             "provider": "OSRM",
+            "waypoint_count": len(waypoints),
             "routes": routes,
             "warning": "Marshrut tavsiyaviy. Og'ir yoki katta hajmli transport uchun yakuniy yo'nalish vakolatli organ bilan kelishiladi.",
         }
