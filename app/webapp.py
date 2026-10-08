@@ -478,6 +478,9 @@ def _telegram_user_id(init_data: str, bot_token: str) -> int | None:
 
 
 def setup_webapp_routes(app: web.Application, settings: Settings, portal_store: PortalStore | None = None) -> None:
+    post_revision_state = app.setdefault(
+        "posts_revision_state", {"value": int(time.time() * 1000)}
+    )
     permit_service = PermitRuleService(settings.permission_rules_path)
     fee_calculator = FeeCalculator(settings.fees_rules_path, settings.bhm_value, settings.usd_fallback_rate)
     oversize_calculator = OversizeCalculator(
@@ -728,7 +731,16 @@ def setup_webapp_routes(app: web.Application, settings: Settings, portal_store: 
         rows = await portal_store.list_posts()
         for row in rows:
             row["name"] = row.get(f"name_{lang}") or row.get("name_uz")
-        return web.json_response({"ok": True, "posts": rows}, headers={"Cache-Control": "public, max-age=120"})
+        return web.json_response(
+            {"ok": True, "posts": rows, "revision": post_revision_state["value"]},
+            headers={"Cache-Control": "no-store, private"},
+        )
+
+    async def posts_revision(_: web.Request) -> web.Response:
+        return web.json_response(
+            {"ok": True, "revision": post_revision_state["value"]},
+            headers={"Cache-Control": "no-store, private"},
+        )
 
     async def uzbekistan_border(_: web.Request) -> web.StreamResponse:
         border_path = settings.permission_rules_path.parent / "uzbekistan_border.geojson"
@@ -783,6 +795,7 @@ def setup_webapp_routes(app: web.Application, settings: Settings, portal_store: 
     app.router.add_post("/api/webapp/oversize/routes", oversize_routes)
     app.router.add_post("/api/webapp/oversize/calculate", oversize_check)
     app.router.add_get("/api/webapp/posts", public_posts)
+    app.router.add_get("/api/webapp/posts/revision", posts_revision)
     app.router.add_get("/api/webapp/uzbekistan-border", uzbekistan_border)
     app.router.add_get("/api/webapp/map-config", map_config)
     app.router.add_post("/api/webapp/feedback", feedback)

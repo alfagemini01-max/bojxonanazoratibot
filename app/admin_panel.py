@@ -835,6 +835,9 @@ loadAll().catch(e=>toast(e.message));
 
 
 def setup_admin_routes(app: web.Application, settings: Settings, portal_store: PortalStore | None = None) -> None:
+    post_revision_state = app.setdefault(
+        "posts_revision_state", {"value": int(time.time() * 1000)}
+    )
     permission_write_lock = asyncio.Lock()
     version_store = RuleVersionStore(settings.user_database_url, settings.permission_rules_path.parent)
 
@@ -1598,8 +1601,9 @@ def setup_admin_routes(app: web.Application, settings: Settings, portal_store: P
         except Exception:
             logger.exception("Customs post could not be saved")
             return _json_error("Postni saqlashda ma'lumotlar bazasi xatosi yuz berdi.", 500)
+        post_revision_state["value"] = int(time.time() * 1000)
         asyncio.create_task(audit("customs_post_save", {"code": item["code"]}))
-        return web.json_response({"ok": True, "item": item})
+        return web.json_response({"ok": True, "item": item, "revision": post_revision_state["value"]})
 
     async def post_delete(request: web.Request) -> web.Response:
         _require_admin(request, settings)
@@ -1612,8 +1616,9 @@ def setup_admin_routes(app: web.Application, settings: Settings, portal_store: P
         except Exception:
             logger.exception("Customs post could not be disabled")
             return _json_error("Postni o'chirishda ma'lumotlar bazasi xatosi yuz berdi.", 500)
+        post_revision_state["value"] = int(time.time() * 1000)
         asyncio.create_task(audit("customs_post_disable", {"code": request.match_info["code"]}))
-        return web.json_response({"ok": True})
+        return web.json_response({"ok": True, "revision": post_revision_state["value"]})
 
     app.router.add_get("/admin", admin_index)
     app.router.add_get("/admin/dashboard", admin_index)
