@@ -13,9 +13,10 @@
     "transit_declaration": "VMning 31.01.2025 y. 55-son qarori, 1-ilova",
     "overdue_delivery": "VMning 31.12.2022 y. 737-son qarori, 3-1-band",
     "temporary_import_overstay": "VMning 31.12.2022 y. 737-son qarori, 3-1-band",
-    "tinted_foreign": "IIV, DBQ, MV va DXXning 2018 y. qo'shma qarori",
+    "tinted_foreign": "3091-son Nizom (05.10.2018), 2-3-bandlar; VMning 18.07.2018 y. 547-son qarori",
     "tinted_domestic": "VMning 18.07.2018 y. 547-son qarori",
-    "osago": "VMning 30.12.2021 y. 790-son qarori",
+    "osago": "O'RQ-155 (21.04.2008) va VMning 24.06.2008 y. 141-son qarori",
+    "customs_escort": "VMning 22.12.2020 y. 800-son qarori va VMning 31.01.2025 y. 55-son qarori, 1-ilova",
     "yhx_fines": "VMning 05.08.2020 y. 463-son qarori"
   },
   "customs_clearance_bhm_scale": [
@@ -34,7 +35,25 @@
     "transit_declaration_change_bhm": 0.1,
     "delivery_overdue_bhm_per_day": 1,
     "temporary_import_overstay_bhm_per_day": 1,
-    "tinted_foreign_usd": 15
+    "tinted_foreign_usd": 15,
+    "customs_escort_up_to_200_bhm": 2,
+    "customs_escort_over_200_bhm": 5
+  },
+  "osago": {
+    "insurance_sum_som": 80000000,
+    "foreign_territory_coefficient": 2.0,
+    "unlimited_driver_coefficient": 2.0,
+    "annual_rate_percent": {
+      "light": 0.2,
+      "truck": 0.35,
+      "truck_trailer": 0.35,
+      "bus": 0.4
+    },
+    "period_coefficient": {
+      "up_to_15": 0.2,
+      "up_to_2_months": 0.4,
+      "up_to_12_months": 1.0
+    }
   },
   "entry_fee": {
     "iran_usd": 0,
