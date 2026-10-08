@@ -91,14 +91,14 @@ class OversizeCalculator:
         axle_count = int(_number(body.get("axle_count"), "O'qlar soni", 2, 20))
         raw_axles = body.get("axles")
         if not isinstance(raw_axles, list) or len(raw_axles) != axle_count:
-            raise OversizeInputError("Har bir o'q uchun haqiqiy va ruxsat etilgan yuklamani kiriting.")
+            raise OversizeInputError("Har bir o'q uchun tarozida o'lchangan haqiqiy yuklamani kiriting.")
 
         axles: list[dict[str, float]] = []
+        allowed = limits["axle_t"]
         for index, row in enumerate(raw_axles, 1):
             if not isinstance(row, dict):
                 raise OversizeInputError(f"{index}-o'q ma'lumoti noto'g'ri.")
             actual = _number(row.get("actual_t"), f"{index}-o'q haqiqiy yuklamasi", 0.01, 50)
-            allowed = _number(row.get("allowed_t", limits["axle_t"]), f"{index}-o'q me'yori", 0.01, 30)
             ratio = actual / allowed
             axles.append({"index": index, "actual_t": actual, "allowed_t": allowed, "ratio": ratio})
 
