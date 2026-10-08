@@ -19,7 +19,7 @@ from app.portal_store import PortalStore
 from app.webapp import setup_webapp_routes, webapp_page
 
 logger = logging.getLogger(__name__)
-APP_VERSION = "2026-10-08-border-fees-cbu-v17"
+APP_VERSION = "2026-10-08-form-validation-v18"
 
 
 def create_http_middlewares(settings: Settings):
