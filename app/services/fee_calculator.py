@@ -20,6 +20,7 @@ from app.services.permit import (
     transport_type_label,
     turkmenistan_extra_fee_applies,
 )
+from app.services.currency_rates import current_usd_rate
 
 
 TAJIKISTAN_CODE = "762"
@@ -96,6 +97,7 @@ class FeeCalculator:
         self.legal_basis = self.data.get("legal_basis", {})
 
     def reload_if_changed(self) -> None:
+        self.usd_rate = current_usd_rate(self.usd_rate)
         now = monotonic()
         if now - self._last_reload_check < self._reload_check_interval:
             return
@@ -115,6 +117,33 @@ class FeeCalculator:
                 bhm = float(row["bhm"])
                 return bhm, int(round(bhm * self.bhm_value))
         return 25.0, int(round(25 * self.bhm_value))
+
+    def osago_amount(self, vehicle_type: str, period: str | None) -> tuple[float, int]:
+        """Return the OSAGO period coefficient and premium for a foreign vehicle."""
+        self.reload_if_changed()
+        config = self.data["osago"]
+        legacy_periods = {
+            "one_month": "up_to_2_months",
+            "over_one_month": "up_to_12_months",
+        }
+        normalized_period = legacy_periods.get(str(period or ""), str(period or "up_to_15"))
+        period_coefficient = float(config["period_coefficient"].get(normalized_period, 0.2))
+        annual_rate = float(config["annual_rate_percent"].get(vehicle_type, 0.2))
+        premium = (
+            float(config["insurance_sum_som"])
+            * annual_rate
+            * float(config["foreign_territory_coefficient"])
+            * float(config["unlimited_driver_coefficient"])
+            * period_coefficient
+            / 100
+        )
+        return period_coefficient, int(round(premium))
+
+    def customs_escort_amount(self, distance: str | None) -> tuple[float, int]:
+        self.reload_if_changed()
+        key = "customs_escort_over_200_bhm" if distance == "over_200" else "customs_escort_up_to_200_bhm"
+        bhm = float(self.data["fixed"][key])
+        return bhm, int(round(bhm * self.bhm_value))
 
     def base_entry_fee_usd(self, vehicle_country_code: str, weight_category: str | None, stay_duration: str | None) -> float:
         self.reload_if_changed()
@@ -239,8 +268,7 @@ class FeeCalculator:
                 )
             )
 
-        transit_declaration_required = cargo_vehicle and direction in {"entry", "transit"}
-        if transit_declaration_required or _yes(payload.get("transit_declaration")):
+        if cargo_vehicle and entry_or_transit and _yes(payload.get("transit_declaration")):
             amount = int(round(float(self.data["fixed"]["transit_declaration_bhm"]) * self.bhm_value))
             items.append(
                 FeeItem(
@@ -248,12 +276,12 @@ class FeeCalculator:
                     amount,
                     None,
                     self.legal_basis["transit_declaration"],
-                    "Yuk bojxona nazoratida harakatlanganda 1 ta tranzit deklaratsiyasi uchun 0,25 BHM.",
+                    "Tovar tranzit bojxona rejimiga joylashtirilganda 1 ta tranzit deklaratsiyasi uchun 0,25 BHM.",
                 )
             )
 
         if _yes(payload.get("tinted")):
-            if foreign_vehicle and direction in {"entry", "transit"}:
+            if foreign_vehicle and vehicle_type == "light" and direction in {"entry", "transit"}:
                 usd = float(self.data["fixed"]["tinted_foreign_usd"])
                 items.append(
                     FeeItem(
@@ -261,14 +289,38 @@ class FeeCalculator:
                         int(round(usd * self.usd_rate)),
                         usd,
                         self.legal_basis["tinted_foreign"],
-                        "Xorijiy avtotransport vaqtincha kirishi yoki tranziti uchun.",
+                        "Faqat xorijiy, oynalari qoraytirilgan yengil avtomobilning vaqtincha kirishi yoki tranziti uchun.",
                     )
                 )
-            else:
+            elif vehicle_type == "light" and not foreign_vehicle:
                 warnings.append("🚘 Qoraytirilgan oyna bo'yicha ruxsatnoma toifaga qarab 5 BHM dan 50 BHM gacha rasmiylashtiriladi.")
+            elif vehicle_type != "light":
+                warnings.append("🚘 15 USD tonirovka yig'imi yuk avtomobili yoki avtobusga emas, xorijiy yengil avtomobilga tatbiq etiladi.")
 
         if foreign_vehicle and entry_or_transit and _yes(payload.get("osago_missing")):
-            warnings.append("🛡️ Xorijiy avto egasining majburiy sug'urtasi OSAGO chegara postida VM 790-son qarori jadvali bo'yicha rasmiylashtiriladi.")
+            period_coefficient, amount = self.osago_amount(vehicle_type, str(payload.get("osago_period") or "up_to_15"))
+            items.append(
+                FeeItem(
+                    "Majburiy avtosug'urta (OSAGO)",
+                    amount,
+                    None,
+                    self.legal_basis["osago"],
+                    f"Xorijiy transport; cheklanmagan haydovchilar; muddat koeffitsiyenti: {period_coefficient:g}.",
+                )
+            )
+
+        if cargo_vehicle and entry_or_transit and _yes(payload.get("customs_escort")):
+            distance = str(payload.get("customs_escort_distance") or "up_to_200")
+            bhm, amount = self.customs_escort_amount(distance)
+            items.append(
+                FeeItem(
+                    "Bojxona kuzatuvi yig'imi",
+                    amount,
+                    None,
+                    self.legal_basis["customs_escort"],
+                    f"Bojxona organi kuzatuv belgilagan holat; stavka: {bhm:g} BHM.",
+                )
+            )
 
         if _yes(payload.get("heavy")):
             warnings.append("🚛 Og'ir vaznli yoki yirik gabaritli transport uchun qonunchilikda belgilangan alohida to'lov undirilishi mumkin.")
@@ -280,19 +332,19 @@ class FeeCalculator:
             warnings.append("🐾 Hayvon yoki hayvonot mahsuloti bo'lsa, veterinariya nazorati xizmatlari preyskurant bo'yicha rasmiylashtiriladi.")
 
         temp_days = _int_value(payload.get("temp_overstay_days"))
-        if temp_days:
+        if foreign_vehicle and direction == "exit" and temp_days:
             items.append(
                 FeeItem(
                     "Vaqtincha olib kirish muddatini o'tkazish",
                     temp_days * self.bhm_value,
                     None,
                     self.legal_basis["temporary_import_overstay"],
-                    f"Kechikkan muddat: {temp_days} kun; har kun uchun 1 BHM.",
+                    f"Bir kalendar yilida 90 kundan ortiq qolgan muddat: {temp_days} kun; har kun uchun 1 BHM.",
                 )
             )
 
         delivery_days = _int_value(payload.get("delivery_overdue_days"))
-        if delivery_days:
+        if cargo_vehicle and direction in {"transit", "exit"} and delivery_days:
             items.append(
                 FeeItem(
                     "Yukni muddatida yetkazmaganlik yig'imi",
