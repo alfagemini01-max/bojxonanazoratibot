@@ -303,7 +303,7 @@ class OversizeCalculatorTests(unittest.TestCase):
             "length_m": 20,
             "width_m": 2.55,
             "height_m": 4,
-            "axles": [{"actual_t": 8, "allowed_t": 10} for _ in range(5)],
+            "axles": [{"actual_t": 8} for _ in range(5)],
         }
         payload.update(changes)
         return payload
@@ -316,7 +316,7 @@ class OversizeCalculatorTests(unittest.TestCase):
 
     def test_local_mass_excess_uses_annex_25_rates(self) -> None:
         result = self.calculator.calculate(
-            self.payload(gross_mass_t=45, axles=[{"actual_t": 9, "allowed_t": 10} for _ in range(5)])
+            self.payload(gross_mass_t=45, axles=[{"actual_t": 9} for _ in range(5)])
         )
         amounts = {item["key"]: item["amount"] for item in result["components"]}
         self.assertEqual(amounts["application_review"], 0)
@@ -337,11 +337,18 @@ class OversizeCalculatorTests(unittest.TestCase):
 
     def test_each_overloaded_axle_is_calculated_separately(self) -> None:
         result = self.calculator.calculate(
-            self.payload(gross_mass_t=55, axles=[{"actual_t": 11, "allowed_t": 10} for _ in range(5)])
+            self.payload(gross_mass_t=55, axles=[{"actual_t": 11} for _ in range(5)])
         )
         axle_items = [item for item in result["components"] if item["key"] == "axle"]
         self.assertEqual(len(axle_items), 5)
         self.assertTrue(all(item["amount"] == 110000 for item in axle_items))
+
+    def test_axle_limit_is_server_controlled(self) -> None:
+        result = self.calculator.calculate(
+            self.payload(axles=[{"actual_t": 8, "allowed_t": 1} for _ in range(5)])
+        )
+        self.assertFalse(result["special_permit_required"])
+        self.assertTrue(all(row["allowed_t"] == 10 for row in result["axles"]))
 
     def test_special_inspection_uses_twenty_percent_from_100_t(self) -> None:
         result = self.calculator.calculate(
@@ -349,7 +356,7 @@ class OversizeCalculatorTests(unittest.TestCase):
                 configuration="multi_trailer",
                 axle_count=12,
                 gross_mass_t=120,
-                axles=[{"actual_t": 10, "allowed_t": 10} for _ in range(12)],
+                axles=[{"actual_t": 10} for _ in range(12)],
                 distance_km=10,
                 special_inspection=True,
             )
