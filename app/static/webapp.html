@@ -6,7 +6,7 @@
   <link rel="icon" href="/static/webapp/uzbekistan-emblem.png">
   <meta name="theme-color" content="#0b3151">
   <title>Ruxsatnoma va chegara yig'imlari</title>
-  <link rel="stylesheet" href="/static/webapp/webapp.css?v=16">
+  <link rel="stylesheet" href="/static/webapp/webapp.css?v=17">
 </head>
 <body>
   <svg class="icon-sprite" aria-hidden="true">
@@ -156,7 +156,7 @@
           <div class="field"><label for="oversize-height" data-t="heightM">Yo'l sathidan balandlik, m</label><input id="oversize-height" type="number" value="4" min="0.1" max="20" step="0.01" required></div>
         </div>
 
-        <div class="axle-head"><div><h3 data-t="axleLoads">O'qlar bo'yicha yuklama</h3><p data-t="axleHint">Har bir o'qning tarozida o'lchangan yuklamasi va shu yo'l uchun ruxsat etilgan me'yorini kiriting.</p></div><span data-t="defaultAxle">Standart me'yor: 10 t</span></div>
+        <div class="axle-head"><div><h3 data-t="axleLoads">O'qlar bo'yicha yuklama</h3><p data-t="axleHint">Har bir o'qqa tushadigan tarozida o'lchangan haqiqiy yuklamani kiriting. Me'yor tizim tomonidan avtomatik qo'llanadi.</p></div></div>
         <div id="oversize-axles" class="axle-grid"></div>
         <div class="checks oversize-checks">
           <label><input id="oversize-railway" type="checkbox"><span data-t="railwayCrossing">Marshrut temiryo'l kesishmasidan o'tadi</span></label>
@@ -175,6 +175,6 @@
   <div class="dialog-backdrop" id="feedback-dialog" hidden><form class="dialog-card" id="feedback-form"><div class="dialog-head"><div><small data-t="feedbackEyebrow">MA'LUMOTNI ANIQLASHTIRISH</small><h2 data-t="feedbackTitle">Xato ma'lumot haqida xabar berish</h2></div><button type="button" class="icon-button" id="feedback-close"><svg class="icon"><use href="#icon-x"/></svg></button></div><p data-t="feedbackHint">Xato yoki eskirgan joyni qisqa va aniq yozing. Yo'nalish hamda qoida versiyasi avtomatik biriktiriladi.</p><textarea id="feedback-message" minlength="5" maxlength="2000" required></textarea><div class="dialog-actions"><button type="button" id="feedback-cancel" data-t="cancel">Bekor qilish</button><button type="submit" class="primary-action"><svg class="icon"><use href="#icon-alert"/></svg><span data-t="send">Yuborish</span></button></div></form></div>
   <div class="toast" id="toast" hidden></div>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="/static/webapp/webapp.js?v=16"></script>
+  <script src="/static/webapp/webapp.js?v=17"></script>
 </body>
 </html>
