@@ -6,7 +6,7 @@
   <link rel="icon" href="/static/webapp/uzbekistan-emblem.png">
   <meta name="theme-color" content="#0b3151">
   <title>Ruxsatnoma va chegara yig'imlari</title>
-  <link rel="stylesheet" href="/static/webapp/webapp.css?v=18">
+  <link rel="stylesheet" href="/static/webapp/webapp.css?v=19">
 </head>
 <body>
   <svg class="icon-sprite" aria-hidden="true">
@@ -43,6 +43,10 @@
       <button class="close-app icon-button" id="close-app" type="button" hidden aria-label="Yopish"><svg class="icon"><use href="#icon-x"/></svg></button>
     </div>
   </header>
+  <section class="currency-ticker" id="currency-ticker" hidden aria-label="Markaziy bank valyuta kurslari">
+    <div class="currency-ticker-label">CBU</div>
+    <div class="currency-ticker-window"><div class="currency-ticker-track" id="currency-ticker-track"></div></div>
+  </section>
 
   <main>
     <section class="intro">
@@ -100,16 +104,20 @@
         <div class="section-head"><span class="step">2</span><div><h2 data-t="extraConditions">Qo'shimcha holatlar</h2><p data-t="extraHint">Belgilangan bandlar hisob-kitobga qo'shiladi.</p></div></div>
         <div class="checks fee-checks">
           <label class="cargo-only"><input id="fee-declared" type="checkbox"><span data-t="declared">Yuk deklaratsiyasi rasmiylashtiriladi</span></label>
-          <label><input id="fee-tinted" type="checkbox"><span data-t="tinted">Qoraytirilgan oyna mavjud</span></label>
-          <label><input id="fee-osago" type="checkbox"><span data-t="osago">OSAGO sug'urta polisi mavjud emas</span></label>
+          <label class="cargo-only entry-transit-only"><input id="fee-transit-declaration" type="checkbox"><span data-t="transitDeclaration">Tovar tranzit bojxona rejimiga joylashtiriladi</span></label>
+          <label class="light-only foreign-entry-transit-only" hidden><input id="fee-tinted" type="checkbox"><span data-t="tinted">Qoraytirilgan oyna mavjud</span></label>
+          <label class="foreign-entry-transit-only" hidden><input id="fee-osago" type="checkbox"><span data-t="osago">OSAGO sug'urta polisi mavjud emas</span></label>
+          <label class="cargo-only entry-transit-only"><input id="fee-customs-escort" type="checkbox"><span data-t="customsEscort">Bojxona organi kuzatuv belgilagan</span></label>
           <label class="cargo-only"><input id="fee-heavy" type="checkbox"><span data-t="heavy">Og'ir vaznli yoki yirik gabaritli transport</span></label>
-          <label class="cargo-only"><input id="fee-humanitarian" type="checkbox"><span data-t="humanitarian">Gumanitar yuk</span></label>
+          <label class="cargo-only entry-transit-only"><input id="fee-humanitarian" type="checkbox"><span data-t="humanitarian">Gumanitar yuk</span></label>
           <label class="cargo-only"><input id="fee-animal" type="checkbox"><span data-t="animal">Hayvon yoki hayvonot mahsuloti mavjud</span></label>
         </div>
         <div class="two-cols conditional-fields">
           <div class="field" id="customs-value-field" hidden><label for="customs-value" data-t="customsValue">Yukning bojxona qiymati, USD</label><input id="customs-value" type="number" min="0.01" step="0.01" value="10000"></div>
-          <div class="field"><label for="temp-days" data-t="tempDays">Vaqtincha olib kirish muddati o'tgan kunlar</label><input id="temp-days" type="number" min="0" step="1" value="0"></div>
-          <div class="field cargo-only"><label for="delivery-days" data-t="deliveryDays">Yukni yetkazish muddati o'tgan kunlar</label><input id="delivery-days" type="number" min="0" step="1" value="0"></div>
+          <div class="field" id="osago-period-field" hidden><label for="osago-period" data-t="osagoPeriod">OSAGO muddati</label><select id="osago-period"><option value="up_to_15" data-t="osago15">15 kungacha</option><option value="up_to_2_months" data-t="osago2m">2 oygacha</option><option value="up_to_12_months" data-t="osago12m">12 oygacha</option></select></div>
+          <div class="field cargo-only" id="customs-escort-distance-field" hidden><label for="customs-escort-distance" data-t="customsEscortDistance">Bojxona kuzatuvi masofasi</label><select id="customs-escort-distance"><option value="up_to_200" data-t="escort200">200 km gacha</option><option value="over_200" data-t="escortOver200">200 km dan ortiq</option></select></div>
+          <div class="field foreign-exit-only" hidden><label for="temp-days" data-t="tempDays">Bir kalendar yilida 90 kundan ortiq qolgan kunlar</label><input id="temp-days" type="number" min="0" step="1" value="0"></div>
+          <div class="field cargo-only transit-exit-only"><label for="delivery-days" data-t="deliveryDays">Yukni yetkazish muddati o'tgan kunlar</label><input id="delivery-days" type="number" min="0" step="1" value="0"></div>
         </div>
         <div class="form-error" id="fees-error" hidden></div>
         <button class="primary-action" type="submit"><svg class="icon"><use href="#icon-calculator"/></svg><span data-t="calculateFees">Yig'imlarni hisoblash</span></button>
@@ -177,6 +185,6 @@
   <div class="dialog-backdrop" id="feedback-dialog" hidden><form class="dialog-card" id="feedback-form"><div class="dialog-head"><div><small data-t="feedbackEyebrow">MA'LUMOTNI ANIQLASHTIRISH</small><h2 data-t="feedbackTitle">Xato ma'lumot haqida xabar berish</h2></div><button type="button" class="icon-button" id="feedback-close"><svg class="icon"><use href="#icon-x"/></svg></button></div><p data-t="feedbackHint">Xato yoki eskirgan joyni qisqa va aniq yozing. Yo'nalish hamda qoida versiyasi avtomatik biriktiriladi.</p><textarea id="feedback-message" minlength="5" maxlength="2000" required></textarea><div class="dialog-actions"><button type="button" id="feedback-cancel" data-t="cancel">Bekor qilish</button><button type="submit" class="primary-action"><svg class="icon"><use href="#icon-alert"/></svg><span data-t="send">Yuborish</span></button></div></form></div>
   <div class="toast" id="toast" hidden></div>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="/static/webapp/webapp.js?v=19"></script>
+  <script src="/static/webapp/webapp.js?v=20"></script>
 </body>
 </html>
