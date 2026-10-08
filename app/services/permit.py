@@ -797,9 +797,9 @@ def border_payment_table(result: PermitResult, lang: str | None = "uz") -> str:
     if code == "ru":
         rows: list[tuple[str, str, str]] = []
         if transit_related:
-            rows.append(("Транзитная декларация", "103 000 сум", "0,25 БРВ / 1 декларация"))
-            rows.append(("Изменение ТД", "41 200 сум", "0,10 БРВ"))
-            rows.append(("Просрочка доставки", "412 000 сум/день", "1 БРВ за день"))
+            rows.append(("Транзитная декларация", "110 000 сум", "0,25 БРВ / 1 декларация"))
+            rows.append(("Изменение ТД", "44 000 сум", "0,10 БРВ"))
+            rows.append(("Просрочка доставки", "440 000 сум/день", "1 БРВ за день"))
         if export_related:
             rows.append(("Грузовая декларация", "1-25 БРВ", "по таможенной стоимости"))
         rows.append(("Карантин/вет/фито", "по прейскуранту", "если товар подконтролен"))
@@ -810,9 +810,9 @@ def border_payment_table(result: PermitResult, lang: str | None = "uz") -> str:
     if code == "en":
         rows: list[tuple[str, str, str]] = []
         if transit_related:
-            rows.append(("Transit declaration", "103,000 UZS", "0.25 BCU / declaration"))
-            rows.append(("TD amendment", "41,200 UZS", "0.10 BCU"))
-            rows.append(("Delivery overdue", "412,000 UZS/day", "1 BCU per day"))
+            rows.append(("Transit declaration", "110,000 UZS", "0.25 BCU / declaration"))
+            rows.append(("TD amendment", "44,000 UZS", "0.10 BCU"))
+            rows.append(("Delivery overdue", "440,000 UZS/day", "1 BCU per day"))
         if export_related:
             rows.append(("Cargo declaration", "1-25 BCU", "by customs value"))
         rows.append(("Quarantine/vet/phyto", "price list", "if goods are controlled"))
@@ -822,9 +822,9 @@ def border_payment_table(result: PermitResult, lang: str | None = "uz") -> str:
         return table(rows, ("Payment", "Amount", "Condition"))
     rows: list[tuple[str, str, str]] = []
     if transit_related:
-        rows.append(("Tranzit deklaratsiyasi", "103 000 so'm", "0,25 BHM / 1 ta"))
-        rows.append(("TD o'zgartirish", "41 200 so'm", "0,10 BHM"))
-        rows.append(("Yuk kechiksa", "412 000 so'm/kun", "1 BHM har kun"))
+        rows.append(("Tranzit deklaratsiyasi", "110 000 so'm", "0,25 BHM / 1 ta"))
+        rows.append(("TD o'zgartirish", "44 000 so'm", "0,10 BHM"))
+        rows.append(("Yuk kechiksa", "440 000 so'm/kun", "1 BHM har kun"))
     if export_related:
         rows.append(("Yuk deklaratsiyasi", "1-25 BHM", "bojxona qiymatiga qarab"))
     rows.append(("Karantin/vet/fito", "preyskurant", "tovar turiga qarab"))

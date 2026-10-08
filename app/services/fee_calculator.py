@@ -84,7 +84,7 @@ class FeeCalculator:
         self._last_reload_check = 0.0
         self._reload_check_interval = 1.0
         self.data = {}
-        self.bhm_value = int(bhm_value or self.data.get("bhm", {}).get("value", 412000))
+        self.bhm_value = int(bhm_value or self.data.get("bhm", {}).get("value", 440000))
         self.usd_rate = float(usd_rate or 0) or 12600.0
         self._load_data()
 
@@ -92,7 +92,7 @@ class FeeCalculator:
         stat = self.data_path.stat()
         self._mtime_ns = stat.st_mtime_ns
         self.data = json.loads(self.data_path.read_text(encoding="utf-8"))
-        self.bhm_value = int(self.data.get("bhm", {}).get("value") or self.bhm_value or 412000)
+        self.bhm_value = int(self.data.get("bhm", {}).get("value") or self.bhm_value or 440000)
         self.legal_basis = self.data.get("legal_basis", {})
 
     def reload_if_changed(self) -> None:
