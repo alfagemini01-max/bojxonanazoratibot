@@ -43,17 +43,17 @@ DEFAULT_FEE_ITEMS = {
         {
             "id": "transit_declaration_import",
             "title": "Tranzit deklaratsiyasi",
-            "amount": "110 000 so'm",
-            "condition": "Yuk bojxona nazoratiga qo'yilganda",
+            "amount": "0,25 BHM",
+            "condition": "Tovar tranzit bojxona rejimiga joylashtirilganda",
             "basis": "VMning 31.01.2025 y. 55-son qarori, 1-ilova",
             "enabled": True,
         },
         {
             "id": "osago_import",
             "title": "OSAGO sug'urta",
-            "amount": "Tarif bo'yicha",
+            "amount": "Transport turi va muddat bo'yicha",
             "condition": "Xorijiy transportda xalqaro sug'urta polisi bo'lmasa",
-            "basis": "VMning 30.12.2021 y. 790-son qarori",
+            "basis": "O'RQ-155 va VMning 24.06.2008 y. 141-son qarori",
             "enabled": True,
         },
         {
@@ -77,7 +77,7 @@ DEFAULT_FEE_ITEMS = {
         {
             "id": "delivery_overdue_export",
             "title": "Yukni kech yetkazish",
-            "amount": "440 000 so'm / kun",
+            "amount": "1 BHM / kun",
             "condition": "Bojxona nazoratidagi yuk muddati o'tsa",
             "basis": "VMning 31.12.2022 y. 737-son qarori",
             "enabled": True,
@@ -87,7 +87,7 @@ DEFAULT_FEE_ITEMS = {
         {
             "id": "transit_declaration",
             "title": "Tranzit deklaratsiyasi",
-            "amount": "110 000 so'm",
+            "amount": "0,25 BHM",
             "condition": "Har bir tranzit deklaratsiyasi uchun",
             "basis": "VMning 31.01.2025 y. 55-son qarori, 1-ilova",
             "enabled": True,
@@ -95,15 +95,23 @@ DEFAULT_FEE_ITEMS = {
         {
             "id": "transit_declaration_change",
             "title": "TD o'zgartirish",
-            "amount": "44 000 so'm",
+            "amount": "0,10 BHM",
             "condition": "Deklarant murojaati bilan o'zgartirilsa",
             "basis": "VMning 31.01.2025 y. 55-son qarori, 1-ilova",
             "enabled": True,
         },
         {
+            "id": "customs_escort",
+            "title": "Bojxona kuzatuvi",
+            "amount": "200 km gacha 2 BHM; 200 km dan ortiq 5 BHM",
+            "condition": "Bojxona organi yukni kuzatib borishni belgilaganda",
+            "basis": "VMning 22.12.2020 y. 800-son va 31.01.2025 y. 55-son qarorlari",
+            "enabled": True,
+        },
+        {
             "id": "delivery_overdue_transit",
             "title": "Yukni kech yetkazish",
-            "amount": "440 000 so'm / kun",
+            "amount": "1 BHM / kun",
             "condition": "Har bir kechikkan kun uchun",
             "basis": "VMning 31.12.2022 y. 737-son qarori",
             "enabled": True,
@@ -308,7 +316,26 @@ def _country_uz_name(data: dict[str, Any], code: str, fallback: str) -> str:
 def _fee_items(fees_data: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
     items = fees_data.setdefault("admin_fee_items", {})
     for direction, defaults in DEFAULT_FEE_ITEMS.items():
-        items.setdefault(direction, defaults)
+        rows = items.setdefault(direction, deepcopy(defaults))
+        existing_ids = {str(row.get("id")) for row in rows}
+        rows.extend(deepcopy(row) for row in defaults if str(row.get("id")) not in existing_ids)
+    for row in items.get("import", []):
+        if row.get("id") == "osago_import" and row.get("basis") == "VMning 30.12.2021 y. 790-son qarori":
+            row["amount"] = "Transport turi va muddat bo'yicha"
+            row["basis"] = "O'RQ-155 va VMning 24.06.2008 y. 141-son qarori"
+        if row.get("id") == "transit_declaration_import" and row.get("condition") == "Yuk bojxona nazoratiga qo'yilganda":
+            row["condition"] = "Tovar tranzit bojxona rejimiga joylashtirilganda"
+    legacy_amounts = {
+        "transit_declaration_import": "0,25 BHM",
+        "transit_declaration": "0,25 BHM",
+        "transit_declaration_change": "0,10 BHM",
+        "delivery_overdue_export": "1 BHM / kun",
+        "delivery_overdue_transit": "1 BHM / kun",
+    }
+    for rows in items.values():
+        for row in rows:
+            if str(row.get("id")) in legacy_amounts:
+                row["amount"] = legacy_amounts[str(row["id"])]
     return items
 
 

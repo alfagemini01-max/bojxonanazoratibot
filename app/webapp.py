@@ -18,6 +18,7 @@ from app.config import Settings
 from app.metrics import metrics
 from app.portal_store import PortalStore
 from app.services.fee_calculator import FeeCalculator
+from app.services.currency_rates import get_currency_rate_service, setup_currency_rate_lifecycle
 from app.services.oversize_calculator import OversizeCalculator, OversizeInputError
 from app.services.permit import (
     IRAN_CODE,
@@ -371,7 +372,7 @@ def _fee_payload(
             f"{customs_value:g} USD; {bhm:g} BHM",
         )
 
-    if cargo and direction in {"entry", "transit"}:
+    if cargo and direction in {"entry", "transit"} and _bool(body.get("transit_declaration")):
         bhm = float(calculator.data["fixed"]["transit_declaration_bhm"])
         add_item(
             "transit_declaration",
@@ -379,11 +380,11 @@ def _fee_payload(
             int(round(bhm * calculator.bhm_value)),
             None,
             calculator.legal_basis["transit_declaration"],
-            f"{bhm:g} BHM",
+            f"Tovar tranzit bojxona rejimiga joylashtiriladi; {bhm:g} BHM",
         )
 
     if _bool(body.get("tinted")):
-        if foreign and direction in {"entry", "transit"}:
+        if foreign and vehicle_type == "light" and direction in {"entry", "transit"}:
             usd = float(calculator.data["fixed"]["tinted_foreign_usd"])
             add_item(
                 "tinted",
@@ -392,10 +393,33 @@ def _fee_payload(
                 usd,
                 calculator.legal_basis["tinted_foreign"],
             )
-        else:
+        elif vehicle_type == "light" and not foreign:
             warnings.append("tinted_domestic")
+        elif vehicle_type != "light":
+            warnings.append("tinted_not_applicable")
     if foreign and direction in {"entry", "transit"} and _bool(body.get("osago_missing")):
-        warnings.append("osago")
+        period_coefficient, amount = calculator.osago_amount(
+            vehicle_type, str(body.get("osago_period") or "up_to_15")
+        )
+        add_item(
+            "osago",
+            "Majburiy avtosug'urta (OSAGO)",
+            amount,
+            None,
+            calculator.legal_basis["osago"],
+            f"Xorijiy transport; muddat koeffitsiyenti {period_coefficient:g}",
+        )
+    if cargo and direction in {"entry", "transit"} and _bool(body.get("customs_escort")):
+        distance = str(body.get("customs_escort_distance") or "up_to_200")
+        bhm, amount = calculator.customs_escort_amount(distance)
+        add_item(
+            "customs_escort",
+            "Bojxona kuzatuvi yig'imi",
+            amount,
+            None,
+            calculator.legal_basis["customs_escort"],
+            f"Bojxona organi kuzatuv belgilagan; {bhm:g} BHM",
+        )
     if _bool(body.get("heavy")):
         warnings.append("heavy")
     if _bool(body.get("humanitarian")):
@@ -404,17 +428,17 @@ def _fee_payload(
         warnings.append("veterinary")
 
     temp_days = _days(body.get("temp_overstay_days", 0))
-    if temp_days:
+    if foreign and direction == "exit" and temp_days:
         add_item(
             "temp_overstay",
             "Vaqtincha olib kirish muddatini o'tkazish",
             temp_days * calculator.bhm_value,
             None,
             calculator.legal_basis["temporary_import_overstay"],
-            f"{temp_days} kun; 1 BHM/kun",
+            f"Bir kalendar yilida 90 kundan ortiq {temp_days} kun; 1 BHM/kun",
         )
     delivery_days = _days(body.get("delivery_overdue_days", 0))
-    if delivery_days:
+    if cargo and direction in {"transit", "exit"} and delivery_days:
         add_item(
             "delivery_overdue",
             "Yukni muddatida yetkazmaganlik yig'imi",
@@ -483,6 +507,11 @@ def setup_webapp_routes(app: web.Application, settings: Settings, portal_store: 
     )
     permit_service = PermitRuleService(settings.permission_rules_path)
     fee_calculator = FeeCalculator(settings.fees_rules_path, settings.bhm_value, settings.usd_fallback_rate)
+    currency_rates = get_currency_rate_service(
+        settings.fees_rules_path.with_name("currency_rates_cache.json"),
+        settings.usd_fallback_rate,
+    )
+    setup_currency_rate_lifecycle(app, currency_rates)
     oversize_calculator = OversizeCalculator(
         settings.oversize_rules_path,
         settings.bhm_value,
@@ -549,6 +578,13 @@ def setup_webapp_routes(app: web.Application, settings: Settings, portal_store: 
         payload = {"ok": True, "countries": rows, "version": current_version}
         countries_cache[lang] = (current_version, payload)
         return web.json_response(payload, headers={"Cache-Control": "public, max-age=300", "ETag": f'"countries-{lang}-{current_version}"'})
+
+    async def public_currency_rates(request: web.Request) -> web.Response:
+        payload = await currency_rates.refresh()
+        return web.json_response(
+            {"ok": True, **payload},
+            headers={"Cache-Control": "public, max-age=1800"},
+        )
 
     async def permit_check(request: web.Request) -> web.Response:
         started = monotonic()
@@ -675,6 +711,7 @@ def setup_webapp_routes(app: web.Application, settings: Settings, portal_store: 
                 if not choice or choice[1] <= time.time():
                     raise web.HTTPBadRequest(text="Marshrut muddati tugagan. Yo'lni qayta hisoblang.")
                 body["distance_km"] = choice[0]
+            oversize_calculator.usd_rate = currency_rates.usd_rate
             response = oversize_calculator.calculate(body)
             metrics.increment("webapp_oversize_checks")
             if portal_store:
@@ -790,6 +827,7 @@ def setup_webapp_routes(app: web.Application, settings: Settings, portal_store: 
     app.router.add_get("/app", webapp_page)
     app.router.add_get("/webapp", webapp_page)
     app.router.add_get("/api/webapp/countries", countries)
+    app.router.add_get("/api/webapp/currency-rates", public_currency_rates)
     app.router.add_post("/api/webapp/permit", permit_check)
     app.router.add_post("/api/webapp/fees", fee_check)
     app.router.add_post("/api/webapp/oversize/routes", oversize_routes)

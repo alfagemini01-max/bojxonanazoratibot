@@ -393,6 +393,8 @@ def build_router(user_storage: UserStorage, settings: Settings) -> Router:
             "declared": data.get("fee_declared"),
             "customs_value_usd": data.get("fee_customs_value_usd"),
             "transit_declaration": data.get("fee_transit_declaration"),
+            "customs_escort": data.get("fee_customs_escort"),
+            "customs_escort_distance": data.get("fee_customs_escort_distance"),
             "tinted": data.get("fee_tinted"),
             "osago_missing": "yes" if data.get("fee_osago") == "no" else "no",
             "osago_period": data.get("fee_osago_period"),
@@ -456,6 +458,7 @@ def build_router(user_storage: UserStorage, settings: Settings) -> Router:
             await state.update_data(
                 fee_declared="no",
                 fee_transit_declaration="yes" if is_cargo_vehicle(data) and direction in {"entry", "transit"} else "no",
+                fee_customs_escort="no",
                 fee_tinted="no",
                 fee_osago="yes",
                 fee_heavy="no",
@@ -477,7 +480,25 @@ def build_router(user_storage: UserStorage, settings: Settings) -> Router:
             await message.answer(t(lang, "ask_fee_customs_value"), reply_markup=cancel_keyboard(lang))
             return
 
-        if not data.get("fee_tinted"):
+        if is_cargo_vehicle(data) and direction in {"entry", "transit"} and not data.get("fee_transit_declaration"):
+            await state.set_state(FeeCalcState.waiting_for_transit_declaration)
+            await message.answer(t(lang, "ask_fee_transit_declaration"), reply_markup=yes_no_keyboard(lang))
+            return
+
+        if is_cargo_vehicle(data) and direction in {"entry", "transit"} and not data.get("fee_customs_escort"):
+            await state.set_state(FeeCalcState.waiting_for_customs_escort)
+            await message.answer(t(lang, "ask_fee_customs_escort"), reply_markup=yes_no_keyboard(lang))
+            return
+
+        if data.get("fee_customs_escort") == "yes" and not data.get("fee_customs_escort_distance"):
+            await state.set_state(FeeCalcState.waiting_for_customs_escort_distance)
+            await message.answer(
+                t(lang, "ask_fee_customs_escort_distance"),
+                reply_markup=simple_options_keyboard(lang, ["button_escort_up_to_200", "button_escort_over_200"], columns=1),
+            )
+            return
+
+        if data.get("fee_vehicle_type") == "light" and not data.get("fee_tinted"):
             await state.set_state(FeeCalcState.waiting_for_tinted)
             await message.answer(t(lang, "ask_fee_tinted"), reply_markup=yes_no_keyboard(lang))
             return
@@ -801,6 +822,30 @@ def build_router(user_storage: UserStorage, settings: Settings) -> Router:
         await state.update_data(fee_transit_declaration=value)
         await continue_fee_questions(message, state, lang)
 
+    @router.message(StateFilter(FeeCalcState.waiting_for_customs_escort))
+    async def receive_fee_customs_escort(message: Message, state: FSMContext) -> None:
+        lang = await profile_lang(message.from_user.id if message.from_user else None)
+        value = fee_yes_no_value(lang, message.text)
+        if not value:
+            await message.answer(t(lang, "ask_fee_customs_escort"), reply_markup=yes_no_keyboard(lang))
+            return
+        await state.update_data(fee_customs_escort=value)
+        await continue_fee_questions(message, state, lang)
+
+    @router.message(StateFilter(FeeCalcState.waiting_for_customs_escort_distance))
+    async def receive_fee_customs_escort_distance(message: Message, state: FSMContext) -> None:
+        lang = await profile_lang(message.from_user.id if message.from_user else None)
+        distance = button_value(
+            lang,
+            {"button_escort_up_to_200": "up_to_200", "button_escort_over_200": "over_200"},
+            message.text,
+        )
+        if not distance:
+            await message.answer(t(lang, "ask_fee_customs_escort_distance"))
+            return
+        await state.update_data(fee_customs_escort_distance=distance)
+        await continue_fee_questions(message, state, lang)
+
     @router.message(StateFilter(FeeCalcState.waiting_for_tinted))
     async def receive_fee_tinted(message: Message, state: FSMContext) -> None:
         lang = await profile_lang(message.from_user.id if message.from_user else None)
@@ -826,7 +871,7 @@ def build_router(user_storage: UserStorage, settings: Settings) -> Router:
         lang = await profile_lang(message.from_user.id if message.from_user else None)
         period = button_value(
             lang,
-            {"button_osago_15": "up_to_15", "button_osago_1m": "one_month", "button_osago_more": "over_one_month"},
+            {"button_osago_15": "up_to_15", "button_osago_1m": "up_to_2_months", "button_osago_more": "up_to_12_months"},
             message.text,
         )
         if not period:

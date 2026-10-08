@@ -19,6 +19,8 @@ class FeeCalcState(StatesGroup):
     waiting_for_declaration = State()
     waiting_for_customs_value = State()
     waiting_for_transit_declaration = State()
+    waiting_for_customs_escort = State()
+    waiting_for_customs_escort_distance = State()
     waiting_for_tinted = State()
     waiting_for_osago = State()
     waiting_for_osago_period = State()
