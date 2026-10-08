@@ -1,0 +1,122 @@
+{
+  "version": "2026-10-08-v2",
+  "effective_date": "2026-09-01",
+  "bhm_value": 440000,
+  "application_review_fee": {
+    "amount_uzs": 0,
+    "basis": "VMQ-86, 25-ilova, 6-band"
+  },
+  "sources": [
+    {
+      "code": "VMQ-86-25",
+      "title_uz": "Vazirlar Mahkamasining 2022-yil 22-fevraldagi 86-son qarori, 25-ilova (amaldagi tahrir)",
+      "title_ru": "Постановление Кабинета Министров от 22 февраля 2022 года № 86, приложение 25 (действующая редакция)",
+      "title_en": "Cabinet of Ministers Resolution No. 86 dated 22 February 2022, Annex 25 (current edition)",
+      "url": "https://lex.uz/uz/acts/-5871129"
+    },
+    {
+      "code": "VMQ-710",
+      "title_uz": "Vazirlar Mahkamasining 2024-yil 28-oktabrdagi 710-son qarori",
+      "title_ru": "Постановление Кабинета Министров от 28 октября 2024 года № 710",
+      "title_en": "Cabinet of Ministers Resolution No. 710 dated 28 October 2024",
+      "url": "https://www.lex.uz/uz/acts/-7180916"
+    },
+    {
+      "code": "VMQ-342",
+      "title_uz": "Vazirlar Mahkamasining 2011-yil 26-dekabrdagi 342-son qarori",
+      "title_ru": "Постановление Кабинета Министров от 26 декабря 2011 года № 342",
+      "title_en": "Cabinet of Ministers Resolution No. 342 dated 26 December 2011",
+      "url": "https://www.lex.uz/uz/acts/-1923902"
+    },
+    {
+      "code": "BHM-2026",
+      "title_uz": "PF-115-son Farmon va Lex.uz BHM kalkulyatori — 2026-yil 1-sentabrdan BHM 440 000 so'm",
+      "title_ru": "Указ № УП-115 и калькулятор БРВ Lex.uz — с 1 сентября 2026 года БРВ 440 000 сумов",
+      "title_en": "Decree No. PF-115 and Lex.uz BCU calculator — BCU is UZS 440,000 from 1 September 2026",
+      "url": "https://lex.uz/bhm"
+    }
+  ],
+  "limits": {
+    "gross_mass_t": {
+      "single": {"2": 18, "3": 26, "4": 32},
+      "combination": {"3": 28, "4": 36, "5": 40, "6": 44}
+    },
+    "axle_t": 10,
+    "length_m": {"single": 12, "one_trailer": 20, "multi_trailer": 24},
+    "width_m": {"standard": 2.55, "isothermal": 2.6},
+    "height_m": 4
+  },
+  "local": {
+    "permit": {"up_to_100_km_bhm_percent": 54, "additional_km_bhm_percent": 0.24},
+    "gross_mass_bhm_percent_per_km": [
+      {"max_excess_t": 5, "rate": 0.08}, {"max_excess_t": 10, "rate": 0.12},
+      {"max_excess_t": 15, "rate": 0.24}, {"max_excess_t": 20, "rate": 0.42},
+      {"max_excess_t": 25, "rate": 0.63}, {"max_excess_t": 30, "rate": 0.97},
+      {"max_excess_t": 35, "rate": 1.39}, {"max_excess_t": 40, "rate": 1.94},
+      {"max_excess_t": 45, "rate": 2.66}, {"max_excess_t": 50, "rate": 3.59},
+      {"max_excess_t": null, "rate": 4.22}
+    ],
+    "axle_bhm_percent_per_axle_km": [
+      {"max_ratio": 1.05, "rate": 0.23}, {"max_ratio": 1.10, "rate": 0.25},
+      {"max_ratio": 1.15, "rate": 0.59}, {"max_ratio": 1.20, "rate": 0.76},
+      {"max_ratio": 1.25, "rate": 0.89}, {"max_ratio": 1.30, "rate": 1.06},
+      {"max_ratio": 1.35, "rate": 1.27}, {"max_ratio": 1.40, "rate": 1.48},
+      {"max_ratio": 1.45, "rate": 1.73}, {"max_ratio": 1.50, "rate": 2.03},
+      {"max_ratio": 1.55, "rate": 2.32}, {"max_ratio": 1.60, "rate": 2.70},
+      {"max_ratio": 1.65, "rate": 3.08}, {"max_ratio": 1.70, "rate": 3.59},
+      {"max_ratio": 1.75, "rate": 4.01}, {"max_ratio": 1.80, "rate": 4.55},
+      {"max_ratio": 1.85, "rate": 5.15}, {"max_ratio": 1.90, "rate": 5.82},
+      {"max_ratio": 1.95, "rate": 6.50}, {"max_ratio": 2.00, "rate": 7.30},
+      {"max_ratio": null, "rate": 8.44}
+    ],
+    "dimension_bhm_percent_per_km": 0.32
+  },
+  "foreign": {
+    "permit": {"up_to_100_km_usd": 25, "additional_km_usd": 0.11},
+    "gross_mass_usd_per_km": [
+      {"max_excess_t": 5, "rate": 0.04}, {"max_excess_t": 10, "rate": 0.06},
+      {"max_excess_t": 15, "rate": 0.12}, {"max_excess_t": 20, "rate": 0.20},
+      {"max_excess_t": 25, "rate": 0.30}, {"max_excess_t": 30, "rate": 0.46},
+      {"max_excess_t": 35, "rate": 0.66}, {"max_excess_t": 40, "rate": 0.92},
+      {"max_excess_t": 45, "rate": 1.26}, {"max_excess_t": 50, "rate": 1.70},
+      {"max_excess_t": null, "rate": 2.00}
+    ],
+    "axle_usd_per_axle_km": [
+      {"max_ratio": 1.05, "rate": 0.11}, {"max_ratio": 1.10, "rate": 0.12},
+      {"max_ratio": 1.15, "rate": 0.28}, {"max_ratio": 1.20, "rate": 0.36},
+      {"max_ratio": 1.25, "rate": 0.42}, {"max_ratio": 1.30, "rate": 0.50},
+      {"max_ratio": 1.35, "rate": 0.60}, {"max_ratio": 1.40, "rate": 0.70},
+      {"max_ratio": 1.45, "rate": 0.82}, {"max_ratio": 1.50, "rate": 0.96},
+      {"max_ratio": 1.55, "rate": 1.10}, {"max_ratio": 1.60, "rate": 1.28},
+      {"max_ratio": 1.65, "rate": 1.46}, {"max_ratio": 1.70, "rate": 1.70},
+      {"max_ratio": 1.75, "rate": 1.90}, {"max_ratio": 1.80, "rate": 2.16},
+      {"max_ratio": 1.85, "rate": 2.44}, {"max_ratio": 1.90, "rate": 2.76},
+      {"max_ratio": 1.95, "rate": 3.08}, {"max_ratio": 2.00, "rate": 3.46},
+      {"max_ratio": null, "rate": 4.00}
+    ],
+    "dimension_usd_per_km": 0.15
+  },
+  "unauthorized_damage": [
+    {"max_total_mass_t": 50, "bhm_per_km": 0.30},
+    {"max_total_mass_t": 80, "bhm_per_km": 1.0},
+    {"max_total_mass_t": null, "bhm_per_km": 3.0}
+  ],
+  "special_inspection": {
+    "automatic_conditions": {
+      "gross_mass_over_t": 70,
+      "length_over_m": 24,
+      "width_over_m": 3.5,
+      "height_over_m": 4.5,
+      "single_axle_over_t": 13
+    },
+    "under_100_t_bhm_percent_per_km": 15,
+    "from_100_t_bhm_percent_per_km": 20,
+    "basis": "VMQ-86, 25-ilova, 12-band, V-izoh"
+  },
+  "input_consistency_percent": 5,
+  "measurement_tolerance": {
+    "stationary_or_up_to_5_kmh_percent": 5,
+    "over_5_kmh_percent": 10,
+    "basis": "VMQ-342 bilan tasdiqlangan qoidalar, 5-band"
+  }
+}
