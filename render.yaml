@@ -35,3 +35,9 @@ services:
         generateValue: true
       - key: YANDEX_MAPS_API_KEY
         sync: false
+      - key: OVERSIZE_RULES_PATH
+        value: data/oversize_rules.json
+      - key: ROUTING_BASE_URL
+        value: https://router.project-osrm.org
+      - key: BHM_VALUE
+        value: "440000"

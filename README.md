@@ -26,7 +26,7 @@ WEBHOOK_SECRET           # tasodifiy maxfiy qiymat
 DATABASE_QUOTA_MB        # ixtiyoriy: provayder bergan baza limiti, masalan 512
 ```
 
-`YANDEX_MAPS_API_KEY` hozir majburiy emas: postlar xaritasi OpenStreetMap/Leaflet orqali ishlaydi. Admin analitikasidagi baza hajmi PostgreSQL ishlatgan aniq joyni ko'rsatadi. `DATABASE_QUOTA_MB` kiritilsa ishlatilgan va bo'sh kvota ham hisoblanadi; qiymat `0` bo'lsa tizim provayder limitini taxmin qilmaydi.
+`YANDEX_MAPS_API_KEY` Web App va admin post xaritalari uchun kerak. Kalitga Yandex Developer kabinetida sayt domeni bo'yicha HTTP Referer cheklovi qo'ying; kalitni kodga yozmang. Admin analitikasidagi baza hajmi `pg_database_size()` orqali PostgreSQL/Supabase ishlatgan aniq joyni ko'rsatadi. `DATABASE_QUOTA_MB` ga Supabase tarifingizdagi real limitni kiritsangiz ishlatilgan va bo'sh kvota ham hisoblanadi; qiymat `0` bo'lsa tizim limitni taxmin qilmaydi va Render lokal diskini baza sig'imi sifatida ko'rsatmaydi.
 
 Bu papka xorijiy yuk avtotransport vositalarining O'zbekiston Respublikasiga kirishi yoki hududi orqali tranzit o'tishi bo'yicha ruxsatnoma va yig'im shartlarini tekshiradigan Telegram bot uchun tayyorlandi.
 
@@ -71,7 +71,7 @@ WEBHOOK_PATH=/webhook
 PERMISSION_RULES_PATH=data/permission_rules.json
 TZ=Asia/Tashkent
 FEES_RULES_PATH=data/fees_2026.json
-BHM_VALUE=412000
+BHM_VALUE=440000
 USD_FALLBACK_RATE=12600
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=kuchli_parol_kiriting
@@ -127,7 +127,9 @@ USER_DATABASE_URL=postgresql://user:password@host:5432/dbname?sslmode=require
 
 ## Ma'lumot manbai
 
-Bot `data/permission_rules.json` faylidagi spravochnik orqali ishlaydi. JSON fayl `Dazvollar davlatlar kesimida.xlsx` va `Dazvol istisnolar.xlsx` fayllari asosida tayyorlangan.
+Bot `data/permission_rules.json` faylidagi spravochnik orqali ishlaydi. Amaldagi to'liq ma'lumotlar `permession.xlsx` va `Dazvol permession exception.xlsx` fayllari asosida tayyorlangan: 251 ta davlat/hudud, 2 008 ta faol tashuv qoidasi va 26 davlatga tegishli 245 ta istisno. Har bir davlat bo'yicha 1-8 tashuv turi mavjud.
+
+Davlat nomlari O'zbek, Rus va Ingliz tillarida saqlanadi. Ruxsatnoma va yig'im holatlari kod asosida uch tilda chiqariladi. Istisno matnining ko'rib chiqilgan tarjimasi mavjud bo'lmasa, dastur uni boshqa til deb ko'rsatmaydi va asl manba tilini belgilaydi.
 
 Kerak bo'lsa Render Environment Variables orqali boshqa JSON yo'lini ko'rsatish mumkin:
 
@@ -148,7 +150,7 @@ Yangi `Chegaradagi yig'imlar` bo'limi quyidagi ma'lumotlar asosida taxminiy hiso
 Hisoblash qoidalari `data/fees_2026.json` faylida saqlanadi. BHM va USD zaxira kursi Render Environment Variables orqali yangilanishi mumkin:
 
 ```text
-BHM_VALUE=412000
+BHM_VALUE=440000
 USD_FALLBACK_RATE=12600
 FEES_RULES_PATH=data/fees_2026.json
 ```
