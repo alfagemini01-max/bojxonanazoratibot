@@ -8,6 +8,7 @@ from pathlib import Path
 from app.i18n import t
 from app.rule_normalization import repair_broken_rule_labels
 from app.services.fee_calculator import FeeCalculator
+from app.services.currency_rates import CurrencyRateService
 from app.services.oversize_calculator import OversizeCalculator, OversizeInputError
 from app.services.permit import (
     Country,
@@ -22,6 +23,33 @@ from app.services.permit import (
 
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+class CurrencyRateTests(unittest.TestCase):
+    def test_fallback_snapshot_keeps_ticker_and_calculator_available(self) -> None:
+        service = CurrencyRateService(ROOT / "data" / "missing-currency-cache.json", 12600)
+        snapshot = service.snapshot()
+        self.assertTrue(snapshot["using_fallback"])
+        self.assertEqual(snapshot["rates"][0]["code"], "USD")
+        self.assertEqual(snapshot["rates"][0]["rate"], 12600)
+
+    def test_cbu_nominal_is_normalized_to_one_currency_unit(self) -> None:
+        rates = CurrencyRateService.parse_cbu_payload([
+            {
+                "Ccy": "KZT",
+                "Nominal": "100",
+                "Rate": "2500,00",
+                "Diff": "10,00",
+                "Date": "08.10.2026",
+                "CcyNm_UZ": "Qozog'iston tengesi",
+            },
+            {"Ccy": "USD", "Nominal": "1", "Rate": "12500.50", "Diff": "-5.25"},
+            {"Ccy": "GBP", "Nominal": "1", "Rate": "16000", "Diff": "0"},
+        ])
+        self.assertEqual(rates["KZT"]["rate"], 25.0)
+        self.assertEqual(rates["KZT"]["diff"], 0.1)
+        self.assertEqual(rates["USD"]["rate"], 12500.5)
+        self.assertNotIn("GBP", rates)
 
 
 class RuleDataMigrationTests(unittest.TestCase):
@@ -237,22 +265,90 @@ class PermitRulesTests(unittest.TestCase):
             self.assertNotEqual(t(lang, "button_oversize"), "button_oversize")
             self.assertNotEqual(t(lang, "oversize_open_button"), "oversize_open_button")
 
-    def test_quick_fee_still_includes_transit_declaration(self) -> None:
+    def test_transit_declaration_is_included_only_when_selected(self) -> None:
         calculator = FeeCalculator(ROOT / "data" / "fees_2026.json", 412000, 12600)
-        message = calculator.build_message(
-            {
+        payload = {
                 "vehicle_type": "truck",
                 "vehicle_country_code": "156",
                 "direction": "entry",
                 "origin_country_code": "156",
                 "destination_country_code": "860",
                 "calculation_mode": "quick",
+        }
+        without_transit = calculator.build_message(payload, self.service, lang="uz")
+        self.assertNotIn("Tranzit deklaratsiyasi rasmiylashtiruvi", without_transit)
+        payload["transit_declaration"] = "yes"
+        with_transit = calculator.build_message(payload, self.service, lang="uz")
+        self.assertIn("Tranzit deklaratsiyasi rasmiylashtiruvi", with_transit)
+
+    def test_osago_uses_vehicle_type_and_legal_period(self) -> None:
+        calculator = FeeCalculator(ROOT / "data" / "fees_2026.json", 440000, 12600)
+        self.assertEqual(calculator.osago_amount("light", "up_to_15"), (0.2, 128000))
+        self.assertEqual(calculator.osago_amount("truck", "up_to_2_months"), (0.4, 448000))
+        self.assertEqual(calculator.osago_amount("bus", "up_to_12_months"), (1.0, 1280000))
+        self.assertNotIn("790", calculator.legal_basis["osago"])
+
+    def test_tinted_fee_applies_only_to_foreign_passenger_car(self) -> None:
+        calculator = FeeCalculator(ROOT / "data" / "fees_2026.json", 440000, 12600)
+        common = {
+            "vehicle_country_code": "398",
+            "direction": "entry",
+            "tinted": "yes",
+        }
+        light_message = calculator.build_message({**common, "vehicle_type": "light"}, self.service, lang="uz")
+        truck_message = calculator.build_message({**common, "vehicle_type": "truck"}, self.service, lang="uz")
+        self.assertIn("Qoraytirilgan oyna uchun yig'im", light_message)
+        self.assertNotIn("Qoraytirilgan oyna uchun yig'im", truck_message)
+        self.assertIn("xorijiy yengil avtomobilga", truck_message)
+
+    def test_customs_escort_rates_follow_distance(self) -> None:
+        calculator = FeeCalculator(ROOT / "data" / "fees_2026.json", 440000, 12600)
+        self.assertEqual(calculator.customs_escort_amount("up_to_200"), (2.0, 880000))
+        self.assertEqual(calculator.customs_escort_amount("over_200"), (5.0, 2200000))
+
+    def test_entry_only_services_are_not_charged_on_exit(self) -> None:
+        calculator = FeeCalculator(ROOT / "data" / "fees_2026.json", 440000, 12600)
+        message = calculator.build_message(
+            {
+                "vehicle_type": "truck",
+                "vehicle_country_code": "156",
+                "direction": "exit",
+                "origin_country_code": "860",
+                "destination_country_code": "156",
+                "transit_declaration": "yes",
+                "customs_escort": "yes",
+                "customs_escort_distance": "over_200",
             },
             self.service,
             lang="uz",
         )
-        self.assertIn("Tranzit deklaratsiyasi", message)
-        self.assertIn("Tezkor hisob", message)
+        self.assertNotIn("Tranzit deklaratsiyasi rasmiylashtiruvi", message)
+        self.assertNotIn("Bojxona kuzatuvi yig'imi", message)
+
+    def test_overdue_charges_follow_vehicle_and_direction(self) -> None:
+        calculator = FeeCalculator(ROOT / "data" / "fees_2026.json", 440000, 12600)
+        base = {
+            "vehicle_country_code": "156",
+            "origin_country_code": "156",
+            "destination_country_code": "860",
+            "temp_overstay_days": "2",
+            "delivery_overdue_days": "3",
+        }
+        entry = calculator.build_message(
+            {**base, "vehicle_type": "truck", "direction": "entry"}, self.service, lang="uz"
+        )
+        passenger_exit = calculator.build_message(
+            {**base, "vehicle_type": "light", "direction": "exit"}, self.service, lang="uz"
+        )
+        cargo_exit = calculator.build_message(
+            {**base, "vehicle_type": "truck", "direction": "exit"}, self.service, lang="uz"
+        )
+        self.assertNotIn("Vaqtincha olib kirish muddatini o'tkazish", entry)
+        self.assertNotIn("Yukni muddatida yetkazmaganlik yig'imi", entry)
+        self.assertIn("Vaqtincha olib kirish muddatini o'tkazish", passenger_exit)
+        self.assertNotIn("Yukni muddatida yetkazmaganlik yig'imi", passenger_exit)
+        self.assertIn("Vaqtincha olib kirish muddatini o'tkazish", cargo_exit)
+        self.assertIn("Yukni muddatida yetkazmaganlik yig'imi", cargo_exit)
 
     def test_additional_conditions_use_language_and_fallback(self) -> None:
         rule = {
@@ -445,6 +541,27 @@ class WebAppAssetTests(unittest.TestCase):
         self.assertIn("permit_exempt_goods", (ROOT / "app" / "webapp.py").read_text(encoding="utf-8"))
         self.assertIn("rule-detail-grid", script)
         self.assertIn("country_input_profile", (ROOT / "app" / "webapp.py").read_text(encoding="utf-8"))
+
+    def test_webapp_has_cached_cbu_currency_ticker(self) -> None:
+        html = (ROOT / "app" / "static" / "webapp.html").read_text(encoding="utf-8")
+        script = (ROOT / "app" / "static" / "webapp.js").read_text(encoding="utf-8")
+        backend = (ROOT / "app" / "webapp.py").read_text(encoding="utf-8")
+        rates = (ROOT / "app" / "services" / "currency_rates.py").read_text(encoding="utf-8")
+        self.assertIn('id="currency-ticker"', html)
+        self.assertIn("loadCurrencyRates", script)
+        self.assertIn("/api/webapp/currency-rates", backend)
+        self.assertIn("https://cbu.uz/uz/arkhiv-kursov-valyut/json/", rates)
+
+    def test_fee_fields_follow_vehicle_country_and_direction(self) -> None:
+        html = (ROOT / "app" / "static" / "webapp.html").read_text(encoding="utf-8")
+        script = (ROOT / "app" / "static" / "webapp.js").read_text(encoding="utf-8")
+        backend = (ROOT / "app" / "webapp.py").read_text(encoding="utf-8")
+        self.assertIn("foreign-entry-transit-only", html)
+        self.assertIn("foreign-exit-only", html)
+        self.assertIn("transit-exit-only", html)
+        self.assertIn("function updateFeeApplicability", script)
+        self.assertIn('direction in {"entry", "transit"} and _bool(body.get("transit_declaration"))', backend)
+        self.assertIn('direction in {"entry", "transit"} and _bool(body.get("customs_escort"))', backend)
 
     def test_admin_can_manage_transport_types(self) -> None:
         html = (ROOT / "app" / "static" / "admin.html").read_text(encoding="utf-8")
