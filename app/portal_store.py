@@ -4,7 +4,6 @@ import asyncio
 import json
 import logging
 import os
-import shutil
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -261,11 +260,32 @@ class PortalStore:
         bot_users = web_visitors = saved_routes = feedback = posts = checks = 0
         database_bytes = 0
         database_limit_bytes = self.database_limit_bytes
+        database_connections = 0
+        database_max_connections = 0
+        database_latency_ms = 0.0
         database_ok = True
         try:
             if self.pool:
                 async with self.pool.acquire() as db:
+                    started = asyncio.get_running_loop().time()
                     database_bytes = int(await db.fetchval("SELECT pg_database_size(current_database())") or 0)
+                    database_latency_ms = round(
+                        (asyncio.get_running_loop().time() - started) * 1000,
+                        1,
+                    )
+                    database_connections = int(
+                        await db.fetchval(
+                            "SELECT COUNT(*) FROM pg_stat_activity WHERE datname=current_database()"
+                        )
+                        or 0
+                    )
+                    try:
+                        database_max_connections = int(
+                            await db.fetchval("SELECT current_setting('max_connections')::int")
+                            or 0
+                        )
+                    except Exception:
+                        database_max_connections = 0
                     users_table = await db.fetchval("SELECT to_regclass('public.users')")
                     if users_table:
                         bot_users = int(await db.fetchval("SELECT COUNT(*) FROM users") or 0)
@@ -298,7 +318,6 @@ class PortalStore:
             database_ok = False
             logger.exception("System statistics could not be read")
 
-        disk = shutil.disk_usage(self.sqlite_path.parent)
         memory_bytes = 0
         try:
             if os.path.exists("/proc/self/status"):
@@ -319,8 +338,11 @@ class PortalStore:
                     if database_limit_bytes is not None
                     else None
                 ),
+                "quota_configured": database_limit_bytes is not None,
+                "connections": database_connections,
+                "max_connections": database_max_connections,
+                "latency_ms": database_latency_ms,
             },
-            "disk": {"total_bytes": disk.total, "used_bytes": disk.used, "free_bytes": disk.free},
             "process": {"memory_bytes": memory_bytes},
             "usage": {
                 "bot_users": bot_users,

@@ -43,7 +43,7 @@ DEFAULT_FEE_ITEMS = {
         {
             "id": "transit_declaration_import",
             "title": "Tranzit deklaratsiyasi",
-            "amount": "103 000 so'm",
+            "amount": "110 000 so'm",
             "condition": "Yuk bojxona nazoratiga qo'yilganda",
             "basis": "VMning 31.01.2025 y. 55-son qarori, 1-ilova",
             "enabled": True,
@@ -77,7 +77,7 @@ DEFAULT_FEE_ITEMS = {
         {
             "id": "delivery_overdue_export",
             "title": "Yukni kech yetkazish",
-            "amount": "412 000 so'm / kun",
+            "amount": "440 000 so'm / kun",
             "condition": "Bojxona nazoratidagi yuk muddati o'tsa",
             "basis": "VMning 31.12.2022 y. 737-son qarori",
             "enabled": True,
@@ -87,7 +87,7 @@ DEFAULT_FEE_ITEMS = {
         {
             "id": "transit_declaration",
             "title": "Tranzit deklaratsiyasi",
-            "amount": "103 000 so'm",
+            "amount": "110 000 so'm",
             "condition": "Har bir tranzit deklaratsiyasi uchun",
             "basis": "VMning 31.01.2025 y. 55-son qarori, 1-ilova",
             "enabled": True,
@@ -95,7 +95,7 @@ DEFAULT_FEE_ITEMS = {
         {
             "id": "transit_declaration_change",
             "title": "TD o'zgartirish",
-            "amount": "41 200 so'm",
+            "amount": "44 000 so'm",
             "condition": "Deklarant murojaati bilan o'zgartirilsa",
             "basis": "VMning 31.01.2025 y. 55-son qarori, 1-ilova",
             "enabled": True,
@@ -103,7 +103,7 @@ DEFAULT_FEE_ITEMS = {
         {
             "id": "delivery_overdue_transit",
             "title": "Yukni kech yetkazish",
-            "amount": "412 000 so'm / kun",
+            "amount": "440 000 so'm / kun",
             "condition": "Har bir kechikkan kun uchun",
             "basis": "VMning 31.12.2022 y. 737-son qarori",
             "enabled": True,
@@ -726,7 +726,7 @@ def _admin_page_v2() -> str:
     <div class="form-grid">
       <div class="field"><label>Yo'nalish</label><select id="feeDirection"><option value="import">Import</option><option value="export">Eksport</option><option value="transit">Tranzit</option></select></div>
       <div class="field"><label>Yig'im nomi</label><input id="feeTitle" /></div>
-      <div class="field"><label>Miqdor</label><input id="feeAmount" placeholder="103 000 so'm / 1 BHM / tarif bo'yicha" /></div>
+      <div class="field"><label>Miqdor</label><input id="feeAmount" placeholder="110 000 so'm / 1 BHM / tarif bo'yicha" /></div>
       <div class="field"><label>Holati</label><select id="feeEnabled"><option value="true">Faol</option><option value="false">O'chirilgan</option></select></div>
       <div class="field full"><label>Qaysi holatda qo'llaniladi</label><textarea id="feeCondition"></textarea></div>
       <div class="field full"><label>Huquqiy asosi</label><textarea id="feeBasis"></textarea></div>

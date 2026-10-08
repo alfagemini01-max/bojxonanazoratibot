@@ -34,6 +34,7 @@ MAX_TELEGRAM_TEXT_LENGTH = 3800
 
 CHECK_BUTTONS = button_texts("button_check")
 FEE_BUTTONS = button_texts("button_fees")
+OVERSIZE_BUTTONS = button_texts("button_oversize")
 LANGUAGE_BUTTONS = button_texts("button_language")
 CANCEL_BUTTONS = button_texts("button_cancel")
 
@@ -111,6 +112,7 @@ def main_menu_keyboard(lang: str = "uz") -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[
             [KeyboardButton(text=t(lang, "button_check")), KeyboardButton(text=t(lang, "button_fees"))],
+            [KeyboardButton(text=t(lang, "button_oversize"))],
             [KeyboardButton(text=t(lang, "button_language"))],
         ],
         resize_keyboard=True,
@@ -577,6 +579,30 @@ def build_router(user_storage: UserStorage, settings: Settings) -> Router:
     @router.message(Command("language"))
     async def language_command(message: Message) -> None:
         await ask_language(message)
+
+    @router.message(Command("oversize"))
+    @router.message(F.text.in_(OVERSIZE_BUTTONS))
+    async def oversize_calculator(message: Message, state: FSMContext) -> None:
+        lang = await profile_lang(message.from_user.id if message.from_user else None)
+        if not settings.webhook_url.startswith("https://"):
+            await message.answer(t(lang, "technical_error"))
+            return
+        await state.clear()
+        await message.answer(
+            t(lang, "oversize_open_text"),
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [
+                        InlineKeyboardButton(
+                            text=t(lang, "oversize_open_button"),
+                            web_app=WebAppInfo(
+                                url=settings.webhook_url.rstrip("/") + "/app?view=oversize"
+                            ),
+                        )
+                    ]
+                ]
+            ),
+        )
 
     @router.message(F.text.in_(LANGUAGE_BUTTONS))
     async def language_button(message: Message) -> None:

@@ -44,12 +44,14 @@ class Settings:
     database_quota_mb: int
     permission_rules_path: Path
     fees_rules_path: Path
+    oversize_rules_path: Path
     bhm_value: int
     usd_fallback_rate: float
     admin_username: str
     admin_password: str
     admin_session_secret: str
     yandex_maps_api_key: str
+    routing_base_url: str
     sql_connection_string: str
     sql_query_path: Path
     timezone: str = "Asia/Tashkent"
@@ -78,12 +80,14 @@ def get_settings() -> Settings:
         database_quota_mb=max(0, int(os.getenv("DATABASE_QUOTA_MB", "0"))),
         permission_rules_path=BASE_DIR / os.getenv("PERMISSION_RULES_PATH", "data/permission_rules.json"),
         fees_rules_path=BASE_DIR / os.getenv("FEES_RULES_PATH", "data/fees_2026.json"),
-        bhm_value=int(os.getenv("BHM_VALUE", "412000")),
+        oversize_rules_path=BASE_DIR / os.getenv("OVERSIZE_RULES_PATH", "data/oversize_rules.json"),
+        bhm_value=int(os.getenv("BHM_VALUE", "440000")),
         usd_fallback_rate=float(os.getenv("USD_FALLBACK_RATE", "12600")),
         admin_username=os.getenv("ADMIN_USERNAME", "").strip(),
         admin_password=os.getenv("ADMIN_PASSWORD", "").strip(),
         admin_session_secret=os.getenv("ADMIN_SESSION_SECRET", "").strip(),
         yandex_maps_api_key=os.getenv("YANDEX_MAPS_API_KEY", "").strip(),
+        routing_base_url=os.getenv("ROUTING_BASE_URL", "https://router.project-osrm.org").strip().rstrip("/"),
         sql_connection_string=os.getenv("SQL_CONNECTION_STRING", "").strip(),
         sql_query_path=BASE_DIR / os.getenv(
             "SQL_QUERY_PATH",

@@ -12,12 +12,13 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qsl
 
-from aiohttp import web
+from aiohttp import ClientError, ClientSession, ClientTimeout, web
 
 from app.config import Settings
 from app.metrics import metrics
 from app.portal_store import PortalStore
 from app.services.fee_calculator import FeeCalculator
+from app.services.oversize_calculator import OversizeCalculator, OversizeInputError
 from app.services.permit import (
     IRAN_CODE,
     TURKMENISTAN_CODE,
@@ -93,6 +94,16 @@ def _days(value: object) -> int:
     if not number.is_integer():
         raise web.HTTPBadRequest(text="Kunlar soni butun son bo'lishi kerak.")
     return int(number)
+
+
+def _coordinate(value: object, name: str) -> dict[str, float]:
+    if not isinstance(value, dict):
+        raise web.HTTPBadRequest(text=f"{name} xaritadan tanlanmagan.")
+    latitude = _number(value.get("lat"), -90, 90)
+    longitude = _number(value.get("lon"), -180, 180)
+    if not (36.0 <= latitude <= 46.5 and 55.0 <= longitude <= 74.5):
+        raise web.HTTPBadRequest(text=f"{name} O'zbekiston hududidan tashqarida.")
+    return {"lat": latitude, "lon": longitude}
 
 
 def _country(service: PermitRuleService, value: object):
@@ -469,7 +480,30 @@ def _telegram_user_id(init_data: str, bot_token: str) -> int | None:
 def setup_webapp_routes(app: web.Application, settings: Settings, portal_store: PortalStore | None = None) -> None:
     permit_service = PermitRuleService(settings.permission_rules_path)
     fee_calculator = FeeCalculator(settings.fees_rules_path, settings.bhm_value, settings.usd_fallback_rate)
+    oversize_calculator = OversizeCalculator(
+        settings.oversize_rules_path,
+        settings.bhm_value,
+        settings.usd_fallback_rate,
+    )
     countries_cache: dict[str, tuple[int, dict[str, Any]]] = {}
+    route_cache: dict[str, tuple[float, dict[str, Any]]] = {}
+    route_choices: dict[str, tuple[float, float]] = {}
+    routing_session: ClientSession | None = None
+
+    async def routing_client() -> ClientSession:
+        nonlocal routing_session
+        if routing_session is None or routing_session.closed:
+            routing_session = ClientSession(
+                timeout=ClientTimeout(total=18, connect=6),
+                headers={"User-Agent": "NazoratBot/1.0 (route advisory service)"},
+            )
+        return routing_session
+
+    async def close_routing(_: web.Application) -> None:
+        if routing_session is not None and not routing_session.closed:
+            await routing_session.close()
+
+    app.on_cleanup.append(close_routing)
 
     def rule_version() -> int:
         try:
@@ -542,6 +576,116 @@ def setup_webapp_routes(app: web.Application, settings: Settings, portal_store: 
         finally:
             metrics.observe("webapp_permit", monotonic() - started)
 
+    async def oversize_routes(request: web.Request) -> web.Response:
+        body = await request.json()
+        start = _coordinate(body.get("start"), "Boshlanish nuqtasi")
+        finish = _coordinate(body.get("finish"), "Tugash nuqtasi")
+        cache_key = ":".join(
+            f"{value:.5f}"
+            for value in (start["lat"], start["lon"], finish["lat"], finish["lon"])
+        )
+        cached = route_cache.get(cache_key)
+        if cached and cached[0] > time.time():
+            for route in cached[1].get("routes", []):
+                route_choices[str(route["id"])] = (float(route["distance_km"]), time.time() + 3600)
+            return web.json_response(cached[1], headers={"Cache-Control": "private, max-age=300"})
+        url = (
+            f"{settings.routing_base_url}/route/v1/driving/"
+            f"{start['lon']},{start['lat']};{finish['lon']},{finish['lat']}"
+        )
+        try:
+            client = await routing_client()
+            async with client.get(
+                url,
+                params={
+                    "alternatives": "3",
+                    "steps": "false",
+                    "overview": "simplified",
+                    "geometries": "geojson",
+                },
+            ) as response:
+                if response.status != 200:
+                    logger.warning("Routing provider returned HTTP %s", response.status)
+                    raise web.HTTPServiceUnavailable(text="Marshrut xizmati vaqtincha javob bermadi.")
+                payload = await response.json()
+        except (ClientError, asyncio.TimeoutError, ValueError) as exc:
+            logger.warning("Routing request failed: %s", exc)
+            raise web.HTTPServiceUnavailable(
+                text="Marshrut xizmati vaqtincha mavjud emas. Masofani qo'lda kiriting."
+            ) from exc
+        if payload.get("code") != "Ok" or not payload.get("routes"):
+            raise web.HTTPBadRequest(text="Tanlangan nuqtalar orasida avtomobil yo'li topilmadi.")
+        routes: list[dict[str, Any]] = []
+        seen: set[int] = set()
+        for index, row in enumerate(payload["routes"][:3], 1):
+            distance_m = int(round(float(row.get("distance") or 0)))
+            if distance_m < 100 or distance_m in seen:
+                continue
+            seen.add(distance_m)
+            geometry = row.get("geometry") or {}
+            coordinates = geometry.get("coordinates") if isinstance(geometry, dict) else None
+            if not isinstance(coordinates, list) or len(coordinates) < 2:
+                continue
+            route_id = hashlib.sha256(
+                f"{cache_key}:{distance_m}:{index}".encode()
+            ).hexdigest()[:20]
+            distance_km = round(distance_m / 1000, 2)
+            route_choices[route_id] = (distance_km, time.time() + 3600)
+            routes.append({
+                "id": route_id,
+                "index": index,
+                "distance_km": distance_km,
+                "duration_minutes": int(round(float(row.get("duration") or 0) / 60)),
+                "geometry": {"type": "LineString", "coordinates": coordinates},
+            })
+        if not routes:
+            raise web.HTTPBadRequest(text="Marshrut ma'lumotini shakllantirib bo'lmadi.")
+        result = {
+            "ok": True,
+            "provider": "OSRM",
+            "routes": routes,
+            "warning": "Marshrut tavsiyaviy. Og'ir yoki katta hajmli transport uchun yakuniy yo'nalish vakolatli organ bilan kelishiladi.",
+        }
+        if len(route_cache) >= 200:
+            oldest = min(route_cache, key=lambda key: route_cache[key][0])
+            route_cache.pop(oldest, None)
+        route_cache[cache_key] = (time.time() + 86400, result)
+        return web.json_response(result, headers={"Cache-Control": "private, max-age=300"})
+
+    async def oversize_check(request: web.Request) -> web.Response:
+        started = monotonic()
+        try:
+            body = await request.json()
+            route_id = str(body.get("route_id") or "")
+            if route_id:
+                choice = route_choices.get(route_id)
+                if not choice or choice[1] <= time.time():
+                    raise web.HTTPBadRequest(text="Marshrut muddati tugagan. Yo'lni qayta hisoblang.")
+                body["distance_km"] = choice[0]
+            response = oversize_calculator.calculate(body)
+            metrics.increment("webapp_oversize_checks")
+            if portal_store:
+                asyncio.create_task(portal_store.record_event(
+                    "oversize_check",
+                    metadata={
+                        "visitor_id": body.get("visitor_id"),
+                        "lang": body.get("lang"),
+                        "distance_km": response["distance_km"],
+                        "special_permit": response["special_permit_required"],
+                    },
+                ))
+            return web.json_response(response)
+        except OversizeInputError as exc:
+            raise web.HTTPBadRequest(text=str(exc)) from exc
+        except web.HTTPException:
+            raise
+        except Exception:
+            metrics.increment("errors")
+            logger.exception("Web App oversize calculation failed")
+            raise web.HTTPInternalServerError(text="Og'irlik va gabarit hisobida texnik xatolik yuz berdi.")
+        finally:
+            metrics.observe("webapp_oversize", monotonic() - started)
+
     async def fee_check(request: web.Request) -> web.Response:
         started = monotonic()
         try:
@@ -585,6 +729,18 @@ def setup_webapp_routes(app: web.Application, settings: Settings, portal_store: 
             headers={"Cache-Control": "public, max-age=86400, immutable"},
         )
 
+    async def map_config(_: web.Request) -> web.Response:
+        """Return the browser map configuration without persisting the key in static files."""
+        return web.json_response(
+            {
+                "ok": True,
+                "provider": "yandex",
+                "configured": bool(settings.yandex_maps_api_key),
+                "api_key": settings.yandex_maps_api_key,
+            },
+            headers={"Cache-Control": "no-store, private"},
+        )
+
     async def feedback(request: web.Request) -> web.Response:
         if not portal_store:
             raise web.HTTPServiceUnavailable(text="Murojaatlar ombori ishga tushmagan.")
@@ -614,8 +770,11 @@ def setup_webapp_routes(app: web.Application, settings: Settings, portal_store: 
     app.router.add_get("/api/webapp/countries", countries)
     app.router.add_post("/api/webapp/permit", permit_check)
     app.router.add_post("/api/webapp/fees", fee_check)
+    app.router.add_post("/api/webapp/oversize/routes", oversize_routes)
+    app.router.add_post("/api/webapp/oversize/calculate", oversize_check)
     app.router.add_get("/api/webapp/posts", public_posts)
     app.router.add_get("/api/webapp/uzbekistan-border", uzbekistan_border)
+    app.router.add_get("/api/webapp/map-config", map_config)
     app.router.add_post("/api/webapp/feedback", feedback)
     app.router.add_post("/api/webapp/saved-routes", save_route)
     app.router.add_static("/static/webapp", STATIC_DIR, show_index=False, append_version=True)
