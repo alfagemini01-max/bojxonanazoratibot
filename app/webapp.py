@@ -505,9 +505,20 @@ async def inspector_document_page(_: web.Request) -> web.FileResponse:
         headers={
             "Cache-Control": "public, max-age=300",
             "X-Robots-Tag": "noindex, nofollow, noarchive",
-            "Content-Security-Policy": "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; base-uri 'none'; frame-ancestors 'self'",
+            # Allow Google Fonts and html2canvas CDN used by the new PDF/payment feature
+            "Content-Security-Policy": (
+                "default-src 'self'; "
+                "img-src 'self' data: https:; "
+                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+                "font-src 'self' https://fonts.gstatic.com; "
+                "script-src 'self' https://cdnjs.cloudflare.com; "
+                "connect-src 'self'; "
+                "base-uri 'none'; "
+                "frame-ancestors 'self'"
+            ),
         },
     )
+
 
 
 def _telegram_user_id(init_data: str, bot_token: str) -> int | None:
@@ -551,6 +562,10 @@ def setup_webapp_routes(app: web.Application, settings: Settings, portal_store: 
     route_cache: dict[str, tuple[float, dict[str, Any]]] = {}
     route_choices: dict[str, tuple[float, float]] = {}
     routing_session: ClientSession | None = None
+    # Semaphore: max 5 concurrent OSRM requests to avoid overload
+    osrm_semaphore = asyncio.Semaphore(5)
+    # RAM cache for posts: {lang: (etag, revision, rows)}
+    posts_cache: dict[str, tuple[str, int, list]] = {}
 
     async def routing_client() -> ClientSession:
         nonlocal routing_session
@@ -673,19 +688,20 @@ def setup_webapp_routes(app: web.Application, settings: Settings, portal_store: 
         )
         try:
             client = await routing_client()
-            async with client.get(
-                url,
-                params={
-                    "alternatives": "false" if waypoints else "3",
-                    "steps": "false",
-                    "overview": "simplified",
-                    "geometries": "geojson",
-                },
-            ) as response:
-                if response.status != 200:
-                    logger.warning("Routing provider returned HTTP %s", response.status)
-                    raise web.HTTPServiceUnavailable(text="Marshrut xizmati vaqtincha javob bermadi.")
-                payload = await response.json()
+            async with osrm_semaphore:
+                async with client.get(
+                    url,
+                    params={
+                        "alternatives": "false" if waypoints else "3",
+                        "steps": "false",
+                        "overview": "simplified",
+                        "geometries": "geojson",
+                    },
+                ) as response:
+                    if response.status != 200:
+                        logger.warning("Routing provider returned HTTP %s", response.status)
+                        raise web.HTTPServiceUnavailable(text="Marshrut xizmati vaqtincha javob bermadi.")
+                    payload = await response.json()
         except (ClientError, asyncio.TimeoutError, ValueError) as exc:
             logger.warning("Routing request failed: %s", exc)
             raise web.HTTPServiceUnavailable(
@@ -795,12 +811,27 @@ def setup_webapp_routes(app: web.Application, settings: Settings, portal_store: 
         if not portal_store:
             raise web.HTTPServiceUnavailable(text="Postlar katalogi ishga tushmagan.")
         lang = _lang(request.query.get("lang"))
+        current_revision = post_revision_state["value"]
+
+        # Serve from RAM cache if revision unchanged (ETag support)
+        cached = posts_cache.get(lang)
+        if cached and cached[1] == current_revision:
+            etag = cached[0]
+            if request.headers.get("If-None-Match") == etag:
+                return web.Response(status=304, headers={"ETag": etag, "Cache-Control": "public, max-age=60"})
+            return web.json_response(
+                {"ok": True, "posts": cached[2], "revision": current_revision},
+                headers={"Cache-Control": "public, max-age=60", "ETag": etag},
+            )
+
         rows = await portal_store.list_posts()
         for row in rows:
             row["name"] = row.get(f"name_{lang}") or row.get("name_uz")
+        etag = f'"posts-{lang}-{current_revision}"'
+        posts_cache[lang] = (etag, current_revision, rows)
         return web.json_response(
-            {"ok": True, "posts": rows, "revision": post_revision_state["value"]},
-            headers={"Cache-Control": "no-store, private"},
+            {"ok": True, "posts": rows, "revision": current_revision},
+            headers={"Cache-Control": "public, max-age=60", "ETag": etag},
         )
 
     async def posts_revision(_: web.Request) -> web.Response:

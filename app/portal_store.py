@@ -175,8 +175,16 @@ class PortalStore:
                     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
                 );
-                CREATE INDEX IF NOT EXISTS inspector_documents_created_idx
-                    ON inspector_documents(created_at DESC);
+                CREATE INDEX IF NOT EXISTS notification_outbox_pending_idx
+                    ON notification_outbox(status, attempts, id);
+                CREATE INDEX IF NOT EXISTS saved_routes_origin_idx
+                    ON saved_routes(origin_code) WHERE active = true;
+                CREATE INDEX IF NOT EXISTS saved_routes_dest_idx
+                    ON saved_routes(destination_code) WHERE active = true;
+                CREATE INDEX IF NOT EXISTS saved_routes_vehicle_idx
+                    ON saved_routes(vehicle_code) WHERE active = true;
+                CREATE INDEX IF NOT EXISTS portal_analytics_event_idx
+                    ON portal_analytics(event_type, created_at DESC);
                 """
             )
         await self._seed_posts()
@@ -236,8 +244,16 @@ class PortalStore:
                     created_at TEXT NOT NULL,
                     updated_at TEXT NOT NULL
                 );
-                CREATE INDEX IF NOT EXISTS inspector_documents_created_idx
-                    ON inspector_documents(created_at);
+                CREATE INDEX IF NOT EXISTS notification_outbox_pending_idx
+                    ON notification_outbox(status, attempts, id);
+                CREATE INDEX IF NOT EXISTS saved_routes_origin_idx
+                    ON saved_routes(origin_code);
+                CREATE INDEX IF NOT EXISTS saved_routes_dest_idx
+                    ON saved_routes(destination_code);
+                CREATE INDEX IF NOT EXISTS saved_routes_vehicle_idx
+                    ON saved_routes(vehicle_code);
+                CREATE INDEX IF NOT EXISTS portal_analytics_event_idx
+                    ON portal_analytics(event_type, created_at);
                 """
             )
             await db.commit()

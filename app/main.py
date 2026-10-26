@@ -19,7 +19,7 @@ from app.portal_store import PortalStore
 from app.webapp import setup_webapp_routes, webapp_page
 
 logger = logging.getLogger(__name__)
-APP_VERSION = "2026-10-26-inspector-qr-v19"
+APP_VERSION = "2026-10-26-inspector-v5-pdf-payment-optimize"
 
 
 def create_http_middlewares(settings: Settings):
@@ -27,13 +27,20 @@ def create_http_middlewares(settings: Settings):
 
     requests: dict[str, deque[float]] = defaultdict(deque)
 
+    # Per-route body size limits (bytes)
+    _BODY_LIMITS: dict[str, int] = {
+        "/api/admin/import": 12 * 1024 * 1024,   # Excel import: 12 MB
+        "/api/webapp/feedback": 16 * 1024,         # Feedback: 16 KB
+    }
+    _DEFAULT_LIMIT = 64 * 1024  # All other APIs: 64 KB
+
     @web.middleware
     async def security(request: web.Request, handler):
         if request.path == settings.webhook_path and settings.webhook_secret:
             supplied = request.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
             if supplied != settings.webhook_secret:
                 raise web.HTTPForbidden(text="Webhook token noto'g'ri.")
-        if request.path.startswith(("/api/webapp/", "/api/inspector/")):
+        if request.path.startswith(("/api/webapp/", "/api/inspector/", "/api/admin/")):
             key = request.remote or "unknown"
             now = monotonic()
             history = requests[key]
@@ -44,6 +51,15 @@ def create_http_middlewares(settings: Settings):
             history.append(now)
             if len(requests) > 5000:
                 requests.clear()
+            # Enforce per-route body size limit
+            content_length = int(request.headers.get("Content-Length", 0) or 0)
+            limit = _BODY_LIMITS.get(request.path, _DEFAULT_LIMIT)
+            if content_length > limit:
+                raise web.HTTPRequestEntityTooLarge(
+                    text=f"So'rov hajmi {limit // 1024} KB dan oshib ketdi.",
+                    max_size=limit,
+                    actual_size=content_length,
+                )
         response = await handler(request)
         response.headers.setdefault("X-Content-Type-Options", "nosniff")
         response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
@@ -84,7 +100,7 @@ def setup_portal_lifecycle(app, settings: Settings, store: PortalStore) -> None:
                                 timeout=10,
                             ) as response:
                                 await store.finish_notification(int(row["id"]), response.status == 200)
-                        await asyncio.sleep(15 if rows else 45)
+                        await asyncio.sleep(15 if rows else 60)
                     except asyncio.CancelledError:
                         raise
                     except Exception:
