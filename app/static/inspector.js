@@ -253,8 +253,9 @@ const journalSearchInput = document.getElementById('journal-search');
 // Toast helper
 function showToast(msg, isError = false) {
   const toast = document.getElementById('toast');
+  if (!toast) return;
   toast.textContent = msg;
-  toast.style.borderColor = isError ? 'var(--danger)' : 'var(--emerald)';
+  toast.className = 'toast-msg' + (isError ? ' error' : '');
   toast.style.display = 'flex';
   setTimeout(() => { toast.style.display = 'none'; }, 3200);
 }
@@ -346,13 +347,13 @@ function closeCountryPicker() {
 function renderModalCountries(list) {
   modalCountryList.innerHTML = list.map(c => `
     <button type="button" class="country-item-btn" onclick="selectCountry('${c.code}', '${c.name.replace(/'/g, "\\'")}')">
-      <img src="${getFlagUrl(c.code)}" alt="${c.name}">
+      <img src="${getFlagUrl(c.code)}" alt="${c.name}" onerror="this.onerror=null;this.src='/static/webapp/flags/uz.svg'">
       <div class="name-wrap">
         <div class="c-name">${c.name}</div>
         <div class="c-code">${c.code} · ${c.num}</div>
       </div>
     </button>
-  `).join('') || '<div style="grid-column:1/-1;text-align:center;padding:20px;color:#94a3b8;">Davlat topilmadi</div>';
+  `).join('') || '<div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--muted);">Davlat topilmadi</div>';
 }
 
 modalCountrySearch.addEventListener('input', (e) => {
@@ -427,15 +428,36 @@ function addDocumentRow(docType = "Invoys", docNo = "", docDate = "", note = "")
 function getDocumentsPayload() {
   const rows = docsTableBody.querySelectorAll('tr');
   const list = [];
-  rows.forEach(tr => {
+  rows.forEach((tr, index) => {
     const type = tr.querySelector('.doc-type-sel')?.value || 'Invoys';
     const no = tr.querySelector('.doc-no-inp')?.value.trim() || '';
     const date = tr.querySelector('.doc-date-inp')?.value.trim() || '';
     const note = tr.querySelector('.doc-note-inp')?.value.trim() || '';
-    if (no || note) {
-      list.push({ type, number: no, date, note });
-    }
+    const code = no || `DOC-${index + 1}`;
+    const title = type + (no ? ` № ${no}` : '');
+    list.push({
+      code: code,
+      title: title,
+      status: "Rasmiylashtirilgan",
+      description: note || date || "Tekshirildi",
+      type: type,
+      number: no,
+      date: date,
+      note: note
+    });
   });
+  if (list.length === 0) {
+    list.push({
+      code: "INV",
+      title: "Invoys / Yuk xati",
+      status: "Rasmiylashtirilgan",
+      description: "Asosiy invoys hujjati",
+      type: "Invoys",
+      number: "1",
+      date: "",
+      note: ""
+    });
+  }
   return list;
 }
 
@@ -463,7 +485,7 @@ function updateReceiptPreview() {
   if (docs.length) {
     rcptDocsWrap.innerHTML = docs.map(d => `<div>• ${d.type} ${d.number ? '№ ' + d.number : ''}</div>`).join('');
   } else {
-    rcptDocsWrap.innerHTML = `<span style="color:#94a3b8">Hujjatlar kiritilmadi</span>`;
+    rcptDocsWrap.innerHTML = `<span style="color:var(--muted)">Hujjatlar kiritilmadi</span>`;
   }
 }
 
@@ -501,20 +523,31 @@ issuanceForm.addEventListener('submit', async (e) => {
   submitBtn.disabled = true;
   submitBtn.innerHTML = `<span>Shakllantirilmoqda...</span>`;
 
+  const postObj = allCustomsPosts.find(p => p.code === postCode);
+  const postName = postObj ? (postObj.name_uz || postObj.name_ru || postCode) : `Bojxona posti ${postCode}`;
+
   const payload = {
     post_code: postCode,
-    crossing_time: crossingTimeInput.value,
+    post_name: postName,
+    crossing_at: crossingTimeInput.value || "",
+    crossing_time: crossingTimeInput.value || "",
     direction: directionSelect.value,
     destination: destinationInput.value.trim(),
+    location: destinationInput.value.trim(),
     driver_name: driverName,
     driver_passport: driverPassportInput.value.trim().toUpperCase(),
+    passport: driverPassportInput.value.trim().toUpperCase(),
     driver_phone: driverPhoneInput.value.trim(),
+    phone: driverPhoneInput.value.trim(),
     driver_country: driverCountryInput.value,
+    nationality: driverCountryInput.value,
     vehicle_plate: plate,
     trailer_plate: trailerPlateInput.value.trim().toUpperCase(),
     vehicle_country: vehicleCountryInput.value,
     cargo_description: cargoDescInput.value.trim(),
+    cargo: cargoDescInput.value.trim(),
     inspector_name: inspectorNameInput.value.trim() || "Navbatchi inspektor",
+    service_note: document.getElementById('service-note')?.value.trim() || "",
     documents: getDocumentsPayload()
   };
 
@@ -543,7 +576,7 @@ issuanceForm.addEventListener('submit', async (e) => {
     submitBtn.disabled = false;
     submitBtn.innerHTML = `
       <span>QR-kodli hujjatni shakllantirish</span>
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
         <path d="M5 12h14"></path>
         <path d="m12 5 7 7-7 7"></path>
       </svg>

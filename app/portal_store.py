@@ -575,36 +575,52 @@ class PortalStore:
 
         driver_name = text("driver_name", 2, 160)
         vehicle_plate = text("vehicle_plate", 2, 40).upper()
-        post_name = text("post_name", 2, 180)
-        crossing_at = text("crossing_at", 4, 64)
-        inspector_name = text("inspector_name", 2, 160, actor)
-        post_code = str(body.get("post_code") or "").strip()[:40]
 
-        documents = body.get("documents") or []
-        if not isinstance(documents, list) or not 1 <= len(documents) <= 12:
-            raise ValueError("Kamida 1 ta, ko'pi bilan 12 ta hujjat kiriting.")
+        post_code = str(body.get("post_code") or "").strip()[:40]
+        post_name_default = ""
+        if post_code:
+            for seed in POST_SEED:
+                if seed[0] == post_code:
+                    post_name_default = f"{seed[1]} posti"
+                    break
+        post_name = str(body.get("post_name") or post_name_default or f"Bojxona posti {post_code}".strip() or "Bojxona posti")[:180]
+
+        crossing_at = str(body.get("crossing_at") or body.get("crossing_time") or _now()[:16].replace("T", " "))[:64]
+        inspector_name = text("inspector_name", 2, 160, actor or "Navbatchi inspektor")
+
+        raw_documents = body.get("documents") or []
+        if not isinstance(raw_documents, list) or len(raw_documents) == 0:
+            raw_documents = [{"code": "INV", "title": "Invoys / Yuk xati", "status": "Rasmiylashtirilgan", "description": "Asosiy hujjat"}]
+
         normalized_documents: list[dict[str, str]] = []
-        for index, item in enumerate(documents, 1):
+        for index, item in enumerate(raw_documents[:12], 1):
             if not isinstance(item, dict):
-                raise ValueError(f"{index}-hujjat ma'lumoti noto'g'ri.")
-            code = str(item.get("code") or "").strip().upper()[:80]
-            title = str(item.get("title") or "").strip()[:180]
+                continue
+            code = str(item.get("code") or item.get("type") or item.get("number") or f"DOC-{index}").strip().upper()[:80]
+            title = str(item.get("title") or item.get("type") or item.get("number") or "Rasmiy hujjat").strip()[:180]
             status = str(item.get("status") or "Rasmiylashtirilgan").strip()[:80]
-            description = str(item.get("description") or "").strip()[:500]
-            if len(code) < 2 or len(title) < 2:
-                raise ValueError(f"{index}-hujjat kodi va nomini to'liq kiriting.")
+            description = str(item.get("description") or item.get("note") or item.get("number") or "").strip()[:500]
+            if len(code) < 1:
+                code = f"DOC-{index}"
+            if len(title) < 1:
+                title = "Hujjat"
             normalized_documents.append(
                 {"code": code, "title": title, "status": status, "description": description}
             )
 
+        if not normalized_documents:
+            normalized_documents.append(
+                {"code": "INV", "title": "Invoys / Yuk xati", "status": "Rasmiylashtirilgan", "description": "Asosiy hujjat"}
+            )
+
         payload = {
-            "nationality": str(body.get("nationality") or "").strip()[:120],
-            "passport": str(body.get("passport") or "").strip().upper()[:80],
-            "phone": str(body.get("phone") or "").strip()[:80],
-            "vehicle_country": str(body.get("vehicle_country") or "").strip()[:120],
-            "location": str(body.get("location") or "").strip()[:240],
-            "cargo": str(body.get("cargo") or "").strip()[:500],
-            "additional_info": str(body.get("additional_info") or "").strip()[:2000],
+            "nationality": str(body.get("nationality") or body.get("driver_country") or "UZ").strip()[:120],
+            "passport": str(body.get("passport") or body.get("driver_passport") or "").strip().upper()[:80],
+            "phone": str(body.get("phone") or body.get("driver_phone") or "").strip()[:80],
+            "vehicle_country": str(body.get("vehicle_country") or "UZ").strip()[:120],
+            "location": str(body.get("location") or body.get("destination") or "").strip()[:240],
+            "cargo": str(body.get("cargo") or body.get("cargo_description") or "").strip()[:500],
+            "additional_info": str(body.get("additional_info") or body.get("service_note") or "").strip()[:2000],
             "documents": normalized_documents,
         }
         now = _now()
