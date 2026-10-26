@@ -181,41 +181,62 @@ def _vid(value: object) -> str:
     return str(int(text))
 
 
-def _signed_token(settings: Settings) -> str:
+INSPECTOR_USERNAMES = {"inspector", "inspektor", "inspecto"}
+INSPECTOR_DEFAULT_PASSWORD = "1111"
+
+
+def _signed_token(settings: Settings, username: str | None = None) -> str:
+    user = (username or settings.admin_username).strip()
     issued_at = str(int(time.time()))
     nonce = secrets.token_urlsafe(12)
-    payload = f"{settings.admin_username}:{issued_at}:{nonce}"
+    payload = f"{user}:{issued_at}:{nonce}"
     signature = hmac.new(settings.admin_session_secret.encode(), payload.encode(), sha256).hexdigest()
     return f"{payload}:{signature}"
 
 
-def _is_authenticated(request: web.Request, settings: Settings) -> bool:
+def _get_authenticated_user(request: web.Request, settings: Settings) -> str | None:
     token = request.cookies.get(SESSION_COOKIE, "")
     parts = token.split(":")
     if len(parts) != 4:
-        return False
+        return None
     username, issued_at, nonce, signature = parts
-    if username != settings.admin_username:
-        return False
     try:
         age = time.time() - int(issued_at)
     except ValueError:
-        return False
+        return None
     if age < 0 or age > SESSION_TTL_SECONDS:
-        return False
+        return None
     payload = f"{username}:{issued_at}:{nonce}"
     expected = hmac.new(settings.admin_session_secret.encode(), payload.encode(), sha256).hexdigest()
-    return hmac.compare_digest(signature, expected)
+    if not hmac.compare_digest(signature, expected):
+        return None
+    return username
 
 
-def _require_admin(request: web.Request, settings: Settings) -> None:
-    if not _is_authenticated(request, settings):
-        raise web.HTTPUnauthorized(text="Admin login talab qilinadi.")
+def _is_authenticated(request: web.Request, settings: Settings, allow_inspector: bool = False) -> bool:
+    user = _get_authenticated_user(request, settings)
+    if not user:
+        return False
+    if user == settings.admin_username:
+        return True
+    if allow_inspector and user in INSPECTOR_USERNAMES:
+        return True
+    return False
+
+
+def _require_admin(request: web.Request, settings: Settings, allow_inspector: bool = False) -> str:
+    user = _get_authenticated_user(request, settings)
+    if not user:
+        raise web.HTTPUnauthorized(text="Tizimga kirish talab qilinadi.")
+    if user != settings.admin_username:
+        if not (allow_inspector and user in INSPECTOR_USERNAMES):
+            raise web.HTTPForbidden(text="Ushbu amal uchun administrator huquqi talab qilinadi.")
     if request.method not in {"GET", "HEAD", "OPTIONS"}:
         cookie_token = request.cookies.get(CSRF_COOKIE, "")
         header_token = request.headers.get("X-CSRF-Token", "")
         if not cookie_token or not hmac.compare_digest(cookie_token, header_token):
             raise web.HTTPForbidden(text="Xavfsizlik belgisi noto'g'ri. Sahifani yangilang.")
+    return user
 
 
 def _json_error(message: str, status: int = 400) -> web.Response:
@@ -384,8 +405,16 @@ def _fee_item_payload(data: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _login_page() -> str:
-    return (Path(__file__).resolve().parent / "static" / "admin-login.html").read_text(encoding="utf-8")
+def _login_page(error: str = "") -> str:
+    path = Path(__file__).resolve().parent / "static" / "admin-login.html"
+    if path.exists():
+        content = path.read_text(encoding="utf-8")
+        if error:
+            error_html = f'<div class="login-alert" id="loginAlert" style="display:flex;"><span>⚠️</span><span>{error}</span></div>'
+            content = content.replace("<!-- ERROR_BANNER -->", error_html)
+        else:
+            content = content.replace("<!-- ERROR_BANNER -->", "")
+        return content
     return """<!doctype html>
 <html lang="uz">
 <head>
@@ -994,27 +1023,64 @@ def setup_admin_routes(app: web.Application, settings: Settings, portal_store: P
         except Exception:
             logger.exception("Admin audit could not be saved: %s", action)
 
+    async def login_get(request: web.Request) -> web.Response:
+        user = _get_authenticated_user(request, settings)
+        if user == settings.admin_username:
+            raise web.HTTPFound("/admin/dashboard")
+        elif user in INSPECTOR_USERNAMES:
+            raise web.HTTPFound("/inspector")
+        error = request.query.get("error", "")
+        response = web.Response(text=_login_page(error=error), content_type="text/html")
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        return response
+
     async def admin_index(request: web.Request) -> web.Response:
         if not settings.admin_username or not settings.admin_password or len(settings.admin_session_secret) < 24:
             return web.Response(
                 text="Admin panel sozlanmagan. Render Environment ichida ADMIN_USERNAME, ADMIN_PASSWORD va kamida 24 belgili ADMIN_SESSION_SECRET kiriting.",
                 status=503,
             )
-        if not _is_authenticated(request, settings):
-            response = web.Response(text=_login_page(), content_type="text/html")
-        else:
-            response = web.Response(
-                text=(Path(__file__).resolve().parent / "static" / "admin.html").read_text(encoding="utf-8"),
-                content_type="text/html",
+        user = _get_authenticated_user(request, settings)
+        if user in INSPECTOR_USERNAMES:
+            raise web.HTTPFound("/inspector")
+        if user != settings.admin_username:
+            raise web.HTTPFound("/login")
+        response = web.Response(
+            text=(Path(__file__).resolve().parent / "static" / "admin.html").read_text(encoding="utf-8"),
+            content_type="text/html",
+        )
+        if not request.cookies.get(CSRF_COOKIE):
+            response.set_cookie(
+                CSRF_COOKIE,
+                secrets.token_urlsafe(24),
+                max_age=SESSION_TTL_SECONDS,
+                secure=bool(settings.webhook_url.startswith("https://")),
+                samesite="Strict",
             )
-            if not request.cookies.get(CSRF_COOKIE):
-                response.set_cookie(
-                    CSRF_COOKIE,
-                    secrets.token_urlsafe(24),
-                    max_age=SESSION_TTL_SECONDS,
-                    secure=bool(settings.webhook_url.startswith("https://")),
-                    samesite="Strict",
-                )
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        return response
+
+    async def inspector_index(request: web.Request) -> web.Response:
+        user = _get_authenticated_user(request, settings)
+        if not user or (user != settings.admin_username and user not in INSPECTOR_USERNAMES):
+            raise web.HTTPFound("/login")
+        inspector_html_path = Path(__file__).resolve().parent / "static" / "inspector.html"
+        if not inspector_html_path.exists():
+            return web.Response(text="Inspektor oynasi topilmadi.", status=404)
+        response = web.Response(
+            text=inspector_html_path.read_text(encoding="utf-8"),
+            content_type="text/html",
+        )
+        if not request.cookies.get(CSRF_COOKIE):
+            response.set_cookie(
+                CSRF_COOKIE,
+                secrets.token_urlsafe(24),
+                max_age=SESSION_TTL_SECONDS,
+                secure=bool(settings.webhook_url.startswith("https://")),
+                samesite="Strict",
+            )
         response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
         response.headers["Pragma"] = "no-cache"
         return response
@@ -1024,22 +1090,57 @@ def setup_admin_routes(app: web.Application, settings: Settings, portal_store: P
         now = time.monotonic()
         attempts = [stamp for stamp in LOGIN_ATTEMPTS.get(address, []) if stamp > now - 600]
         LOGIN_ATTEMPTS[address] = attempts
-        if len(attempts) >= 8:
+        if len(attempts) >= 15:
             return web.Response(text="Kirish urinishlari ko'p. 10 daqiqadan keyin qayta urinib ko'ring.", status=429)
-        form = await request.post()
-        username = str(form.get("username") or "")
-        password = str(form.get("password") or "")
-        if not (
-            hmac.compare_digest(username, settings.admin_username)
+
+        content_type = request.content_type or ""
+        if "application/json" in content_type:
+            try:
+                body = await request.json()
+            except Exception:
+                body = {}
+            username = str(body.get("username") or "").strip()
+            password = str(body.get("password") or "").strip()
+            is_json = True
+        else:
+            form = await request.post()
+            username = str(form.get("username") or "").strip()
+            password = str(form.get("password") or "").strip()
+            is_json = False
+
+        is_admin = bool(
+            settings.admin_username
+            and settings.admin_password
+            and hmac.compare_digest(username, settings.admin_username)
             and hmac.compare_digest(password, settings.admin_password)
-        ):
+        )
+        is_inspector = bool(
+            username.lower() in INSPECTOR_USERNAMES
+            and hmac.compare_digest(password, INSPECTOR_DEFAULT_PASSWORD)
+        )
+
+        if not (is_admin or is_inspector):
             attempts.append(now)
-            return web.Response(text=_login_page(), content_type="text/html", status=403)
+            if is_json:
+                return web.json_response({"ok": False, "error": "Login yoki parol noto'g'ri kiritildi."}, status=403)
+            return web.Response(
+                text=_login_page(error="Login yoki parol noto'g'ri kiritildi."),
+                content_type="text/html",
+                status=403,
+            )
+
         LOGIN_ATTEMPTS.pop(address, None)
-        response = web.HTTPFound("/admin/dashboard")
+        target_role = settings.admin_username if is_admin else "inspector"
+        redirect_url = "/admin/dashboard" if is_admin else "/inspector"
+
+        if is_json:
+            response = web.json_response({"ok": True, "redirect": redirect_url, "role": target_role})
+        else:
+            response = web.HTTPFound(redirect_url)
+
         response.set_cookie(
             SESSION_COOKIE,
-            _signed_token(settings),
+            _signed_token(settings, target_role),
             max_age=SESSION_TTL_SECONDS,
             httponly=True,
             secure=bool(settings.webhook_url.startswith("https://")),
@@ -1052,14 +1153,21 @@ def setup_admin_routes(app: web.Application, settings: Settings, portal_store: P
             secure=bool(settings.webhook_url.startswith("https://")),
             samesite="Strict",
         )
-        raise response
+        if not is_json:
+            raise response
+        return response
 
     async def logout(request: web.Request) -> web.Response:
-        _require_admin(request, settings)
-        response = web.json_response({"ok": True})
+        response = web.json_response({"ok": True, "redirect": "/login"})
         response.del_cookie(SESSION_COOKIE)
         response.del_cookie(CSRF_COOKIE)
         return response
+
+    async def inspector_logout(request: web.Request) -> web.Response:
+        response = web.HTTPFound("/login")
+        response.del_cookie(SESSION_COOKIE)
+        response.del_cookie(CSRF_COOKIE)
+        raise response
 
     async def summary(request: web.Request) -> web.Response:
         _require_admin(request, settings)
@@ -1640,7 +1748,7 @@ def setup_admin_routes(app: web.Application, settings: Settings, portal_store: P
         }
 
     async def inspector_documents(request: web.Request) -> web.Response:
-        _require_admin(request, settings)
+        _require_admin(request, settings, allow_inspector=True)
         if not portal_store:
             return _json_error("Inspektor hujjatlari ombori ishga tushmagan.", 503)
         try:
@@ -1654,12 +1762,12 @@ def setup_admin_routes(app: web.Application, settings: Settings, portal_store: P
         })
 
     async def create_inspector_document(request: web.Request) -> web.Response:
-        _require_admin(request, settings)
+        actor = _require_admin(request, settings, allow_inspector=True)
         if not portal_store:
             return _json_error("Inspektor hujjatlari ombori ishga tushmagan.", 503)
         try:
             item = await portal_store.create_inspector_document(
-                await request.json(), settings.admin_username
+                await request.json(), actor
             )
         except ValueError as exc:
             return _json_error(str(exc))
@@ -1667,11 +1775,12 @@ def setup_admin_routes(app: web.Application, settings: Settings, portal_store: P
             "document_no": item.get("document_no"),
             "vehicle_plate": item.get("vehicle_plate"),
             "post_code": item.get("post_code"),
+            "actor": actor,
         })
         return web.json_response({"ok": True, "document": inspector_urls(request, item)})
 
     async def inspector_document_status(request: web.Request) -> web.Response:
-        _require_admin(request, settings)
+        actor = _require_admin(request, settings, allow_inspector=True)
         if not portal_store:
             return _json_error("Inspektor hujjatlari ombori ishga tushmagan.", 503)
         body = await request.json()
@@ -1680,11 +1789,11 @@ def setup_admin_routes(app: web.Application, settings: Settings, portal_store: P
             await portal_store.set_inspector_document_status(request.match_info["token"], status)
         except ValueError as exc:
             return _json_error(str(exc))
-        await audit("inspector_document_status", {"status": status})
+        await audit("inspector_document_status", {"status": status, "actor": actor})
         return web.json_response({"ok": True, "status": status})
 
     async def posts_list(request: web.Request) -> web.Response:
-        _require_admin(request, settings)
+        _require_admin(request, settings, allow_inspector=True)
         if not portal_store:
             return _json_error("Postlar ombori ishga tushmagan.", 503)
         return web.json_response({"ok": True, "items": await portal_store.list_posts(include_inactive=True)})
@@ -1722,10 +1831,15 @@ def setup_admin_routes(app: web.Application, settings: Settings, portal_store: P
         asyncio.create_task(audit("customs_post_disable", {"code": request.match_info["code"]}))
         return web.json_response({"ok": True, "revision": post_revision_state["value"]})
 
+    app.router.add_get("/login", login_get)
+    app.router.add_post("/login", login)
+    app.router.add_get("/admin/login", login_get)
+    app.router.add_post("/admin/login", login)
     app.router.add_get("/admin", admin_index)
     app.router.add_get("/admin/dashboard", admin_index)
-    app.router.add_post("/admin/login", login)
     app.router.add_post("/admin/logout", logout)
+    app.router.add_get("/inspector", inspector_index)
+    app.router.add_post("/inspector/logout", inspector_logout)
     app.router.add_get("/admin/api/summary", summary)
     app.router.add_get("/admin/api/permission", permission_list)
     app.router.add_get("/admin/api/country/{code}", country_detail)

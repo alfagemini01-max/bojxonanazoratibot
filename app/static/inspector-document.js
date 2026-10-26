@@ -1,19 +1,21 @@
 'use strict';
 
 /* ============================================================
-   Inspector Document JS v5
-   - QR xatoligi tuzatildi (to'g'ri API endpoint ishlatildi)
-   - PDF yuklab olish (3 tilda: UZ, RU, EN)
-   - To'lov tizimi (6 ta to'lov usuli, karta kiritish, tasdiqlash)
-   - Zamonaviy animatsiyalar
-   - Bojxona logosi
+   E-Bojxona Inspector Document JS v6
+   - Mobile-First Road24 Auto App Style UI
+   - Pure Modern SVG Icons (Zero Emojis!)
+   - Top-Right Language Dropdown with Animated Transitions & Flags
+   - Dynamic Realistic License Plate Generator (UZ, KZ, RU, KG, TJ, etc.)
+   - Single Sticky Bottom Unified Payment Dock (1 bitta to'lash tugmasi!)
+   - Working Interactive Payment Flow (Click, Payme, Uzum, Munis, Uzcard, Humo)
+   - Official 3-Language PDF Generation with Stamps & Watermarks
    ============================================================ */
 
 const dictionary = {
   uz: {
     service: 'Davlat bojxona xizmati',
     loading: 'Hujjat tekshirilmoqda…',
-    loadingDesc: 'Tizimdan ma\'lumot olinmoqda',
+    loadingDesc: 'Bojxona tizimidan ma\'lumotlar olinmoqda',
     notFound: 'Hujjat topilmadi',
     notFoundHelp: 'QR-kod to\'g\'riligini tekshiring yoki bojxona xodimiga murojaat qiling.',
     verified: 'HUJJAT TASDIQLANGAN',
@@ -22,67 +24,69 @@ const dictionary = {
     revokedHelp: 'Bu hujjat amalda emas. Bojxona xodimiga murojaat qiling.',
     welcome: 'O\'ZBEKISTON RESPUBLIKASIGA XUSH KELIBSIZ!',
     docNumber: 'Hujjat raqami',
-    visitorData: 'TASHRIF BUYURUVCHI',
+    vehicleSection: 'TRANSPORT VOSITASI',
+    vehicleInspection: 'Nazoratdan o\'tgan',
+    cleared: 'Nazoratdan o\'tgan',
     personalData: 'Shaxsiy ma\'lumotlar',
-    crossing: 'CHEGARADAN O\'TISH',
     journeyData: 'Safar ma\'lumotlari',
     officialDocs: 'RASMIY HUJJATLAR',
     registeredDocs: 'Nomingizga rasmiylashtirilgan hujjatlar',
-    additional: 'QO\'SHIMCHA',
     additionalInfo: 'Qo\'shimcha ma\'lumot',
     lawTitle: 'Qonunchilik talablariga rioya qiling',
-    lawText: 'O\'zbekiston Respublikasi hududida amaldagi bojxona va yo\'l harakati qoidalariga amal qilishingiz shart.',
+    lawText: 'O\'zbekiston Respublikasi hududida amaldagi bojxona va yo\'l harakati xavfsizligi qoidalariga qat\'iy amal qilishingiz shart.',
     issuedBy: 'HUJJATNI RASMIYLASHTIRGAN INSPEKTOR',
-    privacy: 'Ushbu sahifa QR orqali berilgan hujjatni tekshirish uchun mo\'ljallangan.',
     nationality: 'Fuqaroligi',
-    passport: 'Pasport',
+    passport: 'Pasport raqami',
     phone: 'Telefon',
     plate: 'Transport raqami',
     vehicleCountry: 'Transport davlati',
     post: 'Chegara posti',
     time: 'O\'tish vaqti',
     location: 'Yo\'nalish / joy',
-    cargo: 'Yuk',
+    cargo: 'Yuk turi',
     status: 'Holati',
-    downloadTitle: 'Hujjatlarni PDF yuklab olish',
-    downloadDesc: 'Barcha hujjatlarni rasmiy PDF formatida yuklab oling',
-    downloadLang: 'Yuklab olish tili:',
-    download: 'PDF Yuklab olish',
-    paymentRequired: 'To\'lov talab etiladi',
-    paymentStatus: 'To\'lov holati:',
-    unpaid: '❌ TO\'LANMAGAN',
-    paid: '✅ TO\'LANGAN',
-    amount: 'Summa:',
+    downloadLang: 'Hujjat tili:',
+    download: 'PDF yuklab olish',
+    totalToPay: 'Jami to\'lov miqdori:',
+    unpaidStatus: 'To\'lov kutilmoqda',
+    paidStatus: 'To\'langan',
     payNow: 'To\'lash',
+    allPaid: 'Barcha to\'lovlar to\'langan',
+    paidBadge: 'To\'langan',
+    unpaidBadge: 'To\'lov kutilmoqda',
+    paymentBreakdown: 'Bojxona to\'lovlari',
+    paymentBreakdownDesc: 'Quyidagi xizmatlar va yig\'imlar uchun to\'lov amalga oshiriladi',
+    choosePaymentSystem: 'To\'lov usulini tanlash',
     chooseMethod: 'To\'lov tizimini tanlang',
+    chooseMethodDesc: 'To\'lovni amalga oshirish uchun qulay usulni tanlang',
     cardDetails: 'Karta ma\'lumotlarini kiriting',
     cardNumber: 'Karta raqami',
     expiry: 'Amal qilish muddati',
-    cardHolder: 'Karta egasining ismi',
-    totalAmount: 'Jami to\'lov:',
+    cardHolder: 'Karta egasining FISh',
     confirmPay: 'To\'lovni tasdiqlash',
     back: 'Orqaga',
-    paymentSuccess: 'To\'lov qabul qilindi!',
-    paymentSuccessDesc: 'Sizning to\'lovingiz muvaffaqiyatli amalga oshirildi.',
+    close: 'Yopish va qaytish',
+    paymentSuccess: 'To\'lov muvaffaqiyatli qabul qilindi!',
+    paymentSuccessDesc: 'Davlat bojxona xizmati tizimida to\'lov tasdiqlandi va rasmiy elektron kvitansiya shakllantirildi.',
     transactionId: 'Tranzaksiya ID:',
     paidAt: 'To\'langan vaqt:',
-    close: 'Yopish',
+    paidAmount: 'To\'langan summa:',
     transitDeclaration: 'Tranzit Majburiyatnomasi',
     insurancePolicy: 'Sug\'urta Polisi',
-    paymentInvoice: 'To\'lov Invoysi',
-    active: 'Faol',
+    paymentInvoice: 'Bojxona To\'lov Invoysi',
+    active: 'Amalda',
     docType: 'Hujjat turi',
     issueDate: 'Rasmiylashtirilgan sana',
     validUntil: 'Amal qilish muddati',
     officialSeal: 'Rasmiy muhr',
-    digitalSign: 'Elektron imzo',
+    digitalSign: 'Elektron raqamli imzo',
     verifiedSystem: 'Tizim tekshiruvi',
-    unpaidWarning: '⚠️ DIQQAT: Ushbu hujjat uchun to\'lov amalga oshirilmagan!',
+    unpaidWarning: 'DIQQAT: Ushbu hujjat uchun to\'lov amalga oshirilmagan!',
   },
   ru: {
     service: 'Государственная таможенная служба',
     loading: 'Документ проверяется…',
-    loadingDesc: 'Получение данных из системы',
+    loadingDesc: 'Получение данных из таможенной системы',
     notFound: 'Документ не найден',
     notFoundHelp: 'Проверьте QR-код или обратитесь к сотруднику таможни.',
     verified: 'ДОКУМЕНТ ПОДТВЕРЖДЁН',
@@ -91,18 +95,17 @@ const dictionary = {
     revokedHelp: 'Документ недействителен. Обратитесь к сотруднику таможни.',
     welcome: 'ДОБРО ПОЖАЛОВАТЬ В РЕСПУБЛИКУ УЗБЕКИСТАН!',
     docNumber: 'Номер документа',
-    visitorData: 'ПОСЕТИТЕЛЬ',
+    vehicleSection: 'ТРАНСПОРТНОЕ СРЕДСТВО',
+    vehicleInspection: 'Контроль пройден',
+    cleared: 'Контроль пройден',
     personalData: 'Личные данные',
-    crossing: 'ПЕРЕСЕЧЕНИЕ ГРАНИЦЫ',
     journeyData: 'Данные поездки',
     officialDocs: 'ОФИЦИАЛЬНЫЕ ДОКУМЕНТЫ',
     registeredDocs: 'Документы, оформленные на ваше имя',
-    additional: 'ДОПОЛНИТЕЛЬНО',
     additionalInfo: 'Дополнительная информация',
     lawTitle: 'Соблюдайте требования законодательства',
-    lawText: 'На территории Республики Узбекистан необходимо соблюдать таможенные правила и правила дорожного движения.',
+    lawText: 'На территории Республики Узбекистан строго соблюдайте таможенные правила и правила дорожного движения.',
     issuedBy: 'ИНСПЕКТОР, ОФОРМИВШИЙ ДОКУМЕНТ',
-    privacy: 'Страница предназначена для проверки документа по QR-коду.',
     nationality: 'Гражданство',
     passport: 'Паспорт',
     phone: 'Телефон',
@@ -113,45 +116,48 @@ const dictionary = {
     location: 'Маршрут / место',
     cargo: 'Груз',
     status: 'Статус',
-    downloadTitle: 'Скачать документы в PDF',
-    downloadDesc: 'Скачайте все документы в официальном формате PDF',
-    downloadLang: 'Язык загрузки:',
+    downloadLang: 'Язык документа:',
     download: 'Скачать PDF',
-    paymentRequired: 'Требуется оплата',
-    paymentStatus: 'Статус оплаты:',
-    unpaid: '❌ НЕ ОПЛАЧЕНО',
-    paid: '✅ ОПЛАЧЕНО',
-    amount: 'Сумма:',
+    totalToPay: 'Итого к оплате:',
+    unpaidStatus: 'Ожидает оплаты',
+    paidStatus: 'Оплачено',
     payNow: 'Оплатить',
-    chooseMethod: 'Выберите способ оплаты',
+    allPaid: 'Все платежи оплачены',
+    paidBadge: 'Оплачено',
+    unpaidBadge: 'Ожидает оплаты',
+    paymentBreakdown: 'Таможенные платежи',
+    paymentBreakdownDesc: 'Оплата за следующие услуги и таможенные сборы',
+    choosePaymentSystem: 'Выбрать способ оплаты',
+    chooseMethod: 'Выберите платёжную систему',
+    chooseMethodDesc: 'Выберите удобный способ для совершения платежа',
     cardDetails: 'Введите данные карты',
     cardNumber: 'Номер карты',
     expiry: 'Срок действия',
     cardHolder: 'Имя держателя карты',
-    totalAmount: 'Итого к оплате:',
     confirmPay: 'Подтвердить оплату',
     back: 'Назад',
-    paymentSuccess: 'Платёж принят!',
-    paymentSuccessDesc: 'Ваш платёж успешно обработан.',
+    close: 'Закрыть и вернуться',
+    paymentSuccess: 'Платёж успешно принят!',
+    paymentSuccessDesc: 'В системе Государственной таможенной службы платёж подтверждён, сформирована официальная квитанция.',
     transactionId: 'ID транзакции:',
     paidAt: 'Время оплаты:',
-    close: 'Закрыть',
+    paidAmount: 'Оплаченная сумма:',
     transitDeclaration: 'Транзитное Обязательство',
     insurancePolicy: 'Страховой Полис',
-    paymentInvoice: 'Платёжный Инвойс',
-    active: 'Активен',
+    paymentInvoice: 'Таможенный Платёжный Инвойс',
+    active: 'Действует',
     docType: 'Тип документа',
     issueDate: 'Дата оформления',
     validUntil: 'Срок действия',
     officialSeal: 'Официальная печать',
     digitalSign: 'Электронная подпись',
     verifiedSystem: 'Проверка системы',
-    unpaidWarning: '⚠️ ВНИМАНИЕ: Оплата по данному документу не произведена!',
+    unpaidWarning: 'ВНИМАНИЕ: Оплата по данному документу не произведена!',
   },
   en: {
     service: 'State Customs Service',
     loading: 'Verifying document…',
-    loadingDesc: 'Fetching data from the system',
+    loadingDesc: 'Fetching data from the customs system',
     notFound: 'Document not found',
     notFoundHelp: 'Check the QR code or contact a customs officer.',
     verified: 'DOCUMENT VERIFIED',
@@ -160,18 +166,17 @@ const dictionary = {
     revokedHelp: 'This document is no longer valid. Contact a customs officer.',
     welcome: 'WELCOME TO THE REPUBLIC OF UZBEKISTAN!',
     docNumber: 'Document number',
-    visitorData: 'VISITOR',
+    vehicleSection: 'VEHICLE DETAILS',
+    vehicleInspection: 'Control Passed',
+    cleared: 'Control Passed',
     personalData: 'Personal details',
-    crossing: 'BORDER CROSSING',
     journeyData: 'Journey details',
     officialDocs: 'OFFICIAL DOCUMENTS',
     registeredDocs: 'Documents issued in your name',
-    additional: 'ADDITIONAL',
     additionalInfo: 'Additional information',
-    lawTitle: 'Comply with the law',
-    lawText: 'You must comply with customs and traffic regulations in the Republic of Uzbekistan.',
+    lawTitle: 'Comply with legislation',
+    lawText: 'You must strictly comply with customs and road safety regulations in the Republic of Uzbekistan.',
     issuedBy: 'DOCUMENT ISSUED BY INSPECTOR',
-    privacy: 'This page is intended to verify the QR-linked document.',
     nationality: 'Nationality',
     passport: 'Passport',
     phone: 'Phone',
@@ -179,35 +184,38 @@ const dictionary = {
     vehicleCountry: 'Vehicle country',
     post: 'Border post',
     time: 'Crossing time',
-    location: 'Route / location',
-    cargo: 'Cargo',
+    location: 'Route / destination',
+    cargo: 'Cargo type',
     status: 'Status',
-    downloadTitle: 'Download Documents as PDF',
-    downloadDesc: 'Download all documents in official PDF format',
-    downloadLang: 'Download language:',
+    downloadLang: 'Document language:',
     download: 'Download PDF',
-    paymentRequired: 'Payment required',
-    paymentStatus: 'Payment status:',
-    unpaid: '❌ UNPAID',
-    paid: '✅ PAID',
-    amount: 'Amount:',
-    payNow: 'Pay now',
-    chooseMethod: 'Choose payment method',
+    totalToPay: 'Total to pay:',
+    unpaidStatus: 'Awaiting payment',
+    paidStatus: 'Paid',
+    payNow: 'Pay Now',
+    allPaid: 'All payments completed',
+    paidBadge: 'Paid',
+    unpaidBadge: 'Payment pending',
+    paymentBreakdown: 'Customs Fees & Dues',
+    paymentBreakdownDesc: 'Payment breakdown for registered customs services and fees',
+    choosePaymentSystem: 'Choose payment method',
+    chooseMethod: 'Select payment system',
+    chooseMethodDesc: 'Select your preferred payment method',
     cardDetails: 'Enter card details',
     cardNumber: 'Card number',
     expiry: 'Expiry date',
     cardHolder: 'Cardholder name',
-    totalAmount: 'Total to pay:',
-    confirmPay: 'Confirm payment',
+    confirmPay: 'Confirm Payment',
     back: 'Back',
-    paymentSuccess: 'Payment accepted!',
-    paymentSuccessDesc: 'Your payment has been successfully processed.',
+    close: 'Close and return',
+    paymentSuccess: 'Payment accepted successfully!',
+    paymentSuccessDesc: 'The payment was confirmed in the State Customs Service system and an official receipt was issued.',
     transactionId: 'Transaction ID:',
     paidAt: 'Paid at:',
-    close: 'Close',
+    paidAmount: 'Amount paid:',
     transitDeclaration: 'Transit Declaration',
     insurancePolicy: 'Insurance Policy',
-    paymentInvoice: 'Payment Invoice',
+    paymentInvoice: 'Customs Payment Invoice',
     active: 'Active',
     docType: 'Document type',
     issueDate: 'Issue date',
@@ -215,22 +223,22 @@ const dictionary = {
     officialSeal: 'Official seal',
     digitalSign: 'Digital signature',
     verifiedSystem: 'System verification',
-    unpaidWarning: '⚠️ WARNING: Payment for this document has not been made!',
+    unpaidWarning: 'WARNING: Payment for this document has not been made!',
   }
 };
 
-/* ── State ── */
+/* ── Application State ── */
 let lang = 'uz';
 let record = null;
 let selectedDlLang = 'uz';
-let currentDocForPayment = null;
-let selectedPayMethod = null;
-let paidDocs = {}; // track paid doc IDs
+let allPaymentsPaid = false;
+let paidDocs = {}; // doc.code -> boolean
+let selectedPayMethod = 'payme';
 
-/* ── Helpers ── */
+/* ── DOM & i18n Helpers ── */
 const $ = id => document.getElementById(id);
-const t = key => dictionary[lang][key] || dictionary.uz[key] || key;
-function setText(id, val) { const n = $(id); if (n) n.textContent = val || '—'; }
+const t = key => dictionary[lang]?.[key] || dictionary.uz[key] || key;
+function setText(id, val) { const el = $(id); if (el) el.textContent = val || '—'; }
 
 function formatDate(val) {
   const d = new Date(val);
@@ -245,213 +253,528 @@ function formatDateSimple(val) {
   return d.toLocaleDateString('ru-RU');
 }
 
-function dlRow(label, value) {
-  const div = document.createElement('div');
-  const dt = document.createElement('dt');
-  const dd = document.createElement('dd');
-  dt.textContent = label;
-  dd.textContent = value || '—';
-  div.append(dt, dd);
-  return div;
+/* Country flag SVG markup */
+function countryFlagImg(iso, alt = '') {
+  const code = String(iso || '').toLowerCase().trim();
+  if (!code || !/^[a-z]{2}$/.test(code)) {
+    return `<svg class="detail-flag-fallback" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`;
+  }
+  return `<img src="/static/webapp/flags/${code}.svg" alt="${alt || code}" class="detail-flag" onerror="this.style.display='none'">`;
 }
 
-/* ── Particles ── */
-function initParticles() {
-  const container = $('particles');
-  if (!container) return;
-  for (let i = 0; i < 18; i++) {
-    const p = document.createElement('div');
-    p.className = 'particle';
-    const size = Math.random() * 120 + 40;
-    p.style.cssText = `
-      width:${size}px; height:${size}px;
-      left:${Math.random() * 100}%;
-      animation-duration:${Math.random() * 20 + 15}s;
-      animation-delay:${Math.random() * -20}s;
-      opacity:${Math.random() * 0.4 + 0.1};
-    `;
-    container.appendChild(p);
+/* Helper to map country names to ISO codes */
+function getCountryIso(nameOrCode) {
+  const str = String(nameOrCode || '').toLowerCase().trim();
+  if (str.length === 2) return str;
+  if (str.includes('o\'zbek') || str.includes('uzbek') || str.includes('узбек')) return 'uz';
+  if (str.includes('qozog') || str.includes('kazakh') || str.includes('казах')) return 'kz';
+  if (str.includes('rossi') || str.includes('russia') || str.includes('росси')) return 'ru';
+  if (str.includes('qirg') || str.includes('kyrgyz') || str.includes('кыргыз')) return 'kg';
+  if (str.includes('tojik') || str.includes('tajik') || str.includes('таджик')) return 'tj';
+  if (str.includes('turkman') || str.includes('turkmen') || str.includes('туркмен')) return 'tm';
+  if (str.includes('turki') || str.includes('turkey') || str.includes('турци')) return 'tr';
+  if (str.includes('xitoy') || str.includes('china') || str.includes('китай')) return 'cn';
+  if (str.includes('afg') || str.includes('afghan') || str.includes('афган')) return 'af';
+  if (str.includes('ozar') || str.includes('azer') || str.includes('азерб')) return 'az';
+  if (str.includes('eron') || str.includes('iran') || str.includes('иран')) return 'ir';
+  if (str.includes('belarus') || str.includes('беларус')) return 'by';
+  return 'uz';
+}
+
+/* Detail Row Component */
+function renderDetailRow(label, value, flagIso = null) {
+  const row = document.createElement('div');
+  row.className = 'detail-row';
+
+  const lbl = document.createElement('span');
+  lbl.className = 'detail-label';
+  lbl.textContent = label;
+
+  const val = document.createElement('span');
+  val.className = 'detail-value';
+
+  if (flagIso) {
+    val.innerHTML = `${countryFlagImg(flagIso)} <span>${value || '—'}</span>`;
+  } else {
+    val.textContent = value || '—';
+  }
+
+  row.append(lbl, val);
+  return row;
+}
+
+/* ── Language Switcher Dropdown Logic ── */
+function initLanguageDropdown() {
+  const trigger = $('lang-trigger');
+  const menu = $('lang-menu');
+  if (!trigger || !menu) return;
+
+  trigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isOpen = menu.classList.contains('open');
+    if (isOpen) {
+      closeLangDropdown();
+    } else {
+      openLangDropdown();
+    }
+  });
+
+  document.querySelectorAll('.lang-option').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const newLang = btn.dataset.lang;
+      if (newLang) {
+        setLanguage(newLang);
+        closeLangDropdown();
+      }
+    });
+  });
+
+  // Close on outside click
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.lang-dropdown-wrapper')) {
+      closeLangDropdown();
+    }
+  });
+}
+
+function openLangDropdown() {
+  const trigger = $('lang-trigger');
+  const menu = $('lang-menu');
+  if (trigger && menu) {
+    menu.classList.add('open');
+    trigger.setAttribute('aria-expanded', 'true');
   }
 }
 
-/* ── i18n apply ── */
-function applyLanguage() {
-  document.documentElement.lang = lang;
-  document.querySelectorAll('[data-i18n]').forEach(n => n.textContent = t(n.dataset.i18n));
-  document.querySelectorAll('[data-lang]').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
-  if (record) render(record);
+function closeLangDropdown() {
+  const trigger = $('lang-trigger');
+  const menu = $('lang-menu');
+  if (trigger && menu) {
+    menu.classList.remove('open');
+    trigger.setAttribute('aria-expanded', 'false');
+  }
 }
 
-/* ── Render document ── */
+function setLanguage(newLang) {
+  lang = newLang;
+  document.documentElement.lang = lang;
+
+  // Update trigger UI
+  const flagMap = { uz: '/static/webapp/flags/uz.svg', ru: '/static/webapp/flags/ru.svg', en: '/static/webapp/flags/gb.svg' };
+  const textMap = { uz: "O'zbek", ru: "Русский", en: "English" };
+
+  const curFlag = $('lang-cur-flag');
+  const curText = $('lang-cur-text');
+  if (curFlag) curFlag.src = flagMap[lang] || flagMap.uz;
+  if (curText) curText.textContent = textMap[lang] || textMap.uz;
+
+  // Update active state in dropdown
+  document.querySelectorAll('.lang-option').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lang === lang);
+  });
+
+  // Re-translate all elements with data-i18n
+  applyLanguage();
+}
+
+function applyLanguage() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.dataset.i18n;
+    if (key && dictionary[lang]?.[key]) {
+      el.textContent = dictionary[lang][key];
+    }
+  });
+
+  if (record) {
+    render(record);
+  }
+}
+
+/* ── Dynamic Authentic License Plate ── */
+function renderVehiclePlate(plateRaw, countryRaw) {
+  const container = $('plate-wrapper');
+  if (!container) return;
+
+  const plate = String(plateRaw || '').toUpperCase().trim();
+  const countryIso = getCountryIso(countryRaw);
+
+  let html = '';
+
+  if (countryIso === 'uz') {
+    // Uzbek Plate Style: [ 01 | E 685 YB | [🇺🇿 UZ] ]
+    const match = plate.match(/^(\d{2})\s*(.*)$/);
+    const region = match ? match[1] : '01';
+    const numPart = match ? match[2].trim() : plate;
+
+    html = `
+      <div class="license-plate plate-uz">
+        <span class="reg-code">${region}</span>
+        <div class="plate-divider"></div>
+        <span class="main-number">${numPart || '777 ZAA'}</span>
+        <div class="flag-box">
+          <img src="/static/webapp/flags/uz.svg" alt="UZ">
+          <span class="country-code">UZ</span>
+        </div>
+      </div>
+    `;
+  } else if (countryIso === 'kz') {
+    // Kazakh Plate Style: [ 🇰🇿 KZ | 123 ABC | 02 ]
+    const parts = plate.split(/\s+/);
+    let numPart = plate;
+    let region = '02';
+    if (parts.length >= 2 && /^\d{2}$/.test(parts[parts.length - 1])) {
+      region = parts[parts.length - 1];
+      numPart = parts.slice(0, -1).join(' ');
+    }
+
+    html = `
+      <div class="license-plate plate-kz">
+        <div class="flag-box-left">
+          <img src="/static/webapp/flags/kz.svg" alt="KZ">
+          <span class="country-code">KZ</span>
+        </div>
+        <span class="main-number">${numPart}</span>
+        <div class="plate-divider"></div>
+        <span class="reg-code">${region}</span>
+      </div>
+    `;
+  } else if (countryIso === 'ru') {
+    // Russian Plate Style: [ A 123 AA | 777 RUS 🇷🇺 ]
+    const parts = plate.split(/\s+/);
+    let numPart = plate;
+    let region = '777';
+    if (parts.length >= 2 && /^\d{2,3}$/.test(parts[parts.length - 1])) {
+      region = parts[parts.length - 1];
+      numPart = parts.slice(0, -1).join(' ');
+    }
+
+    html = `
+      <div class="license-plate plate-ru">
+        <span class="main-number">${numPart}</span>
+        <div class="plate-divider"></div>
+        <div class="reg-box-ru">
+          <span class="reg-code">${region}</span>
+          <div class="ru-footer">
+            <span>RUS</span>
+            <img src="/static/webapp/flags/ru.svg" alt="RUS">
+          </div>
+        </div>
+      </div>
+    `;
+  } else {
+    // Generic International Plate
+    html = `
+      <div class="license-plate plate-generic">
+        <img src="/static/webapp/flags/${countryIso}.svg" alt="${countryIso}">
+        <span class="main-number">${plate || 'AA 001 AA'}</span>
+        <span class="country-code">${countryIso.toUpperCase()}</span>
+      </div>
+    `;
+  }
+
+  container.innerHTML = html;
+}
+
+/* ── Main Render Function ── */
 function render(item) {
   record = item;
   const payload = item.payload || {};
   const isActive = item.status === 'active';
-  const badge = $('verified');
-  badge.classList.toggle('revoked', !isActive);
 
-  const icon = badge.querySelector('.verified-icon svg');
-  if (!isActive) {
-    icon.innerHTML = '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>';
-  } else {
-    icon.innerHTML = '<polyline points="20 6 9 17 4 12"/>';
+  // Verified Status Pill
+  const chip = $('verified-chip');
+  if (chip) {
+    chip.classList.toggle('revoked', !isActive);
+    chip.classList.toggle('verified', isActive);
+    const chipText = $('status-chip-text');
+    if (chipText) chipText.textContent = t(isActive ? 'verified' : 'revoked');
   }
 
-  badge.querySelector('b').textContent = t(isActive ? 'verified' : 'revoked');
-  badge.querySelector('small').textContent = t(isActive ? 'verifiedHelp' : 'revokedHelp');
-
+  // Driver Name & Document Number
   setText('driver-name', item.driver_name);
   setText('document-number', item.document_no);
 
-  // Identity
+  // Vehicle Hero Card
+  renderVehiclePlate(item.vehicle_plate, payload.vehicle_country);
+  setText('quick-post-name', item.post_name);
+  setText('quick-crossing-time', formatDate(item.crossing_at));
+
+  // Determine vehicle brand or model display
+  const modelLabel = $('vehicle-model-label');
+  if (modelLabel) {
+    const rawCargo = String(payload.cargo || '').toLowerCase();
+    if (rawCargo.includes('yuk') || rawCargo.includes('тягач') || rawCargo.includes('fura')) {
+      modelLabel.textContent = 'Yuk avtotransporti';
+    } else {
+      modelLabel.textContent = 'Chevrolet Cobalt';
+    }
+  }
+
+  // Identity / Personal Details
   const identity = $('identity-list');
-  identity.replaceChildren(
-    dlRow(t('nationality'), payload.nationality),
-    dlRow(t('passport'), payload.passport),
-    dlRow(t('phone'), payload.phone)
-  );
+  if (identity) {
+    const natIso = getCountryIso(payload.nationality);
+    identity.replaceChildren(
+      renderDetailRow(t('nationality'), payload.nationality, natIso),
+      renderDetailRow(t('passport'), payload.passport),
+      renderDetailRow(t('phone'), payload.phone)
+    );
+  }
 
-  // Journey
+  // Journey Details
   const journey = $('journey-list');
-  journey.replaceChildren(
-    dlRow(t('plate'), item.vehicle_plate),
-    dlRow(t('vehicleCountry'), payload.vehicle_country),
-    dlRow(t('post'), item.post_name),
-    dlRow(t('time'), formatDate(item.crossing_at)),
-    dlRow(t('location'), payload.location),
-    dlRow(t('cargo'), payload.cargo)
-  );
+  if (journey) {
+    const vCountryIso = getCountryIso(payload.vehicle_country);
+    journey.replaceChildren(
+      renderDetailRow(t('plate'), item.vehicle_plate),
+      renderDetailRow(t('vehicleCountry'), payload.vehicle_country, vCountryIso),
+      renderDetailRow(t('post'), item.post_name),
+      renderDetailRow(t('time'), formatDate(item.crossing_at)),
+      renderDetailRow(t('location'), payload.location),
+      renderDetailRow(t('cargo'), payload.cargo)
+    );
+  }
 
-  // Documents
+  // Official Documents List
   renderDocuments(payload.documents || []);
 
-  // Additional
+  // Additional Note
   const info = String(payload.additional_info || '').trim();
-  $('note-card').hidden = !info;
-  setText('additional-info', info);
+  const noteCard = $('note-card');
+  if (noteCard) {
+    noteCard.hidden = !info;
+    setText('additional-info', info);
+  }
 
-  // Inspector
+  // Inspector Details
   setText('inspector-name', item.inspector_name);
   setText('issued-at', `${item.post_name} · ${formatDate(item.crossing_at)}`);
 
-  // Downloads
-  renderDownloadButtons(payload.documents || []);
-
-  // Animate cards in sequence
-  animateCards();
+  // Update Single Bottom Pay Dock
+  updateStickyPayDock();
 }
 
+/* ── Render Documents (NO ugly buttons!) ── */
 function renderDocuments(docs) {
-  const container = $('documents');
-  if (!docs.length) {
-    container.innerHTML = '<p style="color:var(--muted);grid-column:1/-1">—</p>';
-    return;
-  }
-  container.replaceChildren(...docs.map((doc, idx) => {
-    const article = document.createElement('article');
-    article.className = 'document-item';
-    article.style.animationDelay = `${idx * 0.1}s`;
+  const container = $('doc-cards-list');
+  if (!container) return;
 
-    const code = document.createElement('small');
-    code.textContent = doc.code;
-
-    const title = document.createElement('b');
-    title.textContent = doc.title;
-
-    const status = document.createElement('span');
-    status.textContent = doc.status || t('status');
-
-    // Payment status badge
-    const isPaid = paidDocs[doc.code] || doc.paid;
-    const payBadge = document.createElement('div');
-    payBadge.className = `doc-payment-status ${isPaid ? 'paid' : 'unpaid'}`;
-    payBadge.id = `pay-badge-${doc.code}`;
-    payBadge.textContent = isPaid ? t('paid') : t('unpaid');
-
-    // Download button
-    const dlBtn = document.createElement('button');
-    dlBtn.className = 'doc-download-btn';
-    dlBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>${t('download')}</span>`;
-    dlBtn.onclick = () => downloadDocumentPDF(doc, selectedDlLang);
-
-    // Pay button if unpaid
-    if (!isPaid) {
-      const payBtn = document.createElement('button');
-      payBtn.className = 'doc-download-btn';
-      payBtn.style.background = 'linear-gradient(135deg, #dc2626, #ef4444)';
-      payBtn.style.marginTop = '6px';
-      payBtn.innerHTML = `💳 <span>${t('payNow')}</span>`;
-      payBtn.onclick = () => openPayModal(doc);
-      article.append(code, title, status, payBadge, dlBtn, payBtn);
-    } else {
-      article.append(code, title, status, payBadge, dlBtn);
-    }
-
-    return article;
-  }));
-}
-
-function renderDownloadButtons(docs) {
-  const container = $('download-buttons');
-  const docTypes = [
-    { key: 'transit', icon: '📋', titleKey: 'transitDeclaration', defaultCode: 'MB' },
-    { key: 'insurance', icon: '🛡️', titleKey: 'insurancePolicy', defaultCode: 'ETSD' },
-    { key: 'invoice', icon: '💰', titleKey: 'paymentInvoice', defaultCode: 'AT' },
+  const defaultDocs = [
+    { code: 'AT2026953307', title: t('paymentInvoice'), type: 'invoice', fee: '621 632 UZS' },
+    { code: 'MB2026278932', title: t('transitDeclaration'), type: 'transit', fee: '110 000 UZS' },
+    { code: 'ETSD2026797758', title: t('insurancePolicy'), type: 'insurance', fee: '308 000 UZS' },
   ];
 
-  const buttons = [];
+  const listToRender = (docs && docs.length) ? docs : defaultDocs;
 
-  // Add buttons for each actual document
-  if (docs.length) {
-    docs.forEach((doc, idx) => {
-      const docType = docTypes[idx] || { icon: '📄', titleKey: null, defaultCode: '' };
-      const btn = document.createElement('button');
-      btn.className = 'dl-btn';
-      btn.innerHTML = `
-        <div class="dl-btn-icon">${docType.icon}</div>
-        <div>
-          <b>${docType.titleKey ? t(docType.titleKey) : doc.title}</b>
-          <small>${doc.code}</small>
-        </div>
-      `;
-      btn.onclick = () => downloadDocumentPDF(doc, selectedDlLang);
-      buttons.push(btn);
-    });
-  } else {
-    // Fallback buttons
-    docTypes.forEach((dt, idx) => {
-      const btn = document.createElement('button');
-      btn.className = 'dl-btn';
-      btn.innerHTML = `
-        <div class="dl-btn-icon">${dt.icon}</div>
-        <div>
-          <b>${t(dt.titleKey)}</b>
-          <small data-i18n="download">${t('download')}</small>
-        </div>
-      `;
-      btn.onclick = () => downloadDocumentPDF(null, selectedDlLang, idx);
-      buttons.push(btn);
-    });
-  }
+  container.innerHTML = '';
 
-  container.replaceChildren(...buttons);
+  listToRender.forEach((doc, idx) => {
+    const isPaid = allPaymentsPaid || paidDocs[doc.code] || doc.paid;
+
+    // SVG icon by document type
+    let iconSvg = '';
+    if (doc.code?.startsWith('AT') || idx === 0) {
+      // Invoice icon
+      iconSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>`;
+    } else if (doc.code?.startsWith('ETSD') || idx === 2) {
+      // Insurance shield icon
+      iconSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`;
+    } else {
+      // Transit file-check icon
+      iconSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="9 15 11 17 15 13"/></svg>`;
+    }
+
+    const docCard = document.createElement('article');
+    docCard.className = 'doc-item-card';
+
+    docCard.innerHTML = `
+      <div class="doc-item-top">
+        <div class="doc-type-info">
+          <div class="doc-type-icon">
+            ${iconSvg}
+          </div>
+          <div class="doc-meta">
+            <b>${doc.title || t('transitDeclaration')}</b>
+            <small>${doc.code || 'DOC-2026'}</small>
+          </div>
+        </div>
+        <div class="doc-status-badge ${isPaid ? 'paid' : 'unpaid'}">
+          ${isPaid
+            ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> <span>${t('paidBadge')}</span>`
+            : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> <span>${t('unpaidBadge')}</span>`
+          }
+        </div>
+      </div>
+      <div class="doc-item-actions">
+        <div class="doc-fee-preview">
+          <span>${isPaid ? 'Holati:' : 'Yig\'im:'}</span>
+          <strong>${isPaid ? 'To\'liq to\'langan' : (doc.fee || 'Qarzdorlik')}</strong>
+        </div>
+        <button type="button" class="doc-download-btn" data-doc-idx="${idx}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          <span>${t('download')}</span>
+        </button>
+      </div>
+    `;
+
+    // Download click handler
+    const dlBtn = docCard.querySelector('.doc-download-btn');
+    if (dlBtn) {
+      dlBtn.addEventListener('click', () => downloadDocumentPDF(doc, selectedDlLang, idx));
+    }
+
+    container.appendChild(docCard);
+  });
 }
 
-/* ── PDF Generation ── */
+/* ── Update Single Bottom Pay Dock ── */
+function updateStickyPayDock() {
+  const dock = $('sticky-pay-dock');
+  const btn = $('dock-pay-btn');
+  const btnLabel = $('dock-btn-label');
+  const badge = $('dock-status-badge');
+  const amount = $('dock-amount-val');
+
+  if (!dock) return;
+  dock.hidden = false;
+
+  if (allPaymentsPaid) {
+    if (btn) {
+      btn.className = 'dock-pay-btn all-paid';
+      btn.onclick = null;
+    }
+    if (btnLabel) btnLabel.textContent = t('allPaid');
+    if (badge) {
+      badge.className = 'dock-status-badge paid';
+      badge.textContent = t('paidStatus');
+    }
+    if (amount) amount.textContent = '0 UZS';
+  } else {
+    if (btn) {
+      btn.className = 'dock-pay-btn';
+      btn.onclick = openUnifiedPayModal;
+    }
+    if (btnLabel) btnLabel.textContent = t('payNow');
+    if (badge) {
+      badge.className = 'dock-status-badge';
+      badge.textContent = t('unpaidStatus');
+    }
+    if (amount) amount.textContent = '621 632 UZS';
+  }
+}
+
+/* ── Unified Payment Modal Flow ── */
+function openUnifiedPayModal() {
+  if (allPaymentsPaid) return;
+  showPayStep1();
+  const modal = $('payment-modal');
+  if (modal) {
+    modal.hidden = false;
+    document.body.style.overflow = 'hidden';
+  }
+}
+
+function closePayModal() {
+  const modal = $('payment-modal');
+  if (modal) {
+    modal.hidden = true;
+    document.body.style.overflow = '';
+  }
+}
+
+function showPayStep1() { togglePaySteps(1); }
+function showPayStep2() { togglePaySteps(2); }
+
+function showPayStep3(method) {
+  selectedPayMethod = method;
+  const names = {
+    payme: 'Payme',
+    click: 'Click Up',
+    uzum: 'Uzum Bank',
+    munis: 'Munis DBQ',
+    uzcard: 'Uzcard',
+    humo: 'Humo Card'
+  };
+  const banner = $('selected-method-banner');
+  if (banner) banner.textContent = `${names[method] || method} orqali to'lov`;
+
+  const btn = $('pay-submit-text');
+  if (btn) btn.textContent = `${t('confirmPay')} · 621 632 UZS`;
+
+  togglePaySteps(3);
+}
+
+function togglePaySteps(step) {
+  [1, 2, 3, 4].forEach(n => {
+    const el = $(`pay-step-${n}`);
+    if (el) el.hidden = n !== step;
+  });
+}
+
+function processUnifiedPayment(e) {
+  e.preventDefault();
+  const numInput = $('card-number');
+  const num = (numInput?.value || '').replace(/\s/g, '');
+  if (num.length < 16) {
+    alert(t('cardNumber') + ' to\'liq kiritilmadi!');
+    return;
+  }
+
+  const submitBtn = $('pay-submit-btn');
+  const submitText = $('pay-submit-text');
+  if (submitBtn) submitBtn.disabled = true;
+  if (submitText) submitText.textContent = '⏳ To\'lov amalga oshirilmoqda…';
+
+  setTimeout(() => {
+    // Payment successful!
+    allPaymentsPaid = true;
+
+    // Mark all docs as paid
+    if (record?.payload?.documents) {
+      record.payload.documents.forEach(d => { paidDocs[d.code] = true; });
+    }
+    paidDocs['INV2026797758'] = true;
+    paidDocs['MB2026278932'] = true;
+    paidDocs['ETSD2026953307'] = true;
+
+    // Set transaction info
+    const txId = $('tx-id-val');
+    const txTime = $('tx-time-val');
+    if (txId) txId.textContent = 'TX-2026-' + Math.floor(10000000 + Math.random() * 90000000);
+    if (txTime) txTime.textContent = new Date().toLocaleString('ru-RU');
+
+    // Switch to step 4 (Success)
+    togglePaySteps(4);
+
+    if (submitBtn) submitBtn.disabled = false;
+
+    // Re-render document list with green paid badges
+    if (record) {
+      renderDocuments(record.payload?.documents || []);
+    }
+    updateStickyPayDock();
+
+  }, 1200);
+}
+
+/* ── PDF Generation Logic ── */
 async function downloadDocumentPDF(doc, dlLang, fallbackIdx = 0) {
   const L = dictionary[dlLang] || dictionary.uz;
   const item = record;
   if (!item) return;
 
-  const isPaid = doc ? (paidDocs[doc.code] || doc.paid) : false;
-  const docTypes = ['transit', 'insurance', 'invoice'];
-  const docType = doc ? docTypes.indexOf(doc.type || '') : fallbackIdx;
+  const isPaid = allPaymentsPaid || (doc ? (paidDocs[doc.code] || doc.paid) : false);
 
-  // Build the right PDF content
   let htmlContent;
-  if (fallbackIdx === 2 || (doc && doc.code && doc.code.startsWith('AT'))) {
+  if (fallbackIdx === 0 || (doc && doc.code && doc.code.startsWith('AT'))) {
     htmlContent = buildInvoicePDF(item, doc, L, isPaid);
-  } else if (fallbackIdx === 1 || (doc && doc.code && doc.code.startsWith('ETSD'))) {
+  } else if (fallbackIdx === 2 || (doc && doc.code && doc.code.startsWith('ETSD'))) {
     htmlContent = buildInsurancePDF(item, doc, L, isPaid);
   } else {
     htmlContent = buildTransitPDF(item, doc, L, isPaid);
@@ -462,27 +785,26 @@ async function downloadDocumentPDF(doc, dlLang, fallbackIdx = 0) {
 
 function openPrintWindow(html) {
   const w = window.open('', '_blank', 'width=900,height=700');
-  if (!w) { alert('Pop-up bloklangan. Brauzer sozlamalarini tekshiring.'); return; }
+  if (!w) {
+    alert('Pop-up oyna bloklandi. Brauzer sozlamalaridan ruxsat bering.');
+    return;
+  }
   w.document.write(html);
   w.document.close();
   setTimeout(() => { w.focus(); w.print(); }, 800);
 }
 
 function getLogoSvg() {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="64" height="64">
-    <polygon points="50,2 61,35 97,35 68,57 79,91 50,70 21,91 32,57 3,35 39,35" fill="#1a5c40" stroke="#d8ad58" stroke-width="2"/>
-    <circle cx="50" cy="50" r="22" fill="#0b5949" stroke="#d8ad58" stroke-width="2"/>
-    <text x="50" y="56" text-anchor="middle" font-family="Georgia,serif" font-weight="bold" font-size="10" fill="#d8ad58">DBQ</text>
-  </svg>`;
+  return `<img src="/static/webapp/customs-emblem.png" width="56" height="56" style="object-fit:contain" alt="DBQ">`;
 }
 
+/* 1. Tranzit Majburiyatnomasi PDF */
 function buildTransitPDF(item, doc, L, isPaid) {
   const payload = item.payload || {};
   const docNo = doc ? doc.code : item.document_no;
-  const paymentWarning = !isPaid ? `<div style="background:#fef2f2;border:2px solid #dc2626;border-radius:8px;padding:12px;margin:16px 0;color:#dc2626;font-weight:bold;font-size:12px;text-align:center;">${L.unpaidWarning || '⚠️ TO\'LOV AMALGA OSHIRILMAGAN'}</div>` : '';
   const paymentStatus = isPaid
-    ? `<span style="background:#dcfce7;color:#16a34a;padding:3px 10px;border-radius:20px;font-weight:bold;font-size:11px;">✅ ${L.paid || 'TO\'LANGAN'}</span>`
-    : `<span style="background:#fee2e2;color:#dc2626;padding:3px 10px;border-radius:20px;font-weight:bold;font-size:11px;">❌ ${L.unpaid || 'TO\'LANMAGAN'}</span>`;
+    ? `<span style="background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0;padding:4px 12px;border-radius:20px;font-weight:800;font-size:11px;">✓ TO'LANGAN / PAID</span>`
+    : `<span style="background:#fffbeb;color:#92400e;border:1px solid #fde68a;padding:4px 12px;border-radius:20px;font-weight:800;font-size:11px;">⏳ KUTILMOQDA</span>`;
 
   return `<!DOCTYPE html><html lang="${lang}"><head><meta charset="UTF-8">
   <title>${L.transitDeclaration} — ${docNo}</title>
@@ -490,15 +812,15 @@ function buildTransitPDF(item, doc, L, isPaid) {
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Space+Mono:wght@400;700&display=swap');
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Inter', Arial, sans-serif; background: #525659; color: #1a1c1e; }
-    .no-print { background: #1e293b; color: #fff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
-    .no-print button { background: #059669; color: #fff; border: none; padding: 10px 22px; border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 13px; }
+    .no-print { background: #063c32; color: #fff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
+    .no-print button { background: #0b5949; color: #fff; border: 1px solid #d8ad58; padding: 10px 22px; border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 13px; }
     .a4 { width: 210mm; min-height: 297mm; margin: 20px auto; background: #fff; padding: 12mm; box-shadow: 0 8px 30px rgba(0,0,0,.3); display: flex; flex-direction: column; justify-content: space-between; }
     .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #0b4f35; padding-bottom: 12px; margin-bottom: 16px; }
     .brand { display: flex; align-items: center; gap: 12px; }
     .brand-text h1 { font-size: 13px; font-weight: 900; text-transform: uppercase; color: #0b4f35; letter-spacing: .05em; }
     .brand-text p { font-size: 10px; color: #6b7280; margin-top: 2px; }
     .status-badge { border: 2px solid #0b4f35; background: #ecfdf5; color: #0b4f35; padding: 4px 14px; border-radius: 6px; font-size: 11px; font-weight: 800; text-transform: uppercase; }
-    .title-bar { background: linear-gradient(135deg, #042e27, #0a5545); color: #fff; padding: 12px 18px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-left: 4px solid #d8ad58; }
+    .title-bar { background: linear-gradient(135deg, #063c32, #0b5949); color: #fff; padding: 12px 18px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-left: 4px solid #d8ad58; }
     .title-bar h2 { font-family: 'Space Mono', monospace; font-size: 16px; font-weight: 700; }
     .title-bar small { font-size: 10px; color: #86efac; }
     .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
@@ -511,7 +833,7 @@ function buildTransitPDF(item, doc, L, isPaid) {
     .obligations { border: 1px solid #e5e7eb; border-radius: 6px; padding: 12px; background: #fafafa; margin-bottom: 14px; }
     .obligations h4 { font-size: 9px; text-transform: uppercase; letter-spacing: .1em; color: #6b7280; font-weight: 700; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; margin-bottom: 8px; }
     .obl-item { display: flex; gap: 8px; font-size: 10px; color: #374151; margin-bottom: 6px; line-height: 1.4; }
-    .obl-check { color: #059669; font-weight: 900; flex-shrink: 0; }
+    .obl-check { color: #0b5949; font-weight: 900; flex-shrink: 0; }
     .stamp-row { display: flex; justify-content: space-between; align-items: center; border: 2px dashed #d1d5db; border-radius: 8px; padding: 12px; }
     .stamp-circle { width: 72px; height: 72px; border-radius: 50%; border: 2px solid #0b4f35; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: #f0fdf4; color: #0b4f35; padding: 4px; }
     .stamp-circle span { font-size: 6px; font-weight: 800; text-transform: uppercase; line-height: 1.2; }
@@ -547,8 +869,6 @@ function buildTransitPDF(item, doc, L, isPaid) {
         </div>
       </div>
 
-      ${paymentWarning}
-
       <div class="title-bar">
         <div>
           <small>${L.transitDeclaration?.toUpperCase() || 'TRANZIT MAJBURIYATNOMASI'}</small>
@@ -577,9 +897,9 @@ function buildTransitPDF(item, doc, L, isPaid) {
 
       <div class="obligations">
         <h4>${L.lawTitle || 'Majburiyatlar'}</h4>
-        <div class="obl-item"><span class="obl-check">☑</span><div>Bojxona identifikatsiya vositalari butunligini saqlash va ruxsatsiz buzmaslik.</div></div>
-        <div class="obl-item"><span class="obl-check">☑</span><div>Belgilangan tranzit koridoridan asossiz chetga chiqmaslik va vaqtida yetkazish.</div></div>
-        <div class="obl-item"><span class="obl-check">☑</span><div>O'zbekiston Respublikasi Bojxona kodeksiga muvofiq to'liq javobgarlikni o'z zimmasiga olish.</div></div>
+        <div class="obl-item"><span class="obl-check">✓</span><div>Bojxona identifikatsiya vositalari butunligini saqlash va ruxsatsiz buzmaslik.</div></div>
+        <div class="obl-item"><span class="obl-check">✓</span><div>Belgilangan tranzit koridoridan asossiz chetga chiqmaslik va vaqtida yetkazish.</div></div>
+        <div class="obl-item"><span class="obl-check">✓</span><div>O'zbekiston Respublikasi Bojxona kodeksiga muvofiq to'liq javobgarlikni o'z zimmasiga olish.</div></div>
       </div>
 
       <div class="stamp-row">
@@ -600,25 +920,25 @@ function buildTransitPDF(item, doc, L, isPaid) {
 
     <div class="footer-doc">
       <div>
-        <strong style="color:#374151">O'zbekiston Respublikasi Davlat Bojxona Xizmati</strong>
+        <strong>Davlat Bojxona Qo'mitasi Yagona Axborot Tizimi</strong>
         <div>customs.uz | 1108 | +998 78 120-76-00</div>
       </div>
       <div style="text-align:right">
-        <div style="font-family:'Space Mono',monospace;font-weight:700;color:#374151">${docNo || item.document_no}</div>
-        <div>A4 Format · ${formatDateSimple(item.crossing_at)}</div>
+        <div style="font-family:'Space Mono',monospace;font-weight:700">MB-2026-${docNo.replace('MB','')}</div>
+        <div>A4 Format · Sahifa 1 / 1</div>
       </div>
     </div>
   </div>
   </body></html>`;
 }
 
+/* 2. Sug'urta Polisi PDF */
 function buildInsurancePDF(item, doc, L, isPaid) {
   const payload = item.payload || {};
-  const docNo = doc ? doc.code : 'ETSD' + Math.floor(Math.random() * 1000000);
-  const paymentWarning = !isPaid ? `<div style="background:#fef2f2;border:2px solid #dc2626;border-radius:8px;padding:12px;margin:16px 0;color:#dc2626;font-weight:bold;font-size:12px;text-align:center;">${L.unpaidWarning || '⚠️ TO\'LOV AMALGA OSHIRILMAGAN'}</div>` : '';
+  const docNo = doc ? doc.code : 'ETSD2026953307';
   const paymentStatus = isPaid
-    ? `<span style="background:#dcfce7;color:#16a34a;padding:3px 10px;border-radius:20px;font-weight:bold;font-size:11px;">✅ ${L.paid || 'TO\'LANGAN'}</span>`
-    : `<span style="background:#fee2e2;color:#dc2626;padding:3px 10px;border-radius:20px;font-weight:bold;font-size:11px;">❌ ${L.unpaid || 'TO\'LANMAGAN'}</span>`;
+    ? `<span style="background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0;padding:4px 12px;border-radius:20px;font-weight:800;font-size:11px;">✓ TO'LANGAN / PAID</span>`
+    : `<span style="background:#fffbeb;color:#92400e;border:1px solid #fde68a;padding:4px 12px;border-radius:20px;font-weight:800;font-size:11px;">⏳ KUTILMOQDA</span>`;
 
   return `<!DOCTYPE html><html lang="${lang}"><head><meta charset="UTF-8">
   <title>${L.insurancePolicy} — ${docNo}</title>
@@ -626,35 +946,32 @@ function buildInsurancePDF(item, doc, L, isPaid) {
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Space+Mono:wght@400;700&display=swap');
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Inter', Arial, sans-serif; background: #525659; color: #1a1c1e; }
-    .no-print { background: #1e293b; color: #fff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
-    .no-print button { background: #059669; color: #fff; border: none; padding: 10px 22px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 13px; }
+    .no-print { background: #063c32; color: #fff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
+    .no-print button { background: #0b5949; color: #fff; border: 1px solid #d8ad58; padding: 10px 22px; border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 13px; }
     .a4 { width: 210mm; min-height: 297mm; margin: 20px auto; background: #fff; padding: 12mm; box-shadow: 0 8px 30px rgba(0,0,0,.3); display: flex; flex-direction: column; justify-content: space-between; }
     .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #0b4f35; padding-bottom: 12px; margin-bottom: 16px; }
     .brand { display: flex; align-items: center; gap: 12px; }
-    .title-bar { background: linear-gradient(135deg, #042e27, #1e3a8a); color: #fff; padding: 12px 18px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-left: 4px solid #60a5fa; }
-    .title-bar h2 { font-family: 'Space Mono', monospace; font-size: 15px; font-weight: 700; }
+    .brand-text h1 { font-size: 13px; font-weight: 900; text-transform: uppercase; color: #0b4f35; letter-spacing: .05em; }
+    .brand-text p { font-size: 10px; color: #6b7280; margin-top: 2px; }
+    .title-bar { background: linear-gradient(135deg, #0b5949, #087f84); color: #fff; padding: 12px 18px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-left: 4px solid #d8ad58; }
+    .title-bar h2 { font-family: 'Space Mono', monospace; font-size: 16px; font-weight: 700; }
+    .title-bar small { font-size: 10px; color: #86efac; }
     .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
     .box { border: 1px solid #e5e7eb; border-radius: 6px; padding: 12px; background: #f9fafb; }
-    .box h4 { font-size: 9px; text-transform: uppercase; color: #6b7280; font-weight: 700; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; margin-bottom: 8px; }
+    .box h4 { font-size: 9px; text-transform: uppercase; letter-spacing: .1em; color: #6b7280; font-weight: 700; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; margin-bottom: 8px; }
     .row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 11px; border-bottom: 1px dashed #f3f4f6; }
     .row:last-child { border: none; }
     .row span { color: #6b7280; }
-    .row strong { font-family: 'Space Mono', monospace; font-size: 10px; }
-    .coverage-box { border: 2px solid rgba(11,89,73,.3); border-radius: 8px; padding: 14px; background: #f0fdf4; margin-bottom: 14px; }
-    .coverage-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
-    .cov-item { background: #fff; border: 1px solid #86efac; border-radius: 6px; padding: 10px; }
-    .cov-label { font-size: 9px; color: #6b7280; text-transform: uppercase; font-weight: 700; }
-    .cov-amount { font-family: 'Space Mono', monospace; font-size: 16px; font-weight: 700; color: #0b4f35; margin-top: 4px; }
-    .cov-desc { font-size: 9px; color: #6b7280; margin-top: 4px; line-height: 1.4; }
-    .stamp-row { display: flex; justify-content: space-between; align-items: center; border: 2px dashed #d1d5db; border-radius: 8px; padding: 12px; }
-    .stamp-circle { width: 72px; height: 72px; border-radius: 50%; border: 2px solid #1e40af; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: #eff6ff; color: #1e40af; padding: 4px; }
-    .stamp-circle span { font-size: 6px; font-weight: 800; text-transform: uppercase; line-height: 1.3; }
+    .row strong { font-family: 'Space Mono', monospace; font-size: 10px; color: #1a1c1e; }
     .footer-doc { border-top: 1px solid #d1d5db; padding-top: 10px; margin-top: 16px; display: flex; justify-content: space-between; font-size: 9px; color: #6b7280; }
     @media print { body { background: none; } .no-print { display: none !important; } .a4 { box-shadow: none; margin: 0; width: 100%; min-height: auto; } }
     @page { size: A4; margin: 10mm; }
   </style></head><body>
   <div class="no-print">
-    <span style="font-size:13px;font-weight:600">🛡️ ${L.insurancePolicy} · A4</span>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span style="width:10px;height:10px;border-radius:50%;background:#38bdf8;display:inline-block"></span>
+      <span style="font-size:13px;font-weight:600">${L.insurancePolicy} · A4</span>
+    </div>
     <button onclick="window.print()">🖨️ PDF / Chop etish</button>
   </div>
   <div class="a4">
@@ -662,99 +979,75 @@ function buildInsurancePDF(item, doc, L, isPaid) {
       <div class="header">
         <div class="brand">
           ${getLogoSvg()}
-          <div>
-            <small style="font-size:9px;color:#6b7280;text-transform:uppercase;font-weight:600">O'zbekiston Respublikasi Sug'urta Bozori</small>
-            <div style="font-size:13px;font-weight:900;text-transform:uppercase;color:#0b4f35;letter-spacing:.04em">Yagona Sug'urta Axborot Tizimi</div>
-            <div style="font-size:10px;color:#6b7280">Davlat Bojxona Qo'mitasi va IIV YHXBB integratsiyalashgan bazasi</div>
+          <div class="brand-text">
+            <small style="font-size:10px;color:#6b7280;text-transform:uppercase;font-weight:600">O'zbekiston Respublikasi</small>
+            <h1>Davlat Bojxona Qo'mitasi</h1>
+            <p>Tranzit transport vositalari fuqarolik javobgarligini majburiy sug'urtalash</p>
           </div>
         </div>
         <div style="text-align:right">
-          <div style="border:2px solid #0b4f35;background:#ecfdf5;color:#0b4f35;padding:4px 12px;border-radius:6px;font-size:11px;font-weight:800;text-transform:uppercase">✓ KUCHDA (FAOL)</div>
-          <div style="font-size:9px;color:#6b7280;margin-top:6px;font-family:'Space Mono',monospace">SERIYA: ETSD-2026<br>E-KAFOLAT ID: #UZ-${docNo}</div>
+          <div style="border:2px solid #0b4f35;background:#ecfdf5;color:#0b4f35;padding:4px 14px;border-radius:6px;font-size:11px;font-weight:800;text-transform:uppercase">● RASMIY POLIS</div>
           <div style="margin-top:6px">${paymentStatus}</div>
         </div>
       </div>
 
-      ${paymentWarning}
-
       <div class="title-bar">
         <div>
-          <small style="font-size:10px;color:#93c5fd">${L.insurancePolicy?.toUpperCase() || 'SUG\'URTA POLISI'}</small>
-          <h2>№ ${docNo}</h2>
+          <small>${L.insurancePolicy?.toUpperCase() || 'SUG\'URTA POLISI'}</small>
+          <h2>${docNo}</h2>
         </div>
-        <div style="text-align:right;font-size:10px;color:#93c5fd">
+        <div style="text-align:right;font-size:10px;color:#86efac">
           <div>Amal qilish muddati:</div>
-          <strong style="font-family:'Space Mono',monospace;color:#fff">${formatDateSimple(item.crossing_at)} (30 Kun)</strong>
+          <strong style="font-family:'Space Mono',monospace">30 KUN / 1 OY</strong>
         </div>
       </div>
 
       <div class="grid2">
         <div class="box">
-          <h4>${L.personalData || 'Sug\'urtalanuvchi'}</h4>
-          <div class="row"><span>${L.passport || 'Pasport'}:</span><strong>${payload.passport || '—'}</strong></div>
-          <div class="row"><span>${L.nationality || 'Fuqaroligi'}:</span><strong>${payload.nationality || '—'}</strong></div>
-          <div class="row"><span>${L.plate || 'Transport'}:</span><strong>${item.vehicle_plate || '—'}</strong></div>
+          <h4>Sug'urtalanuvchi ma'lumotlari</h4>
+          <div class="row"><span>Haydovchi:</span><strong>${item.driver_name || '—'}</strong></div>
+          <div class="row"><span>Pasport:</span><strong>${payload.passport || '—'}</strong></div>
+          <div class="row"><span>Fuqaroligi:</span><strong>${payload.nationality || '—'}</strong></div>
         </div>
         <div class="box">
-          <h4>${L.journeyData || 'Transport'}</h4>
-          <div class="row"><span>Model:</span><strong>Yuk avtomobili</strong></div>
-          <div class="row"><span>${L.vehicleCountry || 'Davlat'}:</span><strong>${payload.vehicle_country || 'UZ'}</strong></div>
-          <div class="row"><span>${L.post || 'Post'}:</span><strong>${item.post_name || '—'}</strong></div>
+          <h4>Transport va qoplama</h4>
+          <div class="row"><span>Davlat raqami:</span><strong>${item.vehicle_plate || '—'}</strong></div>
+          <div class="row"><span>Sug'urta summasi:</span><strong>40 000 000 UZS</strong></div>
+          <div class="row"><span>Sug'urta mukofoti:</span><strong>308 000 UZS</strong></div>
         </div>
       </div>
 
-      <div class="coverage-box">
-        <h4 style="font-size:11px;font-weight:800;text-transform:uppercase;color:#0b4f35;display:flex;align-items:center;gap:6px">🛡️ Sug'urta Qoplami va To'langan Tarif</h4>
-        <div class="coverage-grid">
-          <div class="cov-item">
-            <div class="cov-label">Jami Sug'urta Qoplami:</div>
-            <div class="cov-amount">40 000 000 UZS</div>
-            <div class="cov-desc">Uchinchi shaxslarning hayoti va mol-mulkiga yetkazilgan zarar qoplamasi.</div>
-          </div>
-          <div class="cov-item">
-            <div class="cov-label">Sug'urta Mukofoti:</div>
-            <div class="cov-amount">308 000 UZS</div>
-            <div class="cov-desc">0.700 raz. BHM. Invoys tarkibida to'liq to'langan.</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="stamp-row">
-        <div>
-          <h5 style="font-size:11px;font-weight:700;text-transform:uppercase;color:#1a1c1e;margin-bottom:4px">Sug'urtalovchi Tashkilot</h5>
-          <div style="font-size:11px;font-weight:700;color:#374151">«O'zbekinvest» AJ</div>
-          <small style="font-size:9px;color:#6b7280;display:block;margin-top:2px;font-family:'Space Mono',monospace">ERI: 6B8A91209FF412 | ${formatDateSimple(item.crossing_at)}</small>
-        </div>
-        <div style="display:flex;align-items:center;gap:12px;border-left:1px solid #e5e7eb;padding-left:12px">
-          <div class="stamp-circle">
-            <span>O'ZBEKINVEST<br>ELEKTRON<br>MUHR</span>
-            <span style="font-size:7px;margin-top:2px">${formatDateSimple(item.crossing_at)}</span>
-          </div>
-        </div>
+      <div class="box" style="margin-bottom:14px">
+        <h4>Sug'urta shartlari va huquqiy asos</h4>
+        <div class="row"><span>Asos:</span><strong>O'zbekiston Respublikasining "OSAGO" to'g'risidagi Qonuni</strong></div>
+        <div class="row"><span>Kafolat beruvchi:</span><strong>O'zbekiston Sug'urta Bozorini Rivojlantirish Agentligi</strong></div>
+        <div class="row"><span>Polis maqomi:</span><strong style="color:#059669">YAGONA ELEKTRON REYESTRGA KIRITILGAN</strong></div>
       </div>
     </div>
 
     <div class="footer-doc">
-      <div><strong>O'zbekiston Respublikasi Transport Vazirligi & DBQ</strong><div>YPX va DBQ postlarida 100% onlayn tekshiriladi (1162)</div></div>
-      <div style="text-align:right"><div style="font-family:'Space Mono',monospace;font-weight:700">POLIS-${docNo}-OK</div><div>A4 Format</div></div>
+      <div>
+        <strong>Davlat Bojxona Qo'mitasi Yagona Axborot Tizimi</strong>
+        <div>customs.uz | 1108 | +998 78 120-76-00</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-family:'Space Mono',monospace;font-weight:700">ETSD-2026-${docNo.replace('ETSD','')}</div>
+        <div>A4 Format · Sahifa 1 / 1</div>
+      </div>
     </div>
   </div>
   </body></html>`;
 }
 
+/* 3. Bojxona To'lov Invoysi PDF */
 function buildInvoicePDF(item, doc, L, isPaid) {
   const payload = item.payload || {};
-  const docNo = doc ? doc.code : 'AT' + Math.floor(Math.random() * 10000000);
-  const paymentWarning = !isPaid ? `<div style="background:#fef2f2;border:2px solid #dc2626;border-radius:8px;padding:12px;margin:16px 0;color:#dc2626;font-weight:bold;font-size:12px;text-align:center;">${L.unpaidWarning || '⚠️ TO\'LOV AMALGA OSHIRILMAGAN'}</div>` : '';
-  const paymentStatus = isPaid
-    ? `<span style="background:#dcfce7;color:#16a34a;padding:3px 10px;border-radius:20px;font-weight:bold;font-size:11px;">✅ ${L.paid || 'TO\'LANGAN'}</span>`
-    : `<span style="background:#fee2e2;color:#dc2626;padding:3px 10px;border-radius:20px;font-weight:bold;font-size:11px;">❌ ${L.unpaid || 'TO\'LANMAGAN'}</span>`;
+  const docNo = doc ? doc.code : 'AT2026797758';
+  const totalStr = '621 632.00 UZS';
 
-  const totalUZS = 621632;
-  const totalStr = totalUZS.toLocaleString('uz-UZ') + ' UZS';
-  const paymentStatusRow = isPaid
-    ? `<span style="color:#16a34a;font-weight:800;text-transform:uppercase">Muvaffaqiyatli o'tkazildi</span>`
-    : `<span style="color:#dc2626;font-weight:800;text-transform:uppercase">Kutilmoqda / To'lanmagan</span>`;
+  const paymentStatus = isPaid
+    ? `<span style="background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0;padding:4px 12px;border-radius:20px;font-weight:800;font-size:11px;">✓ TO'LANGAN / PAID</span>`
+    : `<span style="background:#fffbeb;color:#92400e;border:1px solid #fde68a;padding:4px 12px;border-radius:20px;font-weight:800;font-size:11px;">⏳ KUTILMOQDA</span>`;
 
   return `<!DOCTYPE html><html lang="${lang}"><head><meta charset="UTF-8">
   <title>${L.paymentInvoice} — ${docNo}</title>
@@ -762,34 +1055,33 @@ function buildInvoicePDF(item, doc, L, isPaid) {
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Space+Mono:wght@400;700&display=swap');
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Inter', Arial, sans-serif; background: #525659; color: #1a1c1e; }
-    .no-print { background: #1e293b; color: #fff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
-    .no-print button { background: #059669; color: #fff; border: none; padding: 10px 22px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 13px; }
+    .no-print { background: #063c32; color: #fff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
+    .no-print button { background: #0b5949; color: #fff; border: 1px solid #d8ad58; padding: 10px 22px; border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 13px; }
     .a4 { width: 210mm; min-height: 297mm; margin: 20px auto; background: #fff; padding: 12mm; box-shadow: 0 8px 30px rgba(0,0,0,.3); display: flex; flex-direction: column; justify-content: space-between; }
     .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #0b4f35; padding-bottom: 12px; margin-bottom: 16px; }
     .brand { display: flex; align-items: center; gap: 12px; }
-    .title-bar { background: #0b4f35; color: #fff; padding: 10px 16px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-    .title-bar h2 { font-family: 'Space Mono', monospace; font-size: 15px; font-weight: 700; }
+    .title-bar { background: linear-gradient(135deg, #063c32, #0b5949); color: #fff; padding: 12px 18px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-left: 4px solid #d8ad58; }
+    .title-bar h2 { font-family: 'Space Mono', monospace; font-size: 16px; font-weight: 700; }
     .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
     .box { border: 1px solid #e5e7eb; border-radius: 6px; padding: 12px; background: #f9fafb; }
-    .box h4 { font-size: 9px; text-transform: uppercase; color: #6b7280; font-weight: 700; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; margin-bottom: 8px; }
-    .row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 11px; }
+    .box h4 { font-size: 9px; text-transform: uppercase; letter-spacing: .1em; color: #6b7280; font-weight: 700; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; margin-bottom: 8px; }
+    .row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 11px; border-bottom: 1px dashed #f3f4f6; }
+    .row:last-child { border: none; }
     .row span { color: #6b7280; }
-    .row strong { font-family: 'Space Mono', monospace; font-size: 10px; }
-    table { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 14px; }
-    th { background: #f1f5f9; color: #6b7280; font-size: 9px; text-transform: uppercase; text-align: left; padding: 8px; border: 1px solid #e5e7eb; }
-    td { padding: 8px; border: 1px solid #e5e7eb; color: #374151; }
-    tr:nth-child(even) td { background: #f9fafb; }
-    tfoot td { background: #0b4f35; color: #fff; font-weight: 700; font-family: 'Space Mono', monospace; padding: 10px 8px; }
-    .pay-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 14px; font-size: 11px; }
-    .stamp-row { display: flex; justify-content: space-between; align-items: center; border: 2px dashed #d1d5db; border-radius: 8px; padding: 12px; }
-    .stamp-circle { width: 72px; height: 72px; border-radius: 50%; border: 2px solid #0b4f35; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: #f0fdf4; color: #0b4f35; padding: 4px; }
-    .stamp-circle span { font-size: 6px; font-weight: 800; text-transform: uppercase; line-height: 1.3; }
-    .footer-doc { border-top: 1px solid #d1d5db; padding-top: 10px; margin-top: 16px; display: flex; justify-content: space-between; font-size: 9px; color: #6b7280; align-items: flex-end; }
+    .row strong { font-family: 'Space Mono', monospace; font-size: 10px; color: #1a1c1e; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 11px; }
+    th { background: #063c32; color: #fff; text-align: left; padding: 8px 10px; font-size: 10px; text-transform: uppercase; }
+    td { padding: 8px 10px; border-bottom: 1px solid #e5e7eb; }
+    tfoot td { background: #063c32; color: #fff; font-weight: 800; font-family: 'Space Mono', monospace; font-size: 13px; }
+    .footer-doc { border-top: 1px solid #d1d5db; padding-top: 10px; margin-top: 16px; display: flex; justify-content: space-between; font-size: 9px; color: #6b7280; }
     @media print { body { background: none; } .no-print { display: none !important; } .a4 { box-shadow: none; margin: 0; width: 100%; min-height: auto; } }
     @page { size: A4; margin: 10mm; }
   </style></head><body>
   <div class="no-print">
-    <span style="font-size:13px;font-weight:600">💰 ${L.paymentInvoice} · A4</span>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span style="width:10px;height:10px;border-radius:50%;background:#fbbf24;display:inline-block"></span>
+      <span style="font-size:13px;font-weight:600">${L.paymentInvoice} · A4</span>
+    </div>
     <button onclick="window.print()">🖨️ PDF / Chop etish</button>
   </div>
   <div class="a4">
@@ -800,17 +1092,14 @@ function buildInvoicePDF(item, doc, L, isPaid) {
           <div>
             <small style="font-size:9px;color:#6b7280;text-transform:uppercase;font-weight:600">O'zbekiston Respublikasi</small>
             <div style="font-size:13px;font-weight:900;text-transform:uppercase;color:#0b4f35">Davlat Bojxona Qo'mitasi</div>
-            <div style="font-size:10px;color:#6b7280">Bojxona to'lovlari va yig'imlari hisobi bo'yicha elektron invoys</div>
+            <div style="font-size:10px;color:#6b7280">Bojxona to'lovlari va yig'imlari bo'yicha elektron invoys</div>
           </div>
         </div>
         <div style="text-align:right">
-          <div style="border:2px double #0b4f35;background:#ecfdf5;color:#0b4f35;padding:4px 12px;border-radius:6px;font-size:11px;font-weight:800;text-transform:uppercase">${isPaid ? '✓ TO\'LANGAN / PAID' : '⚠ KUTILMOQDA'}</div>
-          <div style="font-size:9px;color:#6b7280;margin-top:6px;font-family:'Space Mono',monospace">TIZIM KODI: UZ-TR-90412883-26<br>SANA: ${formatDateSimple(item.crossing_at)}</div>
+          <div style="border:2px double #0b4f35;background:#ecfdf5;color:#0b4f35;padding:4px 12px;border-radius:6px;font-size:11px;font-weight:800;text-transform:uppercase">${isPaid ? '✓ TO\'LANGAN' : '⏳ KUTILMOQDA'}</div>
           <div style="margin-top:6px">${paymentStatus}</div>
         </div>
       </div>
-
-      ${paymentWarning}
 
       <div class="title-bar">
         <div>
@@ -818,16 +1107,16 @@ function buildInvoicePDF(item, doc, L, isPaid) {
           <h2>№ ${docNo}</h2>
         </div>
         <div style="font-size:11px">
-          <span style="color:#86efac">Deklaratsiya maqomi:</span>
-          <span style="background:#16a34a;color:#fff;padding:3px 10px;border-radius:4px;font-size:10px;margin-left:6px">Yakunlandi</span>
+          <span style="color:#86efac">Sana:</span>
+          <span style="font-weight:700;margin-left:6px">${formatDateSimple(item.crossing_at)}</span>
         </div>
       </div>
 
       <div class="grid2">
         <div class="box">
           <h4>To'lovchi ma'lumotlari</h4>
-          <div class="row"><span>${L.passport || 'Pasport'}:</span><strong>${payload.passport || '—'}</strong></div>
-          <div class="row"><span>${L.nationality || 'Fuqaroligi'}:</span><strong>${payload.nationality || '—'}</strong></div>
+          <div class="row"><span>Haydovchi:</span><strong>${item.driver_name || '—'}</strong></div>
+          <div class="row"><span>Pasport:</span><strong>${payload.passport || '—'}</strong></div>
           <div class="row"><span>Transport:</span><strong>${item.vehicle_plate || '—'} / ${payload.vehicle_country || '—'}</strong></div>
         </div>
         <div class="box">
@@ -844,49 +1133,34 @@ function buildInvoicePDF(item, doc, L, isPaid) {
             <th style="width:30px">№</th>
             <th>To'lov turi va asosi</th>
             <th style="width:100px">Stavka</th>
-            <th style="width:50px;text-align:center">Miqdori</th>
             <th style="width:110px;text-align:right">Summasi (UZS)</th>
             <th style="width:80px;text-align:center">Holati</th>
           </tr>
         </thead>
         <tbody>
-          <tr><td style="text-align:center;font-family:'Space Mono',monospace;font-weight:700">1</td><td><strong>Bojxona yig'imlari (Kirish)</strong><br><span style="font-size:9px;color:#6b7280">Tranzit rejimiga bojxona rasmiylashtiruvi</span></td><td style="font-size:10px;color:#6b7280">25% BHM</td><td style="text-align:center;font-family:'Space Mono',monospace">1</td><td style="text-align:right;font-family:'Space Mono',monospace;font-weight:700">110 000.00</td><td style="text-align:center;font-size:10px;${isPaid ? 'color:#16a34a;background:#f0fdf4' : 'color:#dc2626;background:#fef2f2'};font-weight:700">${isPaid ? 'To\'langan' : 'Kutilmoqda'}</td></tr>
-          <tr><td style="text-align:center;font-family:'Space Mono',monospace;font-weight:700">2</td><td><strong>Veterinariya nazorati</strong><br><span style="font-size:9px;color:#6b7280">Sanitariya-ishlovidan o'tkazish</span></td><td style="font-size:10px;color:#6b7280">Maxsus stavka</td><td style="text-align:center;font-family:'Space Mono',monospace">1</td><td style="text-align:right;font-family:'Space Mono',monospace;font-weight:700">93 632.00</td><td style="text-align:center;font-size:10px;${isPaid ? 'color:#16a34a;background:#f0fdf4' : 'color:#dc2626;background:#fef2f2'};font-weight:700">${isPaid ? 'To\'langan' : 'Kutilmoqda'}</td></tr>
-          <tr><td style="text-align:center;font-family:'Space Mono',monospace;font-weight:700">3</td><td><strong>Sug'urta mukofoti</strong><br><span style="font-size:9px;color:#6b7280">0.700 raz. BHM (68 km magistral)</span></td><td style="font-size:10px;color:#6b7280">0.700 BHM</td><td style="text-align:center;font-family:'Space Mono',monospace">68 km</td><td style="text-align:right;font-family:'Space Mono',monospace;font-weight:700">308 000.00</td><td style="text-align:center;font-size:10px;${isPaid ? 'color:#16a34a;background:#f0fdf4' : 'color:#dc2626;background:#fef2f2'};font-weight:700">${isPaid ? 'To\'langan' : 'Kutilmoqda'}</td></tr>
-          <tr><td style="text-align:center;font-family:'Space Mono',monospace;font-weight:700">4</td><td><strong>Terminal yig'imlari</strong><br><span style="font-size:9px;color:#6b7280">Bojxona ombori xizmati</span></td><td style="font-size:10px;color:#6b7280">1 kun</td><td style="text-align:center;font-family:'Space Mono',monospace">1</td><td style="text-align:right;font-family:'Space Mono',monospace;font-weight:700">110 000.00</td><td style="text-align:center;font-size:10px;${isPaid ? 'color:#16a34a;background:#f0fdf4' : 'color:#dc2626;background:#fef2f2'};font-weight:700">${isPaid ? 'To\'langan' : 'Kutilmoqda'}</td></tr>
+          <tr><td>1</td><td><strong>Bojxona yig'imlari (Kirish)</strong><br><small style="color:#6b7280">Tranzit rejimiga rasmiylashtiruv</small></td><td>25% BHM</td><td style="text-align:right;font-weight:700">110 000.00</td><td style="text-align:center;font-weight:700;${isPaid ? 'color:#16a34a' : 'color:#dc2626'}">${isPaid ? 'To\'langan' : 'Kutilmoqda'}</td></tr>
+          <tr><td>2</td><td><strong>Veterinariya nazorati</strong><br><small style="color:#6b7280">Sanitariya-ishlovi</small></td><td>Maxsus stavka</td><td style="text-align:right;font-weight:700">93 632.00</td><td style="text-align:center;font-weight:700;${isPaid ? 'color:#16a34a' : 'color:#dc2626'}">${isPaid ? 'To\'langan' : 'Kutilmoqda'}</td></tr>
+          <tr><td>3</td><td><strong>Sug'urta mukofoti</strong><br><small style="color:#6b7280">OSAGO tranzit sug'urtasi</small></td><td>0.700 BHM</td><td style="text-align:right;font-weight:700">308 000.00</td><td style="text-align:center;font-weight:700;${isPaid ? 'color:#16a34a' : 'color:#dc2626'}">${isPaid ? 'To\'langan' : 'Kutilmoqda'}</td></tr>
+          <tr><td>4</td><td><strong>Terminal yig'imlari</strong><br><small style="color:#6b7280">Bojxona ombori xizmati (1 kun)</small></td><td>1 kun</td><td style="text-align:right;font-weight:700">110 000.00</td><td style="text-align:center;font-weight:700;${isPaid ? 'color:#16a34a' : 'color:#dc2626'}">${isPaid ? 'To\'langan' : 'Kutilmoqda'}</td></tr>
         </tbody>
         <tfoot>
-          <tr><td colspan="4" style="text-align:right;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Jami To'langan Mablag':</td><td style="text-align:right;font-size:14px;color:#86efac">${totalStr}</td><td style="text-align:center;font-size:10px;color:#86efac">${isPaid ? 'YOPILGAN' : 'OCHIQ'}</td></tr>
+          <tr><td colspan="3" style="text-align:right">Jami summa:</td><td style="text-align:right;color:#86efac">${totalStr}</td><td style="text-align:center;color:#86efac">${isPaid ? 'YOPILGAN' : 'OCHIQ'}</td></tr>
         </tfoot>
       </table>
 
-      <div class="pay-row">
-        <div><span style="color:#6b7280">To'lov usuli:</span> <strong>Elektron Bank Kliringi (Munis / Payme Gov)</strong> <span style="color:#d1d5db">|</span> <span style="color:#6b7280">TX:</span> <span style="font-family:'Space Mono',monospace;font-size:10px">TX-2026-${Math.floor(Math.random()*99999999)}-PAY</span></div>
-        <div>${paymentStatusRow}</div>
-      </div>
-
-      <div class="stamp-row">
-        <div>
-          <h5 style="font-size:11px;font-weight:700;text-transform:uppercase;color:#1a1c1e;margin-bottom:4px">Elektron Raqamli Imzo (ERI)</h5>
-          <p style="font-size:9px;color:#6b7280;line-height:1.4;max-width:300px">Ushbu hujjat qonunchilik asosida yaratilgan bo'lib, muhrlangan kvitansiya bilan teng yuridik kuchga ega.</p>
-          <div style="font-size:9px;color:#6b7280;margin-top:4px;font-family:'Space Mono',monospace">ERI: ${item.inspector_name || 'Inspektor'} | Kalit: 6B8A91209FF412</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:12px;border-left:1px solid #e5e7eb;padding-left:12px">
-          <div class="stamp-circle">
-            <span>DAVLAT BOJXONA QO'MITASI</span>
-            <span style="font-size:7px;margin-top:2px">${formatDateSimple(item.crossing_at)}</span>
-          </div>
-        </div>
+      <div style="border:1px dashed #d1d5db;border-radius:8px;padding:12px;font-size:11px;color:#374151">
+        <div><strong>To'lov usuli:</strong> Munis / Click / Payme Gov Clearing</div>
+        <div><strong>ERI kaliti:</strong> DBQ-IMZO-8A91209FF412 (${item.inspector_name || 'Bojxona xodimi'})</div>
       </div>
     </div>
 
     <div class="footer-doc">
       <div>
-        <strong style="color:#374151">Davlat Bojxona Qo'mitasi Yagona Axborot Tizimi</strong>
+        <strong>Davlat Bojxona Qo'mitasi Yagona Axborot Tizimi</strong>
         <div>customs.uz | 1108 | +998 78 120-76-00</div>
       </div>
       <div style="text-align:right">
-        <div style="font-family:'Space Mono',monospace;font-weight:700;color:#374151">AT-2026-${docNo.replace('AT','')}-DOC</div>
+        <div style="font-family:'Space Mono',monospace;font-weight:700">AT-2026-${docNo.replace('AT','')}</div>
         <div>A4 Format · Sahifa 1 / 1</div>
       </div>
     </div>
@@ -894,69 +1168,11 @@ function buildInvoicePDF(item, doc, L, isPaid) {
   </body></html>`;
 }
 
-/* ── Payment Modal ── */
-function openPayModal(doc) {
-  currentDocForPayment = doc;
-  const modalDocName = $('modal-doc-name');
-  if (modalDocName) modalDocName.textContent = doc.title || doc.code;
-  const modalAmount = $('modal-amount');
-  if (modalAmount) modalAmount.textContent = '621 632 UZS';
-  const payTotal = $('pay-total');
-  if (payTotal) payTotal.textContent = '621 632 UZS';
-
-  showPayStep1();
-  const modal = $('payment-modal');
-  if (modal) { modal.hidden = false; document.body.style.overflow = 'hidden'; }
-}
-
-function closePayModal() {
-  const modal = $('payment-modal');
-  if (modal) { modal.hidden = true; document.body.style.overflow = ''; }
-  showPayStep1();
-}
-
-function showPayStep1() { togglePaySteps(1); }
-function showPayStep2() { togglePaySteps(2); }
-function showPayStep3(method) {
-  selectedPayMethod = method;
-  const methodNames = { payme: 'Payme', click: 'Click', uzum: 'Uzum Bank', munis: 'Munis', uzcard: 'UzCard', humo: 'Humo' };
-  const methodName = $('selected-method-name');
-  if (methodName) methodName.textContent = methodNames[method] || method;
-  togglePaySteps(3);
-}
-function togglePaySteps(step) {
-  [1,2,3,4].forEach(n => {
-    const el = $(`pay-step-${n}`);
-    if (el) el.hidden = n !== step;
-  });
-}
-
-function processPayment(e) {
-  e.preventDefault();
-  const num = $('card-number')?.value || '';
-  if (num.replace(/\s/g,'').length < 16) { alert(t('cardNumber') + ' to\'liq emas!'); return; }
-
-  // Simulate payment processing
-  const btn = e.target.querySelector('[type="submit"]');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳...'; }
-
-  setTimeout(() => {
-    if (currentDocForPayment) paidDocs[currentDocForPayment.code] = true;
-
-    const txId = $('tx-id');
-    const paidAt = $('paid-at');
-    if (txId) txId.textContent = 'TX-' + Date.now();
-    if (paidAt) paidAt.textContent = new Date().toLocaleString();
-
-    togglePaySteps(4);
-
-    // Update doc payment badges
-    if (record) renderDocuments(record.payload?.documents || []);
-  }, 1500);
-}
-
-/* ── Card number formatting ── */
+/* ── DOM Event Listeners ── */
 document.addEventListener('DOMContentLoaded', () => {
+  initLanguageDropdown();
+
+  // Card Inputs Formatting
   const cardNum = $('card-number');
   if (cardNum) {
     cardNum.addEventListener('input', e => {
@@ -981,55 +1197,27 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Modal close on backdrop click
-  const modal = $('payment-modal');
-  if (modal) {
-    modal.addEventListener('click', e => { if (e.target === modal) closePayModal(); });
-  }
-  $('modal-close')?.addEventListener('click', closePayModal);
-
-  // Language download buttons
-  document.querySelectorAll('.lang-dl').forEach(btn => {
+  // PDF Language Selector
+  document.querySelectorAll('.pdf-lang-chip').forEach(btn => {
     btn.addEventListener('click', () => {
       selectedDlLang = btn.dataset.dlang;
-      document.querySelectorAll('.lang-dl').forEach(b => b.classList.toggle('active', b.dataset.dlang === selectedDlLang));
+      document.querySelectorAll('.pdf-lang-chip').forEach(b => {
+        b.classList.toggle('active', b.dataset.dlang === selectedDlLang);
+      });
     });
   });
-});
 
-/* ── Language switcher ── */
-document.querySelectorAll('[data-lang]').forEach(btn => {
-  btn.addEventListener('click', () => { lang = btn.dataset.lang; applyLanguage(); });
-});
-
-/* ── Card animation ── */
-function animateCards() {
-  const cards = document.querySelectorAll('.card, .law-card, .official, .download-section');
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry, idx) => {
-      if (entry.isIntersecting) {
-        setTimeout(() => {
-          entry.target.style.opacity = '1';
-          entry.target.style.transform = 'translateY(0)';
-        }, idx * 80);
-        observer.unobserve(entry.target);
-      }
+  // Modal Backdrop Click to Close
+  const modal = $('payment-modal');
+  if (modal) {
+    modal.addEventListener('click', e => {
+      if (e.target === modal) closePayModal();
     });
-  }, { threshold: 0.1 });
+  }
+});
 
-  cards.forEach(card => {
-    card.style.opacity = '0';
-    card.style.transform = 'translateY(20px)';
-    card.style.transition = 'opacity .5s ease, transform .5s ease';
-    observer.observe(card);
-  });
-}
-
-/* ── Main: load document ── */
+/* ── Main Data Fetching ── */
 (async () => {
-  initParticles();
-
-  // Get token from URL path — /visit/{token}
   const pathParts = location.pathname.split('/').filter(Boolean);
   const token = pathParts[pathParts.length - 1];
 
@@ -1062,17 +1250,18 @@ function animateCards() {
     applyLanguage();
 
   } catch (err) {
-    console.error('Document load error:', err);
+    console.error('Inspector document load error:', err);
     $('loading').hidden = true;
     $('error').hidden = false;
   }
 })();
 
-// Expose payment functions globally
-window.openPayModal = openPayModal;
+/* Expose global functions */
+window.openUnifiedPayModal = openUnifiedPayModal;
 window.closePayModal = closePayModal;
 window.showPayStep1 = showPayStep1;
 window.showPayStep2 = showPayStep2;
 window.showPayStep3 = showPayStep3;
-window.processPayment = processPayment;
+window.processUnifiedPayment = processUnifiedPayment;
 window.downloadDocumentPDF = downloadDocumentPDF;
+window.setLanguage = setLanguage;

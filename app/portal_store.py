@@ -16,32 +16,128 @@ logger = logging.getLogger(__name__)
 
 
 POST_SEED = [
-    ("35004", "Dovut-ota", "CHBP", "Qoraqalpog'iston", "KZ", 43.1355, 58.5986),
+    # Qoraqalpogʻiston Respublikasi boʻyicha
+    ("35001", "Nukus aeroporti", "AERO", "Qoraqalpog'iston", "", 42.4869, 59.6223),
+    ("35002", "Nukus TIF", "TIF", "Qoraqalpog'iston", "", 42.4602, 59.6166),
     ("35003", "Xo'jayli", "CHBP", "Qoraqalpog'iston", "TM", 42.4045, 59.4512),
+    ("35004", "Dovut-ota", "CHBP", "Qoraqalpog'iston", "KZ", 43.1355, 58.5986),
+    ("35010", "Qoraqalpog'iston temir yo'l", "RW", "Qoraqalpog'iston", "KZ", 44.8876, 56.0354),
+
+    # Andijon viloyati boʻyicha
+    ("03002", "Do'stlik", "CHBP", "Andijon", "KG", 40.4443, 72.3436),
+    ("03003", "Andijon aeroporti", "AERO", "Andijon", "", 40.7289, 72.2936),
+    ("03005", "Mingtepa", "CHBP", "Andijon", "KG", 40.4285, 72.2854),
+    ("03006", "Qorasuv", "CHBP", "Andijon", "KG", 40.7047, 72.8823),
+    ("03007", "Xonobod", "CHBP", "Andijon", "KG", 40.8012, 72.9984),
+    ("03008", "Pushmon", "CHBP", "Andijon", "KG", 40.6124, 72.4112),
+    ("03009", "Madaniyat", "CHBP", "Andijon", "KG", 40.8521, 72.8856),
+    ("03011", "Andijon TIF", "TIF", "Andijon", "", 40.7821, 72.3442),
+    ("03013", "Keskanyor", "CHBP", "Andijon", "KG", 40.5214, 72.1895),
+    ("03014", "Savay temir yo'l", "RW", "Andijon", "KG", 40.7891, 72.8541),
+    ("03015", "Asaka TIF", "TIF", "Andijon", "", 40.6415, 72.2389),
+
+    # Buxoro viloyati boʻyicha
+    ("06001", "Buxoro aeroporti", "AERO", "Buxoro", "", 39.7753, 64.4831),
+    ("06006", "Buxoro TIF", "TIF", "Buxoro", "", 39.7681, 64.4556),
+    ("06009", "Qorako'l TIF", "TIF", "Buxoro", "", 39.5012, 63.8561),
     ("06010", "Olot", "CHBP", "Buxoro", "TM", 39.1537, 63.5141),
+    ("06011", "Xo'jadavlat temir yo'l", "RW", "Buxoro", "TM", 39.2312, 63.6541),
+
+    # Jizzax viloyati boʻyicha
+    ("08003", "Uchto'rg'on", "CHBP", "Jizzax", "TJ", 40.1254, 67.8451),
+    ("08004", "Jizzax TIF", "TIF", "Jizzax", "", 40.1158, 67.8422),
+    ("08007", "Qo'shkent", "CHBP", "Jizzax", "TJ", 40.0521, 68.2145),
+
+    # Qashqadaryo viloyati boʻyicha
+    ("10002", "Nasaf TIF", "TIF", "Qashqadaryo", "", 38.8612, 65.7891),
+    ("10007", "Qamashi-G'uzor TIF", "TIF", "Qashqadaryo", "", 38.6214, 66.2541),
     ("10008", "Qarshi-Kerki", "CHBP", "Qashqadaryo", "TM", 38.8841, 65.7172),
-    ("22017", "Ayritom", "CHBP", "Surxondaryo", "AF", 37.2251, 67.4274),
-    ("22003", "Sariosiyo", "CHBP", "Surxondaryo", "TJ", 38.5065, 68.0205),
+    ("10012", "Qarshi aeroporti", "AERO", "Qashqadaryo", "", 38.8341, 65.7725),
+
+    # Navoiy viloyati boʻyicha
+    ("12002", "Navoiy aeroporti", "AERO", "Navoiy", "", 40.1189, 65.1764),
+    ("12003", "Navoiy TIF", "TIF", "Navoiy", "", 40.0841, 65.3789),
+    ("12008", "Zarafshon TIF", "TIF", "Navoiy", "", 41.5721, 64.2145),
+
+    # Namangan viloyati boʻyicha
+    ("14002", "Namangan aeroporti", "AERO", "Namangan", "", 40.9842, 71.5583),
+    ("14003", "Uchqo'rg'on", "CHBP", "Namangan", "KG", 41.1357, 72.0795),
+    ("14004", "Kosonsoy", "CHBP", "Namangan", "KG", 41.2541, 71.5489),
+    ("14005", "Pop", "CHBP", "Namangan", "TJ", 40.8741, 71.1025),
+    ("14010", "Namangan TIF", "TIF", "Namangan", "", 40.9981, 71.6725),
+
+    # Samarqand viloyati boʻyicha
+    ("18001", "Samarqand aeroporti", "AERO", "Samarqand", "", 39.7005, 66.9839),
     ("18002", "Jartepa", "CHBP", "Samarqand", "TJ", 39.5309, 67.4089),
+    ("18005", "Samarqand TIF", "TIF", "Samarqand", "", 39.6542, 66.9597),
+    ("18007", "Ulug'bek TIF", "TIF", "Samarqand", "", 39.6741, 66.9215),
+
+    # Surxondaryo viloyati boʻyicha
+    ("22002", "Termiz aeroporti", "AERO", "Surxondaryo", "", 37.2867, 67.3094),
+    ("22003", "Sariosiyo", "CHBP", "Surxondaryo", "TJ", 38.5065, 68.0205),
+    ("22004", "Sariosiyo temir yo'l", "RW", "Surxondaryo", "TJ", 38.4891, 67.9854),
+    ("22005", "Termiz TIF", "TIF", "Surxondaryo", "", 37.2611, 67.3086),
+    ("22006", "Denov TIF", "TIF", "Surxondaryo", "", 38.2741, 67.8954),
+    ("22007", "Gulbahor", "CHBP", "Surxondaryo", "TJ", 37.3854, 67.6214),
+    ("22011", "Daryo porti", "PORT", "Surxondaryo", "AF", 37.2010, 67.2993),
+    ("22015", "Boldir temir yo'l", "RW", "Surxondaryo", "TM", 37.3541, 67.4521),
+    ("22017", "Ayritom", "CHBP", "Surxondaryo", "AF", 37.2251, 67.4274),
+    ("22022", "Termiz xalqaro savdo markazi TIF", "TIF", "Surxondaryo", "", 37.2145, 67.4012),
+
+    # Sirdaryo viloyati boʻyicha
+    ("24002", "Xovosobod", "CHBP", "Sirdaryo", "TJ", 40.2145, 69.0521),
+    ("24004", "Sirdaryo", "CHBP", "Sirdaryo", "KZ", 40.9284, 68.8225),
+    ("24006", "Oq oltin", "CHBP", "Sirdaryo", "KZ", 40.3541, 68.9125),
+    ("24009", "Guliston TIF", "TIF", "Sirdaryo", "", 40.4891, 68.7845),
+    ("24014", "Malik", "CHBP", "Sirdaryo", "KZ", 40.8541, 68.6541),
+
+    # Toshkent viloyati boʻyicha
+    ("27001", "Yallama", "CHBP", "Toshkent viloyati", "KZ", 41.5852, 69.6584),
+    ("27008", "Navoiy", "CHBP", "Toshkent viloyati", "KZ", 41.4214, 69.2145),
+    ("27009", "S. Najimov", "CHBP", "Toshkent viloyati", "KZ", 41.5142, 69.3521),
     ("27011", "Oybek", "CHBP", "Toshkent viloyati", "TJ", 40.1678, 69.6056),
     ("27013", "Bekobod avto", "CHBP", "Toshkent viloyati", "TJ", 40.2307, 69.1725),
+    ("27014", "Chirchiq TIF", "TIF", "Toshkent viloyati", "", 41.4689, 69.5841),
+    ("27015", "Olmaliq TIF", "TIF", "Toshkent viloyati", "", 40.8541, 69.5984),
+    ("27016", "Yangiyo'l TIF", "TIF", "Toshkent viloyati", "", 41.1145, 69.0521),
+    ("27019", "Nazarbek TIF", "TIF", "Toshkent viloyati", "", 41.3125, 69.1452),
+    ("27020", "Keles TIF", "TIF", "Toshkent viloyati", "", 41.4012, 69.2014),
     ("27021", "G'ishtko'prik", "CHBP", "Toshkent viloyati", "KZ", 41.4688, 69.0717),
-    ("27001", "Yallama", "CHBP", "Toshkent viloyati", "KZ", 41.5852, 69.6584),
-    ("24004", "Sirdaryo", "CHBP", "Sirdaryo", "KZ", 40.9284, 68.8225),
-    ("03002", "Do'stlik", "CHBP", "Andijon", "KG", 40.4443, 72.3436),
-    ("03006", "Qorasuv", "CHBP", "Andijon", "KG", 40.7047, 72.8823),
-    ("14003", "Uchqo'rg'on", "CHBP", "Namangan", "KG", 41.1357, 72.0795),
+    ("27023", "Farhod", "CHBP", "Toshkent viloyati", "TJ", 40.2145, 69.2541),
+    ("27024", "Bekobod temir yo'l", "RW", "Toshkent viloyati", "TJ", 40.2189, 69.2214),
+    ("27028", "Angren TIF", "TIF", "Toshkent viloyati", "", 41.0145, 70.1425),
+
+    # Fargʻona viloyati boʻyicha
+    ("30001", "Farg'ona aeroporti", "AERO", "Farg'ona", "", 40.3586, 71.7456),
+    ("30002", "Qo'qon TIF", "TIF", "Farg'ona", "", 40.5289, 70.9421),
     ("30004", "Farg'ona", "CHBP", "Farg'ona", "KG", 40.3734, 71.7603),
-    ("30010", "O'zbekiston", "CHBP", "Farg'ona", "KG", 40.4168, 70.6102),
+    ("30005", "Andarxon", "CHBP", "Farg'ona", "TJ", 40.2854, 70.7854),
     ("30006", "Rishton", "CHBP", "Farg'ona", "KG", 40.0317, 71.0772),
+    ("30008", "Rovot", "CHBP", "Farg'ona", "TJ", 40.1854, 70.9541),
+    ("30009", "Vodiy TIF", "TIF", "Farg'ona", "", 40.4214, 71.6845),
+    ("30010", "O'zbekiston", "CHBP", "Farg'ona", "KG", 40.4168, 70.6102),
+    ("30012", "So'x", "CHBP", "Farg'ona", "KG", 39.9541, 71.1245),
+
+    # Xorazm viloyati boʻyicha
     ("33001", "Shovot", "CHBP", "Xorazm", "TM", 41.6538, 60.3001),
     ("33004", "Do'stlik", "CHBP", "Xorazm", "TM", 41.3337, 60.6175),
+    ("33007", "Urganch TIF", "TIF", "Xorazm", "", 41.5541, 60.6241),
+    ("33011", "Urganch aeroporti", "AERO", "Xorazm", "", 41.5839, 60.6425),
+    ("33033", "Shovot chegaraoldi savdo zonasi", "CHBP", "Xorazm", "TM", 41.6741, 60.2845),
+
+    # Toshkent shahri boʻyicha
+    ("26002", "Toshkent-tovar TIF", "TIF", "Toshkent shahri", "", 41.2967, 69.2981),
+    ("26003", "Ark buloq TIF", "TIF", "Toshkent shahri", "", 41.2641, 69.1845),
+    ("26004", "Chuqursoy TIF", "TIF", "Toshkent shahri", "", 41.3854, 69.2541),
+    ("26009", "Keles temir yo'l", "RW", "Toshkent shahri", "KZ", 41.4012, 69.2014),
+    ("26010", "Sirg'ali TIF", "TIF", "Toshkent shahri", "", 41.2214, 69.2451),
+    ("26013", "Chuqursoy texnik idora temir yo'l", "RW", "Toshkent shahri", "KZ", 41.3891, 69.2512),
+
+    # “Toshkent-AERO” ixtisoslashtirilgan bojxona kompleksi
     ("00101", "Toshkent xalqaro aeroporti", "AERO", "Toshkent shahri", "", 41.2579, 69.2812),
-    ("06006", "Buxoro TIF", "TIF", "Buxoro", "", 39.7681, 64.4556),
-    ("18005", "Samarqand TIF", "TIF", "Samarqand", "", 39.6542, 66.9597),
-    ("22005", "Termiz TIF", "TIF", "Surxondaryo", "", 37.2611, 67.3086),
-    ("22011", "Daryo porti", "PORT", "Surxondaryo", "", 37.201032, 67.299349),
-    ("26002", "Toshkent-tovar TIF", "TIF", "Toshkent shahri", "", 41.296705, 69.298132),
+    ("00102", "Avia yuklar TIF", "TIF", "Toshkent shahri", "", 41.2612, 69.2845),
+    ("00107", "Elektron tijorat TIF", "TIF", "Toshkent shahri", "", 41.2689, 69.2912),
+    ("00110", "Toshkent-Humo aeroporti", "AERO", "Toshkent shahri", "", 41.2941, 69.3145),
 ]
 
 
@@ -265,15 +361,30 @@ class PortalStore:
                 for code, name, kind, region, neighbor, lat, lon in POST_SEED:
                     await db.execute(
                         """INSERT INTO customs_posts(code,name_uz,post_type,region,neighbor_code,latitude,longitude)
-                           VALUES($1,$2,$3,$4,$5,$6,$7) ON CONFLICT(code) DO NOTHING""",
+                           VALUES($1,$2,$3,$4,$5,$6,$7)
+                           ON CONFLICT(code) DO UPDATE SET
+                           name_uz=EXCLUDED.name_uz,
+                           post_type=EXCLUDED.post_type,
+                           region=EXCLUDED.region,
+                           neighbor_code=EXCLUDED.neighbor_code,
+                           latitude=COALESCE(customs_posts.latitude, EXCLUDED.latitude),
+                           longitude=COALESCE(customs_posts.longitude, EXCLUDED.longitude)""",
                         code, name, kind, region, neighbor, lat, lon,
                     )
             return
         async with aiosqlite.connect(self.sqlite_path) as db:
             await db.executemany(
-                """INSERT OR IGNORE INTO customs_posts
+                """INSERT INTO customs_posts
                    (code,name_uz,post_type,region,neighbor_code,latitude,longitude,updated_at)
-                   VALUES(?,?,?,?,?,?,?,?)""",
+                   VALUES(?,?,?,?,?,?,?,?)
+                   ON CONFLICT(code) DO UPDATE SET
+                   name_uz=excluded.name_uz,
+                   post_type=excluded.post_type,
+                   region=excluded.region,
+                   neighbor_code=excluded.neighbor_code,
+                   latitude=COALESCE(customs_posts.latitude, excluded.latitude),
+                   longitude=COALESCE(customs_posts.longitude, excluded.longitude),
+                   updated_at=excluded.updated_at""",
                 [(code, name, kind, region, neighbor, lat, lon, _now()) for code, name, kind, region, neighbor, lat, lon in POST_SEED],
             )
             await db.commit()

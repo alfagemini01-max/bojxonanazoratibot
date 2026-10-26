@@ -2,320 +2,603 @@
 <html lang="uz">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
   <meta name="robots" content="noindex,nofollow,noarchive">
   <meta name="theme-color" content="#063c32">
-  <link rel="icon" href="/static/webapp/uzbekistan-emblem.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="icon" href="/static/webapp/customs-emblem.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/webapp/inspector-document.css?v=5">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/webapp/inspector-document.css?v=6">
   <title>E-Bojxona · Hujjat tekshiruvi</title>
 </head>
 <body>
-  <!-- Animated particles background -->
-  <div class="particles" id="particles"></div>
-
-  <header class="site-header">
-    <div class="brand">
-      <div class="logo-wrap">
-        <img src="/static/webapp/uzbekistan-emblem.png" alt="DBQ gerbi" class="logo-emblem">
+  <div class="app-container">
+    <!-- Header with logo and animated language dropdown -->
+    <header class="app-header">
+      <div class="header-brand">
+        <div class="brand-logo-wrap">
+          <img src="/static/webapp/customs-emblem.png" alt="DBQ Gerbi" class="brand-logo">
+        </div>
+        <div class="brand-text">
+          <span class="brand-title">E-BOJXONA</span>
+          <span class="brand-subtitle" data-i18n="service">Davlat bojxona xizmati</span>
+        </div>
       </div>
-      <div class="brand-text">
-        <b>E-BOJXONA</b>
-        <small data-i18n="service">Davlat bojxona xizmati</small>
+
+      <!-- Language Switcher with Animated Dropdown -->
+      <div class="lang-dropdown-wrapper">
+        <button type="button" class="lang-trigger-btn" id="lang-trigger" aria-haspopup="true" aria-expanded="false" title="Tilni tanlash / Выберите язык / Select language">
+          <img src="/static/webapp/flags/uz.svg" alt="UZ" class="lang-cur-flag" id="lang-cur-flag">
+          <span class="lang-cur-text" id="lang-cur-text">O'zbek</span>
+          <svg class="chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </button>
+
+        <div class="lang-menu" id="lang-menu" role="menu">
+          <button type="button" class="lang-option active" data-lang="uz" role="menuitem">
+            <img src="/static/webapp/flags/uz.svg" alt="UZ" class="lang-opt-flag">
+            <div class="lang-opt-text">
+              <span class="opt-name">O'zbek</span>
+              <span class="opt-desc">O'zbekiston</span>
+            </div>
+            <svg class="check-indicator" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </button>
+          <button type="button" class="lang-option" data-lang="ru" role="menuitem">
+            <img src="/static/webapp/flags/ru.svg" alt="RU" class="lang-opt-flag">
+            <div class="lang-opt-text">
+              <span class="opt-name">Русский</span>
+              <span class="opt-desc">Россия</span>
+            </div>
+            <svg class="check-indicator" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </button>
+          <button type="button" class="lang-option" data-lang="en" role="menuitem">
+            <img src="/static/webapp/flags/gb.svg" alt="GB" class="lang-opt-flag">
+            <div class="lang-opt-text">
+              <span class="opt-name">English</span>
+              <span class="opt-desc">Great Britain</span>
+            </div>
+            <svg class="check-indicator" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="app-main">
+      <!-- Loading State -->
+      <section class="state-card loading-state" id="loading">
+        <div class="spinner-modern">
+          <div class="spin-ring"></div>
+          <img src="/static/webapp/customs-emblem.png" alt="" class="spin-emblem">
+        </div>
+        <h3 data-i18n="loading">Hujjat tekshirilmoqda…</h3>
+        <p data-i18n="loadingDesc">Bojxona tizimidan ma'lumotlar olinmoqda</p>
+      </section>
+
+      <!-- Error State -->
+      <section class="state-card error-state" id="error" hidden>
+        <div class="error-badge-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+        </div>
+        <h3 data-i18n="notFound">Hujjat topilmadi</h3>
+        <p data-i18n="notFoundHelp">QR-kod to'g'riligini tekshiring yoki bojxona xodimiga murojaat qiling.</p>
+        <a href="tel:1108" class="support-call-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+          </svg>
+          <span>1108 · Ishonch telefoni</span>
+        </a>
+      </section>
+
+      <!-- Document Loaded View -->
+      <div id="document-view" class="doc-view-container" hidden>
+
+        <!-- Status & Welcome Banner -->
+        <section class="welcome-banner">
+          <div class="status-chip verified" id="verified-chip">
+            <span class="status-chip-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </span>
+            <span class="status-chip-text" id="status-chip-text" data-i18n="verified">HUJJAT TASDIQLANGAN</span>
+          </div>
+
+          <div class="welcome-meta">
+            <span class="welcome-lead" data-i18n="welcome">O'ZBEKISTON RESPUBLIKASIGA XUSH KELIBSIZ!</span>
+            <h1 class="welcome-driver-name" id="driver-name">—</h1>
+            <div class="doc-code-row">
+              <span class="doc-code-label" data-i18n="docNumber">Hujjat raqami:</span>
+              <span class="doc-code-val" id="document-number">—</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Vehicle Hero Card (Road24 / Garage Style) -->
+        <section class="modern-card vehicle-hero-card">
+          <div class="card-head-row">
+            <div class="vehicle-title-badge">
+              <div class="vehicle-icon-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <path d="M5 17h14m-17-4 2-8h16l2 8v6a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-1H6v1a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-6z"></path>
+                  <circle cx="7" cy="14" r="2"></circle>
+                  <circle cx="17" cy="14" r="2"></circle>
+                </svg>
+              </div>
+              <div class="vehicle-info-text">
+                <span class="v-sub" data-i18n="vehicleSection">TRANSPORT VOSITASI</span>
+                <b class="v-main" id="vehicle-model-label">Chevrolet Cobalt</b>
+              </div>
+            </div>
+            <div class="vehicle-pass-badge">
+              <span class="dot-pulse"></span>
+              <span data-i18n="cleared">Nazoratdan o'tgan</span>
+            </div>
+          </div>
+
+          <!-- Car Visual Stage -->
+          <div class="car-visual-stage">
+            <img src="/static/webapp/vehicle-cobalt.jpg" alt="Transport vositasi" class="car-profile-img">
+            <div class="car-ground-shadow"></div>
+          </div>
+
+          <!-- Dynamic Realistic License Plate -->
+          <div class="plate-wrapper" id="plate-wrapper">
+            <!-- Injected dynamically by JS matching country & plate format -->
+          </div>
+
+          <!-- Quick Vehicle Stats (Road24 style) -->
+          <div class="vehicle-quick-stats">
+            <div class="stat-pill">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+              <div>
+                <small data-i18n="post">Chegara posti</small>
+                <b id="quick-post-name">—</b>
+              </div>
+            </div>
+            <div class="stat-pill">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              <div>
+                <small data-i18n="time">O'tish vaqti</small>
+                <b id="quick-crossing-time">—</b>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Registered Documents List Section -->
+        <section class="modern-card documents-section-card">
+          <div class="section-card-head">
+            <div class="sec-icon-circle green">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+              </svg>
+            </div>
+            <div>
+              <span class="sec-label" data-i18n="officialDocs">RASMIY HUJJATLAR</span>
+              <h2 class="sec-title" data-i18n="registeredDocs">Nomingizga rasmiylashtirilgan hujjatlar</h2>
+            </div>
+          </div>
+
+          <!-- Document Cards (Clean, NO ugly buttons) -->
+          <div class="doc-list" id="doc-cards-list">
+            <!-- Injected by JS -->
+          </div>
+
+          <!-- Language Selector for PDF Downloads -->
+          <div class="pdf-lang-bar">
+            <span class="pdf-lang-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="2" y1="12" x2="22" y2="12"></line>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+              </svg>
+              <span data-i18n="downloadLang">Hujjat tili:</span>
+            </span>
+            <div class="pdf-lang-options">
+              <button type="button" class="pdf-lang-chip active" data-dlang="uz">
+                <img src="/static/webapp/flags/uz.svg" alt="UZ">
+                <span>O'zbek</span>
+              </button>
+              <button type="button" class="pdf-lang-chip" data-dlang="ru">
+                <img src="/static/webapp/flags/ru.svg" alt="RU">
+                <span>Русский</span>
+              </button>
+              <button type="button" class="pdf-lang-chip" data-dlang="en">
+                <img src="/static/webapp/flags/gb.svg" alt="GB">
+                <span>English</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Information Accordions / Cards -->
+        <div class="two-column-details">
+          <!-- Visitor Personal Details -->
+          <article class="modern-card detail-subcard">
+            <div class="detail-card-head">
+              <div class="sec-icon-circle blue">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </div>
+              <h3 data-i18n="personalData">Shaxsiy ma'lumotlar</h3>
+            </div>
+            <div class="detail-list" id="identity-list"></div>
+          </article>
+
+          <!-- Crossing / Route Details -->
+          <article class="modern-card detail-subcard">
+            <div class="detail-card-head">
+              <div class="sec-icon-circle teal">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
+                </svg>
+              </div>
+              <h3 data-i18n="journeyData">Safar ma'lumotlari</h3>
+            </div>
+            <div class="detail-list" id="journey-list"></div>
+          </article>
+        </div>
+
+        <!-- Additional Note if available -->
+        <section class="modern-card note-subcard" id="note-card" hidden>
+          <div class="detail-card-head">
+            <div class="sec-icon-circle amber">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg>
+            </div>
+            <h3 data-i18n="additionalInfo">Qo'shimcha ma'lumot</h3>
+          </div>
+          <p id="additional-info" class="note-text"></p>
+        </section>
+
+        <!-- Legal Disclaimer -->
+        <section class="legal-notice-card">
+          <div class="legal-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"></path>
+              <path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"></path>
+              <path d="M7 21h10"></path>
+              <path d="M12 3v18"></path>
+              <path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"></path>
+            </svg>
+          </div>
+          <div class="legal-text-wrap">
+            <b data-i18n="lawTitle">Qonunchilik talablariga rioya qiling</b>
+            <p data-i18n="lawText">O'zbekiston Respublikasi hududida amaldagi bojxona va yo'l harakati xavfsizligi qoidalariga qat'iy amal qilishingiz shart.</p>
+          </div>
+        </section>
+
+        <!-- Official Inspector Attribution -->
+        <section class="inspector-card">
+          <div class="inspector-emblem">
+            <img src="/static/webapp/customs-emblem.png" alt="DBQ">
+          </div>
+          <div class="inspector-details">
+            <small data-i18n="issuedBy">HUJJATNI RASMIYLASHTIRGAN INSPEKTOR</small>
+            <b id="inspector-name">—</b>
+            <span id="issued-at">—</span>
+          </div>
+          <div class="inspector-verified-seal">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+        </section>
+
+        <!-- Spacer for Sticky Pay Dock -->
+        <div class="dock-spacer"></div>
+
+      </div>
+    </main>
+
+    <!-- SINGLE UNIFIED PAYMENT DOCK (Sticky Bottom, 1 bitta tugma!) -->
+    <div class="sticky-pay-dock" id="sticky-pay-dock" hidden>
+      <div class="pay-dock-inner">
+        <div class="pay-dock-meta">
+          <span class="dock-meta-label" data-i18n="totalToPay">Jami to'lov miqdori:</span>
+          <div class="dock-price-row">
+            <span class="dock-amount" id="dock-amount-val">621 632 UZS</span>
+            <span class="dock-status-badge" id="dock-status-badge" data-i18n="unpaidStatus">Kutilmoqda</span>
+          </div>
+        </div>
+        <button type="button" class="dock-pay-btn" id="dock-pay-btn" onclick="openUnifiedPayModal()">
+          <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+            <line x1="1" y1="10" x2="23" y2="10"></line>
+          </svg>
+          <span id="dock-btn-label" data-i18n="payNow">To'lash</span>
+        </button>
       </div>
     </div>
-    <div class="header-right">
-      <div class="languages" aria-label="Til">
-        <button class="active" data-lang="uz">UZ</button>
-        <button data-lang="ru">RU</button>
-        <button data-lang="en">EN</button>
-      </div>
-    </div>
-  </header>
 
-  <main>
-    <!-- Loading state -->
-    <section class="loading-card" id="loading">
-      <div class="loader-ring">
-        <div></div><div></div><div></div><div></div>
+    <!-- Footer -->
+    <footer class="app-footer">
+      <div class="footer-center">
+        <img src="/static/webapp/customs-emblem.png" alt="DBQ" class="footer-emblem">
+        <b>O'ZBEKISTON RESPUBLIKASI DAVLAT BOJXONA QO'MITASI</b>
+        <span>Yagona axborot tizimi · Ishonch telefoni: 1108</span>
       </div>
-      <b data-i18n="loading">Hujjat tekshirilmoqda…</b>
-      <p data-i18n="loadingDesc">Tizimdan ma'lumot olinmoqda</p>
-    </section>
+    </footer>
+  </div>
 
-    <!-- Error state -->
-    <section id="error" class="error-card" hidden>
-      <div class="error-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="12" y1="8" x2="12" y2="12"/>
-          <line x1="12" y1="16" x2="12.01" y2="16"/>
+  <!-- Unified Payment Modal (Modern iOS Bottom-Sheet) -->
+  <div class="pay-modal-overlay" id="payment-modal" hidden>
+    <div class="pay-modal-sheet" role="dialog" aria-modal="true">
+      <div class="sheet-drag-handle"></div>
+      <button type="button" class="sheet-close-btn" onclick="closePayModal()" aria-label="Yopish">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
         </svg>
-      </div>
-      <b data-i18n="notFound">Hujjat topilmadi</b>
-      <p data-i18n="notFoundHelp">QR-kod to'g'riligini tekshiring yoki bojxona xodimiga murojaat qiling.</p>
-      <a href="tel:1108" class="contact-btn">📞 1108 — Qo'ng'iroq qilish</a>
-    </section>
+      </button>
 
-    <!-- Document view -->
-    <div id="document-view" hidden>
-      <!-- Hero section -->
-      <section class="hero" id="hero-section">
-        <div class="hero-bg-anim"></div>
-        <div class="hero-content">
-          <div class="verified-badge" id="verified">
-            <div class="verified-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <!-- Step 1: Breakdown of all charges -->
+      <div class="modal-step" id="pay-step-1">
+        <div class="sheet-header">
+          <div class="sheet-icon-circle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+              <line x1="1" y1="10" x2="23" y2="10"></line>
+            </svg>
+          </div>
+          <h2 data-i18n="paymentBreakdown">Bojxona to'lovlari</h2>
+          <p data-i18n="paymentBreakdownDesc">Quyidagi xizmatlar va yig'imlar uchun to'lov amalga oshiriladi</p>
+        </div>
+
+        <div class="fee-items-box">
+          <div class="fee-row-item">
             <div>
-              <b data-i18n="verified">HUJJAT TASDIQLANGAN</b>
-              <small data-i18n="verifiedHelp">Ma'lumotlar bojxona tizimidagi yozuvga mos</small>
+              <b>Bojxona yig'imlari (Kirish)</b>
+              <small>Tranzit rasmiylashtiruvi (25% BHM)</small>
             </div>
+            <span>110 000 UZS</span>
           </div>
-          <p class="welcome-text" data-i18n="welcome">O'ZBEKISTON RESPUBLIKASIGA XUSH KELIBSIZ!</p>
-          <h1 id="driver-name" class="driver-name"></h1>
-          <div class="doc-number-wrap">
-            <span class="doc-label" data-i18n="docNumber">Hujjat raqami</span>
-            <span class="document-number" id="document-number"></span>
-          </div>
-        </div>
-        <div class="hero-emblem">
-          <img src="/static/webapp/uzbekistan-emblem.png" alt="">
-        </div>
-      </section>
-
-      <!-- Info cards grid -->
-      <section class="content-grid">
-        <article class="card identity-card" id="identity-card">
-          <div class="card-title">
-            <span class="card-num">01</span>
+          <div class="fee-row-item">
             <div>
-              <small data-i18n="visitorData">TASHRIF BUYURUVCHI</small>
-              <h2 data-i18n="personalData">Shaxsiy ma'lumotlar</h2>
+              <b>Veterinariya nazorati</b>
+              <small>Sanitariya-ishlovidan o'tkazish</small>
             </div>
+            <span>93 632 UZS</span>
           </div>
-          <dl id="identity-list"></dl>
-        </article>
-
-        <article class="card journey-card" id="journey-card">
-          <div class="card-title">
-            <span class="card-num">02</span>
+          <div class="fee-row-item">
             <div>
-              <small data-i18n="crossing">CHEGARADAN O'TISH</small>
-              <h2 data-i18n="journeyData">Safar ma'lumotlari</h2>
+              <b>Sug'urta polisi (OSAGO)</b>
+              <small>0.700 raz. BHM (68 km tranzit)</small>
             </div>
+            <span>308 000 UZS</span>
           </div>
-          <dl id="journey-list"></dl>
-        </article>
-      </section>
-
-      <!-- Documents section -->
-      <section class="card documents-card">
-        <div class="card-title">
-          <span class="card-num">03</span>
-          <div>
-            <small data-i18n="officialDocs">RASMIY HUJJATLAR</small>
-            <h2 data-i18n="registeredDocs">Nomingizga rasmiylashtirilgan hujjatlar</h2>
+          <div class="fee-row-item">
+            <div>
+              <b>Terminal yig'imlari</b>
+              <small>Bojxona ombori xizmati (1 kun)</small>
+            </div>
+            <span>110 000 UZS</span>
           </div>
-        </div>
-        <div class="documents" id="documents"></div>
-      </section>
-
-      <!-- Additional info -->
-      <section class="card note-card" id="note-card" hidden>
-        <div class="card-title">
-          <span class="card-num">04</span>
-          <div>
-            <small data-i18n="additional">QO'SHIMCHA</small>
-            <h2 data-i18n="additionalInfo">Qo'shimcha ma'lumot</h2>
+          <div class="fee-total-row">
+            <span data-i18n="totalAmount">Jami to'lov:</span>
+            <strong>621 632 UZS</strong>
           </div>
         </div>
-        <p id="additional-info"></p>
-      </section>
 
-      <!-- Law notice -->
-      <section class="law-card">
-        <div class="law-icon">⚖</div>
-        <div>
-          <b data-i18n="lawTitle">Qonunchilik talablariga rioya qiling</b>
-          <p data-i18n="lawText">O'zbekiston Respublikasi hududida amaldagi bojxona va yo'l harakati qoidalariga amal qilishingiz shart.</p>
-        </div>
-      </section>
-
-      <!-- Inspector section -->
-      <section class="official">
-        <div class="official-logo">
-          <img src="/static/webapp/uzbekistan-emblem.png" alt="DBQ">
-        </div>
-        <div>
-          <small data-i18n="issuedBy">HUJJATNI RASMIYLASHTIRGAN INSPEKTOR</small>
-          <b id="inspector-name"></b>
-          <span id="issued-at"></span>
-        </div>
-        <div class="official-seal-wrap">
-          <div class="official-seal">✓</div>
-        </div>
-      </section>
-
-      <!-- Download documents section -->
-      <section class="download-section" id="download-section">
-        <div class="download-header">
-          <div class="download-icon">📄</div>
-          <div>
-            <h3 data-i18n="downloadTitle">Hujjatlarni PDF yuklab olish</h3>
-            <p data-i18n="downloadDesc">Barcha hujjatlarni rasmiy PDF formatida yuklab oling</p>
-          </div>
-        </div>
-        <div class="download-buttons" id="download-buttons">
-          <!-- Generated dynamically -->
-        </div>
-        <div class="lang-selector-download">
-          <span data-i18n="downloadLang">Yuklab olish tili:</span>
-          <div class="lang-btns-dl">
-            <button class="lang-dl active" data-dlang="uz">🇺🇿 O'zbek</button>
-            <button class="lang-dl" data-dlang="ru">🇷🇺 Русский</button>
-            <button class="lang-dl" data-dlang="en">🇬🇧 English</button>
-          </div>
-        </div>
-      </section>
-    </div>
-  </main>
-
-  <!-- Payment Modal -->
-  <div class="modal-overlay" id="payment-modal" hidden>
-    <div class="modal-box">
-      <button class="modal-close" id="modal-close">✕</button>
-
-      <!-- Step 1: Payment needed -->
-      <div id="pay-step-1">
-        <div class="modal-header">
-          <div class="payment-warning-icon">⚠️</div>
-          <h2 data-i18n="paymentRequired">To'lov talab etiladi</h2>
-          <p id="modal-doc-name"></p>
-        </div>
-        <div class="payment-status-box unpaid">
-          <span data-i18n="paymentStatus">To'lov holati:</span>
-          <strong data-i18n="unpaid" class="status-red">❌ TO'LANMAGAN</strong>
-        </div>
-        <div class="payment-amount-box">
-          <span data-i18n="amount">Summa:</span>
-          <strong id="modal-amount"></strong>
-        </div>
-        <button class="pay-btn" id="pay-now-btn" onclick="showPayStep2()">
-          <span data-i18n="payNow">To'lash</span>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        <button type="button" class="modal-primary-btn" onclick="showPayStep2()">
+          <span data-i18n="choosePaymentSystem">To'lov usulini tanlash</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
         </button>
       </div>
 
-      <!-- Step 2: Choose payment method -->
-      <div id="pay-step-2" hidden>
-        <div class="modal-header">
+      <!-- Step 2: Choose Payment System -->
+      <div class="modal-step" id="pay-step-2" hidden>
+        <div class="sheet-header">
           <h2 data-i18n="chooseMethod">To'lov tizimini tanlang</h2>
+          <p data-i18n="chooseMethodDesc">To'lovni amalga oshirish uchun qulay usulni tanlang</p>
         </div>
-        <div class="payment-methods">
-          <button class="pay-method" onclick="showPayStep3('payme')" data-method="payme">
-            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 40'%3E%3Crect width='120' height='40' rx='8' fill='%2300AAFF'/%3E%3Ctext x='60' y='27' text-anchor='middle' font-family='Arial' font-weight='bold' font-size='18' fill='white'%3EPayme%3C/text%3E%3C/svg%3E" alt="Payme">
-            <span>Payme</span>
+
+        <div class="pay-methods-grid">
+          <!-- Payme -->
+          <button type="button" class="method-card" onclick="showPayStep3('payme')">
+            <div class="method-logo-box payme-bg">
+              <span class="brand-logotype">payme</span>
+            </div>
+            <div class="method-text">
+              <b>Payme</b>
+              <small>O'zbekiston kartalari</small>
+            </div>
           </button>
-          <button class="pay-method" onclick="showPayStep3('click')" data-method="click">
-            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 40'%3E%3Crect width='120' height='40' rx='8' fill='%23FF6B00'/%3E%3Ctext x='60' y='27' text-anchor='middle' font-family='Arial' font-weight='bold' font-size='18' fill='white'%3ECLICK%3C/text%3E%3C/svg%3E" alt="Click">
-            <span>Click</span>
+
+          <!-- Click -->
+          <button type="button" class="method-card" onclick="showPayStep3('click')">
+            <div class="method-logo-box click-bg">
+              <span class="brand-logotype">CLICK</span>
+            </div>
+            <div class="method-text">
+              <b>Click Up</b>
+              <small>Uzcard / Humo</small>
+            </div>
           </button>
-          <button class="pay-method" onclick="showPayStep3('uzum')" data-method="uzum">
-            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 40'%3E%3Crect width='120' height='40' rx='8' fill='%238B5CF6'/%3E%3Ctext x='60' y='27' text-anchor='middle' font-family='Arial' font-weight='bold' font-size='18' fill='white'%3EUzum%3C/text%3E%3C/svg%3E" alt="Uzum">
-            <span>Uzum Bank</span>
+
+          <!-- Uzum Bank -->
+          <button type="button" class="method-card" onclick="showPayStep3('uzum')">
+            <div class="method-logo-box uzum-bg">
+              <span class="brand-logotype">uzum</span>
+            </div>
+            <div class="method-text">
+              <b>Uzum Bank</b>
+              <small>Tezkor to'lov</small>
+            </div>
           </button>
-          <button class="pay-method" onclick="showPayStep3('munis')" data-method="munis">
-            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 40'%3E%3Crect width='120' height='40' rx='8' fill='%23059669'/%3E%3Ctext x='60' y='27' text-anchor='middle' font-family='Arial' font-weight='bold' font-size='18' fill='white'%3EMunis%3C/text%3E%3C/svg%3E" alt="Munis">
-            <span>Munis</span>
+
+          <!-- Munis (Gov clearing) -->
+          <button type="button" class="method-card" onclick="showPayStep3('munis')">
+            <div class="method-logo-box munis-bg">
+              <span class="brand-logotype">MUNIS</span>
+            </div>
+            <div class="method-text">
+              <b>Munis DBQ</b>
+              <small>Davlat to'lov tizimi</small>
+            </div>
           </button>
-          <button class="pay-method" onclick="showPayStep3('uzcard')" data-method="uzcard">
-            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 40'%3E%3Crect width='120' height='40' rx='8' fill='%230EA5E9'/%3E%3Ctext x='60' y='27' text-anchor='middle' font-family='Arial' font-weight='bold' font-size='16' fill='white'%3EUzCard%3C/text%3E%3C/svg%3E" alt="UzCard">
-            <span>UzCard</span>
+
+          <!-- Uzcard -->
+          <button type="button" class="method-card" onclick="showPayStep3('uzcard')">
+            <div class="method-logo-box uzcard-bg">
+              <span class="brand-logotype">UZCARD</span>
+            </div>
+            <div class="method-text">
+              <b>Uzcard</b>
+              <small>Milliy to'lov tizimi</small>
+            </div>
           </button>
-          <button class="pay-method" onclick="showPayStep3('humo')" data-method="humo">
-            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 40'%3E%3Crect width='120' height='40' rx='8' fill='%23DC2626'/%3E%3Ctext x='60' y='27' text-anchor='middle' font-family='Arial' font-weight='bold' font-size='18' fill='white'%3EHUMO%3C/text%3E%3C/svg%3E" alt="Humo">
-            <span>Humo</span>
+
+          <!-- Humo -->
+          <button type="button" class="method-card" onclick="showPayStep3('humo')">
+            <div class="method-logo-box humo-bg">
+              <span class="brand-logotype">HUMO</span>
+            </div>
+            <div class="method-text">
+              <b>Humo Card</b>
+              <small>Kontaktsiz to'lov</small>
+            </div>
           </button>
         </div>
-        <button class="back-btn" onclick="showPayStep1()">← <span data-i18n="back">Orqaga</span></button>
+
+        <button type="button" class="modal-back-btn" onclick="showPayStep1()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          <span data-i18n="back">Orqaga</span>
+        </button>
       </div>
 
-      <!-- Step 3: Card details -->
-      <div id="pay-step-3" hidden>
-        <div class="modal-header">
+      <!-- Step 3: Card Details Input -->
+      <div class="modal-step" id="pay-step-3" hidden>
+        <div class="sheet-header">
           <h2 data-i18n="cardDetails">Karta ma'lumotlarini kiriting</h2>
-          <p id="selected-method-name"></p>
+          <p id="selected-method-banner" class="selected-method-badge"></p>
         </div>
-        <form class="card-form" onsubmit="processPayment(event)">
-          <div class="form-group">
-            <label data-i18n="cardNumber">Karta raqami</label>
-            <div class="card-input-wrap">
-              <input type="text" id="card-number" maxlength="19" placeholder="0000 0000 0000 0000" autocomplete="cc-number">
-              <svg class="card-chip" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.5"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M7 15h.01M12 15h.01"/></svg>
+
+        <form class="card-entry-form" onsubmit="processUnifiedPayment(event)">
+          <div class="input-block">
+            <label for="card-number" data-i18n="cardNumber">Karta raqami</label>
+            <div class="card-field-wrap">
+              <input type="text" id="card-number" inputmode="numeric" maxlength="19" placeholder="8600 0000 0000 0000" autocomplete="cc-number" required>
+              <div class="field-card-chip">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                  <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                  <path d="M2 10h20"></path>
+                </svg>
+              </div>
             </div>
           </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label data-i18n="expiry">Amal qilish muddati</label>
-              <input type="text" id="card-expiry" maxlength="5" placeholder="MM/YY" autocomplete="cc-exp">
+
+          <div class="input-row-two">
+            <div class="input-block">
+              <label for="card-expiry" data-i18n="expiry">Amal qilish muddati</label>
+              <input type="text" id="card-expiry" inputmode="numeric" maxlength="5" placeholder="MM/YY" autocomplete="cc-exp" required>
             </div>
-            <div class="form-group">
-              <label>CVV/CVC</label>
-              <input type="text" id="card-cvv" maxlength="3" placeholder="•••" autocomplete="cc-csc">
+            <div class="input-block">
+              <label for="card-cvv">CVV / CVC</label>
+              <input type="password" id="card-cvv" inputmode="numeric" maxlength="3" placeholder="•••" autocomplete="cc-csc">
             </div>
           </div>
-          <div class="form-group">
-            <label data-i18n="cardHolder">Karta egasining ismi</label>
-            <input type="text" id="card-holder" placeholder="IVAN IVANOV" autocomplete="cc-name" style="text-transform:uppercase">
+
+          <div class="input-block">
+            <label for="card-holder" data-i18n="cardHolder">Karta egasining FISh</label>
+            <input type="text" id="card-holder" placeholder="SHAXS ISMI" autocomplete="cc-name" style="text-transform:uppercase">
           </div>
-          <div class="pay-summary">
-            <span data-i18n="totalAmount">Jami to'lov:</span>
-            <strong id="pay-total"></strong>
+
+          <div class="form-amount-summary">
+            <span data-i18n="totalToPay">Yechib olinadigan summa:</span>
+            <b>621 632 UZS</b>
           </div>
-          <button type="submit" class="pay-btn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            <span data-i18n="confirmPay">To'lovni tasdiqlash</span>
+
+          <button type="submit" class="modal-primary-btn pay-submit-btn" id="pay-submit-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+            <span id="pay-submit-text" data-i18n="confirmPay">To'lovni tasdiqlash · 621 632 UZS</span>
           </button>
-          <button type="button" class="back-btn" onclick="showPayStep2()">← <span data-i18n="back">Orqaga</span></button>
+
+          <button type="button" class="modal-back-btn" onclick="showPayStep2()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+            <span data-i18n="back">Orqaga</span>
+          </button>
         </form>
       </div>
 
-      <!-- Step 4: Success -->
-      <div id="pay-step-4" hidden>
-        <div class="pay-success">
-          <div class="success-anim">
-            <svg class="checkmark" viewBox="0 0 52 52">
-              <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
-              <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+      <!-- Step 4: Success State -->
+      <div class="modal-step" id="pay-step-4" hidden>
+        <div class="payment-success-box">
+          <div class="success-ring-wrap">
+            <svg class="success-check-svg" viewBox="0 0 52 52">
+              <circle class="check-circle" cx="26" cy="26" r="24" fill="none"></circle>
+              <path class="check-tick" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"></path>
             </svg>
           </div>
-          <h2 data-i18n="paymentSuccess">To'lov qabul qilindi!</h2>
-          <p data-i18n="paymentSuccessDesc">Sizning to'lovingiz muvaffaqiyatli amalga oshirildi.</p>
-          <div class="success-details">
-            <div><span data-i18n="transactionId">Tranzaksiya ID:</span> <strong id="tx-id"></strong></div>
-            <div><span data-i18n="paidAt">To'langan vaqt:</span> <strong id="paid-at"></strong></div>
+          <h2 data-i18n="paymentSuccess">To'lov muvaffaqiyatli qabul qilindi!</h2>
+          <p data-i18n="paymentSuccessDesc">Davlat bojxona xizmati tizimida to'lov tasdiqlandi va rasmiy elektron kvitansiya shakllantirildi.</p>
+
+          <div class="receipt-spec-box">
+            <div class="spec-row">
+              <span data-i18n="transactionId">Tranzaksiya ID:</span>
+              <strong id="tx-id-val">—</strong>
+            </div>
+            <div class="spec-row">
+              <span data-i18n="paidAt">To'langan vaqt:</span>
+              <strong id="tx-time-val">—</strong>
+            </div>
+            <div class="spec-row">
+              <span data-i18n="paidAmount">To'langan summa:</span>
+              <strong class="green-text">621 632.00 UZS</strong>
+            </div>
+            <div class="spec-row">
+              <span>Status:</span>
+              <span class="badge-success-pill">✓ TASDIQLANDI</span>
+            </div>
           </div>
-          <button class="pay-btn" onclick="closePayModal()">
-            <span data-i18n="close">Yopish</span>
+
+          <button type="button" class="modal-primary-btn" onclick="closePayModal()">
+            <span data-i18n="close">Yopish va qaytish</span>
           </button>
         </div>
       </div>
     </div>
   </div>
 
-  <footer>
-    <div class="footer-brand">
-      <img src="/static/webapp/uzbekistan-emblem.png" alt="DBQ">
-      <div>
-        <b>O'ZBEKISTON RESPUBLIKASI DAVLAT BOJXONA XIZMATI</b>
-        <span>1108 · +998 55 502-76-00</span>
-      </div>
-    </div>
-    <small data-i18n="privacy">Ushbu sahifa QR orqali berilgan hujjatni tekshirish uchun mo'ljallangan.</small>
-  </footer>
-
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="/static/webapp/inspector-document.js?v=5"></script>
+  <script src="/static/webapp/inspector-document.js?v=6"></script>
 </body>
 </html>
