@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import unittest
 import ast
+import json
 import re
+import tempfile
 from pathlib import Path
 
 from app.i18n import t
@@ -511,6 +513,38 @@ class AdminTemplateTests(unittest.TestCase):
         self.assertNotIn('onclick="publishDraft()"', html)
         self.assertNotIn('onclick="discardDraft()"', html)
         self.assertNotIn("?'➕ Qo'shiladi'", html)
+
+    def test_long_telegram_line_is_not_truncated(self) -> None:
+        tree = ast.parse((ROOT / "app" / "handlers.py").read_text(encoding="utf-8"))
+        function = next(node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == "split_telegram_text")
+        namespace = {"MAX_TELEGRAM_TEXT_LENGTH": 4096}
+        exec(compile(ast.Module(body=[function], type_ignores=[]), "handlers.py", "exec"), namespace)
+        split_telegram_text = namespace["split_telegram_text"]
+        source = "A" * 9800
+        chunks = split_telegram_text(source, 1000)
+        self.assertTrue(all(len(chunk) <= 1000 for chunk in chunks))
+        self.assertEqual("".join(chunks), source)
+
+    def test_inspector_admin_and_single_public_template_exist(self) -> None:
+        html = (ROOT / "app" / "static" / "admin.html").read_text(encoding="utf-8")
+        script = (ROOT / "app" / "static" / "admin.js").read_text(encoding="utf-8")
+        public = (ROOT / "app" / "static" / "inspector-document.html").read_text(encoding="utf-8")
+        backend = (ROOT / "app" / "webapp.py").read_text(encoding="utf-8")
+        self.assertIn('id="screen-inspector"', html)
+        self.assertIn("loadInspector", script)
+        self.assertIn("/api/inspector/documents/{token}", backend)
+        self.assertIn('id="document-view"', public)
+
+
+class RuntimeCountryLabelTests(unittest.TestCase):
+    def test_admin_country_label_is_used_by_runtime(self) -> None:
+        source = json.loads((ROOT / "data" / "permission_rules.json").read_text(encoding="utf-8"))
+        source.setdefault("country_labels", {}).setdefault("398", {})["uz"] = "Qozog'iston sinov nomi"
+        with tempfile.TemporaryDirectory(dir=ROOT) as folder:
+            path = Path(folder) / "rules.json"
+            path.write_text(json.dumps(source, ensure_ascii=False), encoding="utf-8")
+            service = PermitRuleService(path)
+            self.assertEqual(country_label(service.country_by_code("398"), "uz"), "Qozog'iston sinov nomi")
 
 
 class WebAppAssetTests(unittest.TestCase):

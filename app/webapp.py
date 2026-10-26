@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import asyncio
+import io
 import logging
 import math
 import hashlib
+from functools import lru_cache
 import hmac
 import json
 import time
@@ -35,6 +37,23 @@ from app.services.permit import (
 
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
+
+
+@lru_cache(maxsize=512)
+def _inspector_qr_svg(public_url: str) -> bytes:
+    """Generate each immutable public QR once per worker to reduce CPU load."""
+    import qrcode
+    import qrcode.image.svg
+
+    image = qrcode.make(
+        public_url,
+        image_factory=qrcode.image.svg.SvgPathImage,
+        box_size=8,
+        border=2,
+    )
+    output = io.BytesIO()
+    image.save(output)
+    return output.getvalue()
 logger = logging.getLogger(__name__)
 ISO_NUMERIC_TO_ALPHA2 = dict(
     item.split(":")
@@ -480,6 +499,17 @@ async def webapp_page(_: web.Request) -> web.FileResponse:
     )
 
 
+async def inspector_document_page(_: web.Request) -> web.FileResponse:
+    return web.FileResponse(
+        STATIC_DIR / "inspector-document.html",
+        headers={
+            "Cache-Control": "public, max-age=300",
+            "X-Robots-Tag": "noindex, nofollow, noarchive",
+            "Content-Security-Policy": "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; base-uri 'none'; frame-ancestors 'self'",
+        },
+    )
+
+
 def _telegram_user_id(init_data: str, bot_token: str) -> int | None:
     if not init_data or not bot_token:
         return None
@@ -824,8 +854,47 @@ def setup_webapp_routes(app: web.Application, settings: Settings, portal_store: 
         await portal_store.save_route(user_id, body)
         return web.json_response({"ok": True})
 
+    async def inspector_document(request: web.Request) -> web.Response:
+        if not portal_store:
+            raise web.HTTPServiceUnavailable(text="Hujjatlar ombori ishga tushmagan.")
+        token = request.match_info.get("token", "")
+        item = await portal_store.get_inspector_document(token)
+        if not item:
+            raise web.HTTPNotFound(text="Hujjat topilmadi.")
+        item["verified"] = item.get("status") == "active"
+        return web.json_response(
+            {"ok": True, "document": item},
+            headers={
+                "Cache-Control": "no-store, private",
+                "X-Robots-Tag": "noindex, nofollow, noarchive",
+            },
+        )
+
+    async def inspector_qr(request: web.Request) -> web.Response:
+        if not portal_store:
+            raise web.HTTPServiceUnavailable(text="Hujjatlar ombori ishga tushmagan.")
+        token = request.match_info.get("token", "")
+        item = await portal_store.get_inspector_document(token)
+        if not item:
+            raise web.HTTPNotFound(text="Hujjat topilmadi.")
+        base_url = settings.webhook_url.rstrip("/") if settings.webhook_url else f"{request.scheme}://{request.host}"
+        public_url = f"{base_url}/visit/{token}"
+        try:
+            svg = _inspector_qr_svg(public_url)
+        except ImportError as exc:
+            raise web.HTTPServiceUnavailable(text="QR moduli o'rnatilmagan.") from exc
+        return web.Response(
+            body=svg,
+            content_type="image/svg+xml",
+            headers={
+                "Cache-Control": "public, max-age=86400, immutable",
+                "X-Robots-Tag": "noindex, nofollow, noarchive",
+            },
+        )
+
     app.router.add_get("/app", webapp_page)
     app.router.add_get("/webapp", webapp_page)
+    app.router.add_get("/visit/{token}", inspector_document_page)
     app.router.add_get("/api/webapp/countries", countries)
     app.router.add_get("/api/webapp/currency-rates", public_currency_rates)
     app.router.add_post("/api/webapp/permit", permit_check)
@@ -838,4 +907,6 @@ def setup_webapp_routes(app: web.Application, settings: Settings, portal_store: 
     app.router.add_get("/api/webapp/map-config", map_config)
     app.router.add_post("/api/webapp/feedback", feedback)
     app.router.add_post("/api/webapp/saved-routes", save_route)
+    app.router.add_get("/api/inspector/documents/{token}", inspector_document)
+    app.router.add_get("/api/inspector/documents/{token}/qr.svg", inspector_qr)
     app.router.add_static("/static/webapp", STATIC_DIR, show_index=False, append_version=True)

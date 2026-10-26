@@ -10,6 +10,7 @@ Yangi xizmatlar:
 - foydalanish va server holati analitikasi;
 - chegara va bojxona postlari xaritasi hamda admin CRUD boshqaruvi;
 - natijaga bog'langan "Xato ma'lumot haqida xabar berish" murojaatlari;
+- inspektor uchun QR-kodli hujjat va 80 mm chek rasmiylashtirish;
 - Web App bayroqlarini kechiktirib yuklash, davlatlar keshi va API rate-limit;
 - webhook maxfiy tokeni, admin CSRF himoyasi va login rate-limit;
 - PostgreSQL mavjud muhitda vaqtinchalik SQLite'ga jim o'tmaslik.
@@ -124,6 +125,17 @@ USER_DATABASE_URL=postgresql://user:password@host:5432/dbname?sslmode=require
 ```
 
 `USER_DATABASE_URL` bo'lmasa bot SQLite faylga yozadi. Render Free Web Service redeploy/restart bo'lganda local fayllar o'chishi mumkin, shu sababli ishlab turgan bot uchun Postgres tavsiya etiladi.
+
+### QR-kodli inspektor hujjati
+
+Admin paneldagi `Inspektor` bo'limida haydovchi, transport, chegara posti va rasmiylashtirilgan hujjatlar kiritiladi. Saqlanganda tizim:
+
+1. takrorlanmaydigan hujjat raqami va yopiq tasodifiy token yaratadi;
+2. 80 mm termal printerga mos QR-kodli chek chiqaradi;
+3. QR orqali `/visit/...` manzilidagi UZ/RU/EN mobil sahifani ochadi;
+4. hujjat bekor qilinsa, o'sha QR sahifada bekor qilingan holatni ko'rsatadi.
+
+Barcha yozuvlar bitta `inspector-document.html` shablonidan foydalanadi. Dizaynni shu shablonda yangilash eski va yangi hujjatlarning ko'rinishiga bir xil ta'sir qiladi; har bir hujjat uchun alohida HTML yaratilmaydi. Ishlab turgan Render muhitida bu yozuvlar yo'qolmasligi uchun `USER_DATABASE_URL` majburiy deb qaralishi kerak.
 
 ## Ma'lumot manbai
 

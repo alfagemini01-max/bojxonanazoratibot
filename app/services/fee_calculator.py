@@ -109,6 +109,16 @@ class FeeCalculator:
         if mtime_ns != self._mtime_ns:
             self._load_data()
 
+    def _admin_item_enabled(self, *item_ids: str) -> bool:
+        configured = {
+            str(row.get("id")): bool(row.get("enabled", True))
+            for rows in self.data.get("admin_fee_items", {}).values()
+            if isinstance(rows, list)
+            for row in rows
+            if isinstance(row, dict)
+        }
+        return all(configured.get(item_id, True) for item_id in item_ids)
+
     def customs_clearance_amount(self, customs_value_usd: float) -> tuple[float, int]:
         self.reload_if_changed()
         for row in self.data["customs_clearance_bhm_scale"]:
@@ -255,7 +265,7 @@ class FeeCalculator:
 
             summaries.append(permit_status_text(permit_result.rule, code))
 
-        if _yes(payload.get("declared")):
+        if _yes(payload.get("declared")) and (direction != "exit" or self._admin_item_enabled("cargo_declaration_export")):
             customs_value = _float_value(payload.get("customs_value_usd"))
             bhm, amount = self.customs_clearance_amount(customs_value)
             items.append(
@@ -268,7 +278,8 @@ class FeeCalculator:
                 )
             )
 
-        if cargo_vehicle and entry_or_transit and _yes(payload.get("transit_declaration")):
+        transit_item_id = "transit_declaration" if direction == "transit" else "transit_declaration_import"
+        if cargo_vehicle and entry_or_transit and _yes(payload.get("transit_declaration")) and self._admin_item_enabled(transit_item_id):
             amount = int(round(float(self.data["fixed"]["transit_declaration_bhm"]) * self.bhm_value))
             items.append(
                 FeeItem(
@@ -297,7 +308,7 @@ class FeeCalculator:
             elif vehicle_type != "light":
                 warnings.append("🚘 15 USD tonirovka yig'imi yuk avtomobili yoki avtobusga emas, xorijiy yengil avtomobilga tatbiq etiladi.")
 
-        if foreign_vehicle and entry_or_transit and _yes(payload.get("osago_missing")):
+        if foreign_vehicle and entry_or_transit and _yes(payload.get("osago_missing")) and self._admin_item_enabled("osago_import"):
             period_coefficient, amount = self.osago_amount(vehicle_type, str(payload.get("osago_period") or "up_to_15"))
             items.append(
                 FeeItem(
@@ -309,7 +320,7 @@ class FeeCalculator:
                 )
             )
 
-        if cargo_vehicle and entry_or_transit and _yes(payload.get("customs_escort")):
+        if cargo_vehicle and entry_or_transit and _yes(payload.get("customs_escort")) and self._admin_item_enabled("customs_escort"):
             distance = str(payload.get("customs_escort_distance") or "up_to_200")
             bhm, amount = self.customs_escort_amount(distance)
             items.append(
@@ -344,7 +355,8 @@ class FeeCalculator:
             )
 
         delivery_days = _int_value(payload.get("delivery_overdue_days"))
-        if cargo_vehicle and direction in {"transit", "exit"} and delivery_days:
+        overdue_item_id = "delivery_overdue_transit" if direction == "transit" else "delivery_overdue_export"
+        if cargo_vehicle and direction in {"transit", "exit"} and delivery_days and self._admin_item_enabled(overdue_item_id):
             items.append(
                 FeeItem(
                     "Yukni muddatida yetkazmaganlik yig'imi",

@@ -60,6 +60,7 @@
         <button data-screen="history"><svg><use href="#i-history"/></svg><span>O'zgarishlar tarixi</span></button>
         <button data-screen="analytics"><svg><use href="#i-chart"/></svg><span>Analitika</span></button>
         <button data-screen="posts"><svg><use href="#i-map"/></svg><span>Chegara postlari</span></button>
+        <button data-screen="inspector"><svg><use href="#i-users"/></svg><span>Inspektor</span></button>
         <button data-screen="feedback"><svg><use href="#i-message"/></svg><span>Xato xabarlari</span></button>
       </nav>
       <div class="sidebar-note"><svg><use href="#i-shield"/></svg><span>Har bir saqlashdan keyin bot va Web App bir xil faol bazadan foydalanadi.</span></div>
@@ -137,6 +138,35 @@
         <div class="post-admin-grid" id="post-list"></div>
       </section>
 
+      <section class="screen" id="screen-inspector">
+        <div class="page-heading"><div><p class="eyebrow">INSPEKTOR</p><h1>QR-kodli hujjat rasmiylashtirish</h1><p>Haydovchi va transport ma'lumotlarini kiriting. QR-kod bitta umumiy mobil shablonni ochadi.</p></div></div>
+        <div class="inspector-layout">
+          <form class="panel inspector-form" id="inspector-form">
+            <div class="section-title compact"><div><h2>Yangi rasmiylashtirish</h2><p>Yulduzchali maydonlar majburiy.</p></div></div>
+            <div class="form-grid inspector-fields">
+              <label>Inspektor F.I.Sh. *<input id="inspector-name" required maxlength="160" autocomplete="name"></label>
+              <label>Haydovchi F.I.Sh. *<input id="inspector-driver" required maxlength="160"></label>
+              <label>Transport davlat raqami *<input id="inspector-plate" required maxlength="40" style="text-transform:uppercase"></label>
+              <label>Chegara posti *<select id="inspector-post" required><option value="">Postni tanlang</option></select></label>
+              <label>O'tish vaqti *<input id="inspector-crossing-at" type="datetime-local" required></label>
+              <label>Fuqaroligi<input id="inspector-nationality" maxlength="120"></label>
+              <label>Pasport raqami<input id="inspector-passport" maxlength="80" style="text-transform:uppercase"></label>
+              <label>Telefon<input id="inspector-phone" maxlength="80" inputmode="tel"></label>
+              <label>Transport davlati<input id="inspector-vehicle-country" maxlength="120"></label>
+              <label>Joylashuv / yo'nalish<input id="inspector-location" maxlength="240"></label>
+            </div>
+            <label class="inspector-wide-label">Yuk haqida ma'lumot<textarea id="inspector-cargo" maxlength="500"></textarea></label>
+            <label class="inspector-wide-label">Qo'shimcha ma'lumot<textarea id="inspector-info" maxlength="2000"></textarea></label>
+            <div class="section-title compact inspector-doc-title"><div><h3>Rasmiylashtirilgan hujjatlar</h3><p>Chek va mobil sahifada ko'rinadigan ro'yxat.</p></div><button class="secondary" id="inspector-add-document" type="button"><svg><use href="#i-plus"/></svg>Hujjat qo'shish</button></div>
+            <div class="inspector-document-rows" id="inspector-documents"></div>
+            <button class="primary inspector-submit" type="submit"><svg><use href="#i-check"/></svg>Rasmiylashtirish va QR yaratish</button>
+          </form>
+          <aside id="inspector-receipt" class="inspector-receipt-host"><div class="panel inspector-placeholder"><svg><use href="#i-shield"/></svg><b>Chek shu yerda paydo bo'ladi</b><span>Ma'lumotlarni kiriting va “Rasmiylashtirish” tugmasini bosing.</span></div></aside>
+        </div>
+        <div class="section-title"><div><h2>Oxirgi hujjatlar</h2><p>QR havolasini qayta ochish, chekni chop etish yoki hujjatni bekor qilish mumkin.</p></div></div>
+        <div class="inspector-list" id="inspector-list"></div>
+      </section>
+
       <section class="screen" id="screen-feedback">
         <div class="page-heading"><div><p class="eyebrow">MUROJAATLAR</p><h1>Xato ma'lumot haqida xabarlar</h1><p>Har bir xabar yo'nalish, tashuv turi va qoida versiyasi bilan birga saqlanadi.</p></div></div>
         <div class="feedback-list" id="feedback-list"></div>
@@ -152,6 +182,6 @@
     </div>
   </div>
   <div class="toast" id="toast" hidden></div>
-  <script src="/static/webapp/admin.js?v=15"></script>
+  <script src="/static/webapp/admin.js?v=16"></script>
 </body>
 </html>

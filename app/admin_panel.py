@@ -4,6 +4,7 @@ import asyncio
 import hmac
 import json
 import logging
+import re
 import secrets
 import time
 import uuid
@@ -325,18 +326,38 @@ def _fee_items(fees_data: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
             row["basis"] = "O'RQ-155 va VMning 24.06.2008 y. 141-son qarori"
         if row.get("id") == "transit_declaration_import" and row.get("condition") == "Yuk bojxona nazoratiga qo'yilganda":
             row["condition"] = "Tovar tranzit bojxona rejimiga joylashtirilganda"
-    legacy_amounts = {
-        "transit_declaration_import": "0,25 BHM",
-        "transit_declaration": "0,25 BHM",
-        "transit_declaration_change": "0,10 BHM",
-        "delivery_overdue_export": "1 BHM / kun",
-        "delivery_overdue_transit": "1 BHM / kun",
+    fixed = fees_data.get("fixed", {})
+    calculated_amounts = {
+        "transit_declaration_import": f"{float(fixed.get('transit_declaration_bhm', .25)):g} BHM",
+        "transit_declaration": f"{float(fixed.get('transit_declaration_bhm', .25)):g} BHM",
+        "transit_declaration_change": f"{float(fixed.get('transit_declaration_change_bhm', .1)):g} BHM",
+        "delivery_overdue_export": f"{float(fixed.get('delivery_overdue_bhm_per_day', 1)):g} BHM / kun",
+        "delivery_overdue_transit": f"{float(fixed.get('delivery_overdue_bhm_per_day', 1)):g} BHM / kun",
     }
     for rows in items.values():
         for row in rows:
-            if str(row.get("id")) in legacy_amounts:
-                row["amount"] = legacy_amounts[str(row["id"])]
+            if str(row.get("id")) in calculated_amounts:
+                row["amount"] = calculated_amounts[str(row["id"])]
     return items
+
+
+def _sync_fee_item_formula(fees_data: dict[str, Any], item: dict[str, Any]) -> None:
+    """Keep editable catalog values and live calculator formula values in sync."""
+    item_id = str(item.get("id") or "")
+    bindings = {
+        "transit_declaration_import": "transit_declaration_bhm",
+        "transit_declaration": "transit_declaration_bhm",
+        "transit_declaration_change": "transit_declaration_change_bhm",
+        "delivery_overdue_export": "delivery_overdue_bhm_per_day",
+        "delivery_overdue_transit": "delivery_overdue_bhm_per_day",
+    }
+    key = bindings.get(item_id)
+    if not key:
+        return
+    match = re.search(r"\d+(?:[.,]\d+)?", str(item.get("amount") or ""))
+    if not match:
+        raise web.HTTPBadRequest(text="Bog'langan yig'im miqdorida BHM sonini kiriting.")
+    fees_data.setdefault("fixed", {})[key] = float(match.group(0).replace(",", "."))
 
 
 def _fee_direction(value: object) -> str:
@@ -1312,6 +1333,7 @@ def setup_admin_routes(app: web.Application, settings: Settings, portal_store: P
             current = [row for row in items[direction] if row.get("id") != item["id"]]
             current.append(item)
             items[direction] = current
+            _sync_fee_item_formula(fees_data, item)
             fees_data.setdefault("source", {})["last_admin_update"] = int(time.time())
             _write_json(fees_admin_path(), fees_data)
             snapshot = await activate_current_rules(
@@ -1608,6 +1630,59 @@ def setup_admin_routes(app: web.Application, settings: Settings, portal_store: P
             return _json_error(str(exc))
         return web.json_response({"ok": True})
 
+    def inspector_urls(request: web.Request, item: dict[str, Any]) -> dict[str, Any]:
+        base_url = settings.webhook_url.rstrip("/") if settings.webhook_url else f"{request.scheme}://{request.host}"
+        token = str(item.get("public_token") or "")
+        return {
+            **item,
+            "public_url": f"{base_url}/visit/{token}",
+            "qr_url": f"/api/inspector/documents/{token}/qr.svg",
+        }
+
+    async def inspector_documents(request: web.Request) -> web.Response:
+        _require_admin(request, settings)
+        if not portal_store:
+            return _json_error("Inspektor hujjatlari ombori ishga tushmagan.", 503)
+        try:
+            limit = int(request.query.get("limit", "100"))
+        except ValueError:
+            limit = 100
+        rows = await portal_store.list_inspector_documents(limit)
+        return web.json_response({
+            "ok": True,
+            "items": [inspector_urls(request, row) for row in rows],
+        })
+
+    async def create_inspector_document(request: web.Request) -> web.Response:
+        _require_admin(request, settings)
+        if not portal_store:
+            return _json_error("Inspektor hujjatlari ombori ishga tushmagan.", 503)
+        try:
+            item = await portal_store.create_inspector_document(
+                await request.json(), settings.admin_username
+            )
+        except ValueError as exc:
+            return _json_error(str(exc))
+        await audit("inspector_document_create", {
+            "document_no": item.get("document_no"),
+            "vehicle_plate": item.get("vehicle_plate"),
+            "post_code": item.get("post_code"),
+        })
+        return web.json_response({"ok": True, "document": inspector_urls(request, item)})
+
+    async def inspector_document_status(request: web.Request) -> web.Response:
+        _require_admin(request, settings)
+        if not portal_store:
+            return _json_error("Inspektor hujjatlari ombori ishga tushmagan.", 503)
+        body = await request.json()
+        status = str(body.get("status") or "")
+        try:
+            await portal_store.set_inspector_document_status(request.match_info["token"], status)
+        except ValueError as exc:
+            return _json_error(str(exc))
+        await audit("inspector_document_status", {"status": status})
+        return web.json_response({"ok": True, "status": status})
+
     async def posts_list(request: web.Request) -> web.Response:
         _require_admin(request, settings)
         if not portal_store:
@@ -1680,6 +1755,9 @@ def setup_admin_routes(app: web.Application, settings: Settings, portal_store: P
     app.router.add_get("/admin/api/analytics", portal_analytics)
     app.router.add_get("/admin/api/feedback", feedback_list)
     app.router.add_post("/admin/api/feedback/{feedback_id}/status", feedback_status)
+    app.router.add_get("/admin/api/inspector-documents", inspector_documents)
+    app.router.add_post("/admin/api/inspector-documents", create_inspector_document)
+    app.router.add_post("/admin/api/inspector-documents/{token}/status", inspector_document_status)
     app.router.add_get("/admin/api/posts", posts_list)
     app.router.add_post("/admin/api/posts", post_save)
     app.router.add_delete("/admin/api/posts/{code}", post_delete)

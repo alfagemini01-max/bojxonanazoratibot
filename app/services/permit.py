@@ -125,6 +125,7 @@ COMMON_COUNTRY_ALIASES.update({
 class Country:
     code: str
     name: str
+    labels: dict[str, str] | None = None
 
 
 @dataclass(frozen=True)
@@ -240,6 +241,11 @@ class PermitRuleService:
         self._mtime_ns = stat.st_mtime_ns
         self.data = json.loads(self.data_path.read_text(encoding="utf-8"))
         self.countries: dict[str, str] = dict(self.data["countries"])
+        self.country_labels: dict[str, dict[str, str]] = {
+            str(code): dict(labels)
+            for code, labels in self.data.get("country_labels", {}).items()
+            if isinstance(labels, dict)
+        }
         self.rules: dict[str, dict[str, dict[str, str]]] = self.data["rules"]
         self.exceptions: dict[str, list[dict[str, str]]] = self.data.get("exceptions", {})
         self.vid_types: dict[str, str] = self.data["vid_types"]
@@ -279,7 +285,8 @@ class PermitRuleService:
         candidates: dict[str, set[str]] = {}
         for code, name in self.countries.items():
             candidates.setdefault(code, set()).update({name, transliterate_cyrillic_to_latin(name), code})
-            for label in COUNTRY_LABELS.get(code, {}).values():
+            labels = {**COUNTRY_LABELS.get(code, {}), **self.country_labels.get(code, {})}
+            for label in labels.values():
                 candidates[code].add(label)
         for code, values in self.data.get("manual_aliases", {}).items():
             candidates.setdefault(code, set()).update(values)
@@ -299,7 +306,8 @@ class PermitRuleService:
         if not code:
             return None
         if code == UZBEKISTAN_CODE:
-            return Country(code, "O'zbekiston")
+            labels = {**COUNTRY_LABELS.get(code, {}), **self.country_labels.get(code, {})}
+            return Country(code, "O'zbekiston", labels or None)
         name = self.countries.get(code)
         if not name:
             fallback_names = {
@@ -309,7 +317,8 @@ class PermitRuleService:
                 "792": "Turkiya",
             }
             name = fallback_names.get(code)
-        return Country(code, name) if name else None
+        labels = {**COUNTRY_LABELS.get(code, {}), **self.country_labels.get(code, {})}
+        return Country(code, name, labels or None) if name else None
 
     def country_by_code(self, code: str) -> Country | None:
         self.reload_if_changed()
@@ -557,7 +566,7 @@ def _html(value: object) -> str:
 
 def country_label(country: Country, lang: str | None = "uz") -> str:
     code = _lang(lang)
-    labels = COUNTRY_LABELS.get(country.code)
+    labels = country.labels or COUNTRY_LABELS.get(country.code)
     if labels:
         return labels.get(code) or labels["uz"]
     return country.name.title() if country.name.isupper() else country.name

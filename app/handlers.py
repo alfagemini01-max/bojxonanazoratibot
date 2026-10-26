@@ -216,7 +216,12 @@ def split_telegram_text(text: str, limit: int = MAX_TELEGRAM_TEXT_LENGTH) -> lis
             current = []
             current_length = 0
         if line_length > limit:
-            chunks.append(line[:limit])
+            while len(line) > limit:
+                chunks.append(line[:limit])
+                line = line[limit:]
+            if line:
+                current.append(line)
+                current_length = len(line) + 1
             continue
         current.append(line)
         current_length += line_length

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="theme-color" content="#063c32">
+  <link rel="icon" href="/static/webapp/uzbekistan-emblem.png">
+  <link rel="stylesheet" href="/static/webapp/inspector-document.css?v=1">
+  <title>E-Bojxona · Hujjat tekshiruvi</title>
+</head>
+<body>
+  <header class="site-header"><div class="brand"><img src="/static/webapp/uzbekistan-emblem.png" alt="O'zbekiston gerbi"><span><b>E-BOJXONA</b><small data-i18n="service">Davlat bojxona xizmati</small></span></div><div class="languages" aria-label="Til"><button class="active" data-lang="uz">UZ</button><button data-lang="ru">RU</button><button data-lang="en">EN</button></div></header>
+  <main>
+    <section class="loading-card" id="loading"><span class="spinner"></span><b data-i18n="loading">Hujjat tekshirilmoqda…</b></section>
+    <section id="error" class="error-card" hidden><b data-i18n="notFound">Hujjat topilmadi</b><p data-i18n="notFoundHelp">QR-kod to'g'riligini tekshiring yoki bojxona xodimiga murojaat qiling.</p></section>
+    <div id="document-view" hidden>
+      <section class="hero">
+        <div class="hero-mark"><img src="/static/webapp/uzbekistan-emblem.png" alt=""></div>
+        <div class="verified" id="verified"><span>✓</span><div><b data-i18n="verified">HUJJAT TASDIQLANGAN</b><small data-i18n="verifiedHelp">Ma'lumotlar bojxona tizimidagi yozuvga mos</small></div></div>
+        <p data-i18n="welcome">O'ZBEKISTON RESPUBLIKASIGA XUSH KELIBSIZ!</p>
+        <h1 id="driver-name"></h1>
+        <span class="document-number" id="document-number"></span>
+      </section>
+
+      <section class="content-grid">
+        <article class="card identity-card"><div class="card-title"><span>01</span><div><small data-i18n="visitorData">TASHRIF BUYURUVCHI</small><h2 data-i18n="personalData">Shaxsiy ma'lumotlar</h2></div></div><dl id="identity-list"></dl></article>
+        <article class="card journey-card"><div class="card-title"><span>02</span><div><small data-i18n="crossing">CHEGARADAN O'TISH</small><h2 data-i18n="journeyData">Safar ma'lumotlari</h2></div></div><dl id="journey-list"></dl></article>
+      </section>
+
+      <section class="card documents-card"><div class="card-title"><span>03</span><div><small data-i18n="officialDocs">RASMIY HUJJATLAR</small><h2 data-i18n="registeredDocs">Nomingizga rasmiylashtirilgan hujjatlar</h2></div></div><div class="documents" id="documents"></div></section>
+
+      <section class="card note-card" id="note-card" hidden><div class="card-title"><span>04</span><div><small data-i18n="additional">QO'SHIMCHA</small><h2 data-i18n="additionalInfo">Qo'shimcha ma'lumot</h2></div></div><p id="additional-info"></p></section>
+
+      <section class="law-card"><div class="law-icon">⚖</div><div><b data-i18n="lawTitle">Qonunchilik talablariga rioya qiling</b><p data-i18n="lawText">O'zbekiston Respublikasi hududida amaldagi bojxona va yo'l harakati qoidalariga amal qilishingiz shart.</p></div></section>
+
+      <section class="official"><img src="/static/webapp/uzbekistan-emblem.png" alt=""><div><small data-i18n="issuedBy">HUJJATNI RASMIYLASHTIRGAN INSPEKTOR</small><b id="inspector-name"></b><span id="issued-at"></span></div><span class="official-seal">✓</span></section>
+    </div>
+  </main>
+  <footer><b>O'ZBEKISTON RESPUBLIKASI DAVLAT BOJXONA XIZMATI</b><span>1108 · +998 55 502-76-00</span><small data-i18n="privacy">Ushbu sahifa QR orqali berilgan hujjatni tekshirish uchun mo'ljallangan.</small></footer>
+  <script src="/static/webapp/inspector-document.js?v=1"></script>
+</body>
+</html>

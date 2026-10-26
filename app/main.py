@@ -19,7 +19,7 @@ from app.portal_store import PortalStore
 from app.webapp import setup_webapp_routes, webapp_page
 
 logger = logging.getLogger(__name__)
-APP_VERSION = "2026-10-08-form-validation-v18"
+APP_VERSION = "2026-10-26-inspector-qr-v19"
 
 
 def create_http_middlewares(settings: Settings):
@@ -33,7 +33,7 @@ def create_http_middlewares(settings: Settings):
             supplied = request.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
             if supplied != settings.webhook_secret:
                 raise web.HTTPForbidden(text="Webhook token noto'g'ri.")
-        if request.path.startswith("/api/webapp/"):
+        if request.path.startswith(("/api/webapp/", "/api/inspector/")):
             key = request.remote or "unknown"
             now = monotonic()
             history = requests[key]

@@ -4,6 +4,7 @@ import asyncio
 import json
 import logging
 import os
+import secrets
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -58,6 +59,20 @@ def _public_record(row: Any) -> dict[str, Any]:
     for key, value in result.items():
         if isinstance(value, (datetime, date)):
             result[key] = value.isoformat()
+    return result
+
+
+def _inspector_record(row: Any, *, include_token: bool = False) -> dict[str, Any]:
+    result = _public_record(row)
+    payload = result.get("payload")
+    if isinstance(payload, str):
+        try:
+            payload = json.loads(payload)
+        except (TypeError, ValueError, json.JSONDecodeError):
+            payload = {}
+    result["payload"] = payload if isinstance(payload, dict) else {}
+    if not include_token:
+        result.pop("public_token", None)
     return result
 
 
@@ -145,6 +160,23 @@ class PortalStore:
                     allowed_transport TEXT NOT NULL DEFAULT 'Yuk va yengil transport', allowed_cargo TEXT NOT NULL DEFAULT 'Umumiy tartibda',
                     is_active BOOLEAN NOT NULL DEFAULT TRUE, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
                 );
+                CREATE TABLE IF NOT EXISTS inspector_documents (
+                    id BIGSERIAL PRIMARY KEY,
+                    document_no TEXT NOT NULL UNIQUE,
+                    public_token TEXT NOT NULL UNIQUE,
+                    status TEXT NOT NULL DEFAULT 'active',
+                    inspector_name TEXT NOT NULL,
+                    driver_name TEXT NOT NULL,
+                    vehicle_plate TEXT NOT NULL,
+                    post_code TEXT NOT NULL DEFAULT '',
+                    post_name TEXT NOT NULL,
+                    crossing_at TEXT NOT NULL,
+                    payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                );
+                CREATE INDEX IF NOT EXISTS inspector_documents_created_idx
+                    ON inspector_documents(created_at DESC);
                 """
             )
         await self._seed_posts()
@@ -189,6 +221,23 @@ class PortalStore:
                     contact TEXT NOT NULL DEFAULT '', address TEXT NOT NULL DEFAULT '', allowed_transport TEXT NOT NULL DEFAULT 'Yuk va yengil transport',
                     allowed_cargo TEXT NOT NULL DEFAULT 'Umumiy tartibda', is_active INTEGER NOT NULL DEFAULT 1, updated_at TEXT NOT NULL
                 );
+                CREATE TABLE IF NOT EXISTS inspector_documents (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    document_no TEXT NOT NULL UNIQUE,
+                    public_token TEXT NOT NULL UNIQUE,
+                    status TEXT NOT NULL DEFAULT 'active',
+                    inspector_name TEXT NOT NULL,
+                    driver_name TEXT NOT NULL,
+                    vehicle_plate TEXT NOT NULL,
+                    post_code TEXT NOT NULL DEFAULT '',
+                    post_name TEXT NOT NULL,
+                    crossing_at TEXT NOT NULL,
+                    payload TEXT NOT NULL DEFAULT '{}',
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS inspector_documents_created_idx
+                    ON inspector_documents(created_at);
                 """
             )
             await db.commit()
@@ -389,6 +438,134 @@ class PortalStore:
             async with aiosqlite.connect(self.sqlite_path) as db:
                 await db.execute("UPDATE portal_feedback SET status=?,updated_at=? WHERE id=?", (status, _now(), feedback_id))
                 await db.commit()
+
+    async def create_inspector_document(self, body: dict[str, Any], actor: str) -> dict[str, Any]:
+        def text(name: str, minimum: int, maximum: int, default: str = "") -> str:
+            value = str(body.get(name) or default).strip()
+            if not minimum <= len(value) <= maximum:
+                raise ValueError(f"{name}: {minimum}-{maximum} belgi oralig'ida bo'lishi kerak.")
+            return value
+
+        driver_name = text("driver_name", 2, 160)
+        vehicle_plate = text("vehicle_plate", 2, 40).upper()
+        post_name = text("post_name", 2, 180)
+        crossing_at = text("crossing_at", 4, 64)
+        inspector_name = text("inspector_name", 2, 160, actor)
+        post_code = str(body.get("post_code") or "").strip()[:40]
+
+        documents = body.get("documents") or []
+        if not isinstance(documents, list) or not 1 <= len(documents) <= 12:
+            raise ValueError("Kamida 1 ta, ko'pi bilan 12 ta hujjat kiriting.")
+        normalized_documents: list[dict[str, str]] = []
+        for index, item in enumerate(documents, 1):
+            if not isinstance(item, dict):
+                raise ValueError(f"{index}-hujjat ma'lumoti noto'g'ri.")
+            code = str(item.get("code") or "").strip().upper()[:80]
+            title = str(item.get("title") or "").strip()[:180]
+            status = str(item.get("status") or "Rasmiylashtirilgan").strip()[:80]
+            description = str(item.get("description") or "").strip()[:500]
+            if len(code) < 2 or len(title) < 2:
+                raise ValueError(f"{index}-hujjat kodi va nomini to'liq kiriting.")
+            normalized_documents.append(
+                {"code": code, "title": title, "status": status, "description": description}
+            )
+
+        payload = {
+            "nationality": str(body.get("nationality") or "").strip()[:120],
+            "passport": str(body.get("passport") or "").strip().upper()[:80],
+            "phone": str(body.get("phone") or "").strip()[:80],
+            "vehicle_country": str(body.get("vehicle_country") or "").strip()[:120],
+            "location": str(body.get("location") or "").strip()[:240],
+            "cargo": str(body.get("cargo") or "").strip()[:500],
+            "additional_info": str(body.get("additional_info") or "").strip()[:2000],
+            "documents": normalized_documents,
+        }
+        now = _now()
+        for _ in range(5):
+            document_no = f"BXT-{datetime.now(timezone.utc).year}-{secrets.token_hex(4).upper()}"
+            public_token = secrets.token_urlsafe(24)
+            try:
+                if self.pool:
+                    async with self.pool.acquire() as db:
+                        row = await db.fetchrow(
+                            """INSERT INTO inspector_documents
+                               (document_no,public_token,inspector_name,driver_name,vehicle_plate,post_code,post_name,crossing_at,payload)
+                               VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb) RETURNING *""",
+                            document_no, public_token, inspector_name, driver_name, vehicle_plate,
+                            post_code, post_name, crossing_at, _json(payload),
+                        )
+                    return _inspector_record(row, include_token=True)
+                async with aiosqlite.connect(self.sqlite_path) as db:
+                    db.row_factory = aiosqlite.Row
+                    cursor = await db.execute(
+                        """INSERT INTO inspector_documents
+                           (document_no,public_token,inspector_name,driver_name,vehicle_plate,post_code,post_name,crossing_at,payload,created_at,updated_at)
+                           VALUES(?,?,?,?,?,?,?,?,?,?,?)""",
+                        (document_no, public_token, inspector_name, driver_name, vehicle_plate,
+                         post_code, post_name, crossing_at, _json(payload), now, now),
+                    )
+                    await db.commit()
+                    row = await (await db.execute(
+                        "SELECT * FROM inspector_documents WHERE id=?", (cursor.lastrowid,)
+                    )).fetchone()
+                return _inspector_record(row, include_token=True)
+            except Exception as exc:
+                if "unique" not in str(exc).lower() and "duplicate" not in str(exc).lower():
+                    raise
+        raise RuntimeError("Hujjat uchun yagona raqam yaratib bo'lmadi.")
+
+    async def get_inspector_document(self, public_token: str, *, include_token: bool = False) -> dict[str, Any] | None:
+        token = str(public_token or "").strip()
+        if not 20 <= len(token) <= 80:
+            return None
+        if self.pool:
+            async with self.pool.acquire() as db:
+                row = await db.fetchrow(
+                    "SELECT * FROM inspector_documents WHERE public_token=$1", token
+                )
+        else:
+            async with aiosqlite.connect(self.sqlite_path) as db:
+                db.row_factory = aiosqlite.Row
+                row = await (await db.execute(
+                    "SELECT * FROM inspector_documents WHERE public_token=?", (token,)
+                )).fetchone()
+        return _inspector_record(row, include_token=include_token) if row else None
+
+    async def list_inspector_documents(self, limit: int = 100) -> list[dict[str, Any]]:
+        limit = max(1, min(200, int(limit)))
+        if self.pool:
+            async with self.pool.acquire() as db:
+                rows = await db.fetch(
+                    "SELECT * FROM inspector_documents ORDER BY id DESC LIMIT $1", limit
+                )
+        else:
+            async with aiosqlite.connect(self.sqlite_path) as db:
+                db.row_factory = aiosqlite.Row
+                rows = await (await db.execute(
+                    "SELECT * FROM inspector_documents ORDER BY id DESC LIMIT ?", (limit,)
+                )).fetchall()
+        return [_inspector_record(row, include_token=True) for row in rows]
+
+    async def set_inspector_document_status(self, public_token: str, status: str) -> None:
+        if status not in {"active", "revoked"}:
+            raise ValueError("Hujjat holati noto'g'ri.")
+        if self.pool:
+            async with self.pool.acquire() as db:
+                result = await db.execute(
+                    "UPDATE inspector_documents SET status=$1,updated_at=NOW() WHERE public_token=$2",
+                    status, public_token,
+                )
+                if result.endswith(" 0"):
+                    raise ValueError("Hujjat topilmadi.")
+        else:
+            async with aiosqlite.connect(self.sqlite_path) as db:
+                cursor = await db.execute(
+                    "UPDATE inspector_documents SET status=?,updated_at=? WHERE public_token=?",
+                    (status, _now(), public_token),
+                )
+                await db.commit()
+                if cursor.rowcount == 0:
+                    raise ValueError("Hujjat topilmadi.")
 
     async def list_posts(self, include_inactive: bool = False) -> list[dict[str, Any]]:
         where = "" if include_inactive else " WHERE is_active=" + ("TRUE" if self.pool else "1")
