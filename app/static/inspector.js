@@ -471,34 +471,32 @@ function updateReceiptPreview() {
 
   const plate = vehiclePlateInput.value.trim().toUpperCase() || "—";
   const driver = driverNameInput.value.trim() || "—";
-  const driverCountry = driverCountryInput.value || "UZ";
-  const vehicleCountry = vehicleCountryInput.value || "UZ";
   const cargo = cargoDescInput.value.trim() || "Standart yuk";
   const time = crossingTimeInput.value || "—";
 
-  document.getElementById('rcpt-post').textContent = `${postCode ? postCode + ' · ' : ''}${postName}`;
-  document.getElementById('rcpt-plate').textContent = `${plate} (${vehicleCountry})`;
-  document.getElementById('rcpt-driver').textContent = `${driver} (${driverCountry})`;
+  document.getElementById('rcpt-post').textContent = `“${postName}” CBP`;
+  document.getElementById('rcpt-plate').textContent = plate;
+  document.getElementById('rcpt-driver').textContent = driver;
   const cargoNode = document.getElementById('rcpt-cargo');
   if (cargoNode) cargoNode.textContent = cargo;
-  document.getElementById('rcpt-time').textContent = time;
-  const dateLabel = time === '—' ? 'shu kuni' : time.replace('T', ' ');
-  ['uz', 'ru', 'en'].forEach(code => {
-    const nameNode = document.getElementById(`rcpt-name-${code}`);
-    const dateNode = document.getElementById(`rcpt-date-${code}`);
-    const borderNode = document.getElementById(`rcpt-border-${code}`);
-    if (nameNode) nameNode.textContent = driver === '—' ? (code === 'ru' ? 'посетитель' : code === 'en' ? 'visitor' : 'tashrif buyuruvchi') : driver;
-    if (dateNode) dateNode.textContent = dateLabel;
-    if (borderNode) borderNode.textContent = postName;
-  });
+  document.getElementById('rcpt-time').textContent = formatReceiptDate(time);
 
   const docs = getDocumentsPayload();
   const rcptDocsWrap = document.getElementById('rcpt-docs-list');
   if (docs.length) {
-    rcptDocsWrap.innerHTML = docs.map(d => `<div>• ${d.type} ${d.number ? '№ ' + d.number : ''}</div>`).join('');
+    rcptDocsWrap.innerHTML = docs.map((d, index) => `<div>${index + 1}. ${d.number || d.code || '—'} &nbsp;–&nbsp; ${d.type}</div>`).join('');
   } else {
     rcptDocsWrap.innerHTML = `<span style="color:var(--muted)">Hujjatlar kiritilmadi</span>`;
   }
+}
+
+function formatReceiptDate(value) {
+  if (!value || value === '—') return '—';
+  const normalized = String(value).replace(' ', 'T');
+  const [datePart, timePart = ''] = normalized.split('T');
+  const [year, month, day] = datePart.split('-');
+  if (!year || !month || !day) return String(value).replace('T', ' ');
+  return `${day}.${month}.${year}${timePart ? '  ' + timePart.slice(0, 5) : ''}`;
 }
 
 // Bind live updates
@@ -600,33 +598,25 @@ issuanceForm.addEventListener('submit', async (e) => {
 
 function displayGeneratedReceipt(doc) {
   const details = doc.payload || {};
-  if (doc.post_name) document.getElementById('rcpt-post').textContent = doc.post_name;
-  if (doc.crossing_at) document.getElementById('rcpt-time').textContent = String(doc.crossing_at).replace('T', ' ').slice(0, 19);
-  if (doc.vehicle_plate) document.getElementById('rcpt-plate').textContent = `${doc.vehicle_plate} (${details.vehicle_country || 'UZ'})`;
-  if (doc.driver_name) document.getElementById('rcpt-driver').textContent = `${doc.driver_name} (${details.nationality || 'UZ'})`;
+  if (doc.post_name) document.getElementById('rcpt-post').textContent = `“${doc.post_name}” CBP`;
+  if (doc.crossing_at) document.getElementById('rcpt-time').textContent = formatReceiptDate(doc.crossing_at);
+  if (doc.vehicle_plate) document.getElementById('rcpt-plate').textContent = doc.vehicle_plate;
+  if (doc.driver_name) document.getElementById('rcpt-driver').textContent = doc.driver_name;
   const cargoNode = document.getElementById('rcpt-cargo');
   if (details.cargo && cargoNode) cargoNode.textContent = details.cargo;
-  ['uz', 'ru', 'en'].forEach(code => {
-    const nameNode = document.getElementById(`rcpt-name-${code}`);
-    const dateNode = document.getElementById(`rcpt-date-${code}`);
-    const borderNode = document.getElementById(`rcpt-border-${code}`);
-    if (nameNode) nameNode.textContent = doc.driver_name || (code === 'ru' ? 'посетитель' : code === 'en' ? 'visitor' : 'tashrif buyuruvchi');
-    if (dateNode) dateNode.textContent = String(doc.crossing_at || '').replace('T', ' ').slice(0, 16) || '—';
-    if (borderNode) borderNode.textContent = doc.post_name || '—';
-  });
   if (Array.isArray(details.documents) && details.documents.length) {
-    document.getElementById('rcpt-docs-list').replaceChildren(...details.documents.map(item => {
+    document.getElementById('rcpt-docs-list').replaceChildren(...details.documents.map((item, index) => {
       const row = document.createElement('div');
-      row.textContent = `• ${item.title || item.type || 'Hujjat'} ${item.code ? '№ ' + item.code : ''}`;
+      row.textContent = `${index + 1}. ${item.number || item.code || '—'}  –  ${item.title || item.type || 'Hujjat'}`;
       return row;
     }));
   }
-  document.getElementById('rcpt-doc-no').textContent = doc.document_no || "№ " + (doc.public_token || "").slice(0, 8).toUpperCase();
   const qrImage = document.getElementById('rcpt-qr-img');
   qrImage.src = doc.qr_url || `/api/inspector/documents/${doc.public_token}/qr.svg`;
   qrImage.classList.remove('preview-placeholder');
-  document.getElementById('rcpt-stamp').style.display = 'block';
   document.getElementById('rcpt-actions').style.display = 'flex';
+  const publicUrlNode = document.getElementById('rcpt-public-url');
+  if (publicUrlNode && doc.public_url) publicUrlNode.textContent = doc.public_url;
 
   const viewBtn = document.getElementById('btn-rcpt-view');
   if (viewBtn) viewBtn.href = doc.public_url;

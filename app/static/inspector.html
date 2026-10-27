@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/webapp/inspector.css?v=6">
+  <link rel="stylesheet" href="/static/webapp/inspector.css?v=7">
 </head>
 <body>
   <!-- Top Government Bar -->
@@ -291,21 +291,19 @@
         <div class="receipt-header">
           <img src="/static/webapp/customs-emblem.png" alt="Bojxona Gerbi" class="receipt-emblem">
           <div class="receipt-title">O'zbekiston Respublikasi<br>Davlat Bojxona Xizmati</div>
-          <div class="receipt-subtitle">NAZORAT KVITANSIYASI</div>
-          <div class="receipt-doc-no" id="rcpt-doc-no">PREVYU HOLATIDA</div>
         </div>
 
         <div class="receipt-body">
           <div class="receipt-row">
-            <span class="label">Bojxona posti:</span>
-            <span class="val" id="rcpt-post">—</span>
-          </div>
-          <div class="receipt-row">
-            <span class="label">O'tish vaqti:</span>
+            <span class="label">Sana:</span>
             <span class="val" id="rcpt-time">—</span>
           </div>
           <div class="receipt-row">
-            <span class="label">Davlat raqami:</span>
+            <span class="label">Punkt:</span>
+            <span class="val" id="rcpt-post">—</span>
+          </div>
+          <div class="receipt-row">
+            <span class="label">T/r vositasi:</span>
             <span class="val" id="rcpt-plate">—</span>
           </div>
           <div class="receipt-row">
@@ -315,27 +313,25 @@
           <div class="receipt-language-notices">
             <div class="receipt-language-row">
               <b>UZ</b>
-              <p>Hurmatli <strong id="rcpt-name-uz">tashrif buyuruvchi</strong>! Siz <span id="rcpt-date-uz">shu kuni</span> <span id="rcpt-border-uz">ushbu post</span> orqali chegarani kesib o'tdingiz. To'liq ma'lumot va hujjatlaringizni olish uchun QR-kodni skanerlang.</p>
-            </div>
-            <div class="receipt-language-row">
-              <b>RU</b>
-              <p>Уважаемый(ая) <strong id="rcpt-name-ru">посетитель</strong>! Вы пересекли границу <span id="rcpt-date-ru">в этот день</span> через пункт <span id="rcpt-border-ru">таможни</span>. Отсканируйте QR-код, чтобы получить полную информацию и документы.</p>
+              <p>Assalomu alaykum!<br>O'zbekiston Respublikasiga<br>xush kelibsiz!</p>
             </div>
             <div class="receipt-language-row">
               <b>EN</b>
-              <p>Dear <strong id="rcpt-name-en">visitor</strong>! You crossed the border on <span id="rcpt-date-en">this date</span> through <span id="rcpt-border-en">this post</span>. Scan the QR code to view full details and download your documents.</p>
+              <p>Dear visitor!<br>Welcome to the Republic<br>of Uzbekistan!</p>
+            </div>
+            <div class="receipt-language-row">
+              <b>RU</b>
+              <p>Уважаемый посетитель!<br>Добро пожаловать в Республику<br>Узбекистан!</p>
             </div>
           </div>
 
-          <div style="margin-top:12px;font-size:11px;font-weight:750;color:var(--muted);text-transform:uppercase;">
-            Rasmiylashtirilgan Hujjatlar:
+          <div class="receipt-section-title">
+            NOMINGIZGA RASMIYLASHTIRILGAN HUJJATLAR:
           </div>
-          <div id="rcpt-docs-list" style="font-size:11px;line-height:1.45;margin-top:4px;color:var(--ink);">
-            • Invoys<br>• Majburiyatnoma<br>• OSAGO sug'urta
-          </div>
-
-          <div class="receipt-total-line">
-            <span>Jami to'lov:</span><b>621 632 UZS</b>
+          <div id="rcpt-docs-list" class="receipt-docs-list">
+            <div>1. INV000000 &nbsp;–&nbsp; Invoys</div>
+            <div>2. MB0000000 &nbsp;–&nbsp; Majburiyatnoma</div>
+            <div>3. ETSD00000 &nbsp;–&nbsp; Sug'urta polisi</div>
           </div>
 
           <div class="receipt-law-notices">
@@ -346,11 +342,7 @@
 
           <div class="receipt-qr-box">
             <img id="rcpt-qr-img" src="/static/webapp/customs-emblem.png" alt="QR-kod" class="receipt-qr-img preview-placeholder">
-            <div class="receipt-qr-hint">TO'LIQ MA'LUMOT VA HUJJATLAR UCHUN<br>QR-KODNI SKANERLANG</div>
-          </div>
-
-          <div class="receipt-stamp" id="rcpt-stamp" style="display:none;">
-            ✓ DAVLAT BOJXONA NAZORATIDAN O'TKAZILDI
+            <div class="receipt-public-url" id="rcpt-public-url">https://bojxonanazoratibot.onrender.com/</div>
           </div>
         </div>
 
