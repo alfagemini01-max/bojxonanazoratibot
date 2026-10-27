@@ -550,6 +550,7 @@ class AdminTemplateTests(unittest.TestCase):
 
     def test_inspector_receipt_has_fixed_fees_three_languages_and_direct_pdf(self) -> None:
         html = (ROOT / "app" / "static" / "inspector.html").read_text(encoding="utf-8")
+        css = (ROOT / "app" / "static" / "inspector.css").read_text(encoding="utf-8")
         public_script = (ROOT / "app" / "static" / "inspector-document.js").read_text(encoding="utf-8")
         backend = (ROOT / "app" / "webapp.py").read_text(encoding="utf-8")
         self.assertNotIn('id="payment-total-uzs"', html)
@@ -560,6 +561,9 @@ class AdminTemplateTests(unittest.TestCase):
         self.assertEqual(len(default_inspector_payments()), 4)
         self.assertIn("/documents/${fallbackIdx}.pdf", public_script)
         self.assertIn('/documents/{document_index}.pdf', backend)
+        self.assertIn(".app-shell > .panel", css)
+        self.assertIn("size: A4 portrait", css)
+        self.assertIn("page-break-inside: avoid", css)
 
     def test_mobile_payment_and_full_translation_fixes_are_present(self) -> None:
         css = (ROOT / "app" / "static" / "inspector-document.css").read_text(encoding="utf-8")

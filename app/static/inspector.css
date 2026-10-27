@@ -1079,27 +1079,84 @@ body {
 
 /* 8. Print Rules */
 @media print {
-  body * {
-    visibility: hidden !important;
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
   }
-  .receipt-wrapper,
-  .receipt-wrapper * {
-    visibility: visible !important;
-  }
-  .receipt-wrapper {
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
-    width: 80mm !important;
-  }
-  .receipt-card {
-    border: none !important;
-    box-shadow: none !important;
+  html,
+  body {
+    width: 100% !important;
+    min-height: 0 !important;
+    margin: 0 !important;
     padding: 0 !important;
-    width: 80mm !important;
+    background: #fff !important;
   }
+  .government-bar,
+  .topbar,
+  .app-shell > .panel,
+  .history-section,
+  .modal-backdrop,
+  .toast-msg,
   .receipt-actions {
     display: none !important;
+  }
+  .app-shell {
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .receipt-wrapper {
+    position: static !important;
+    width: 88mm !important;
+    margin: 0 auto !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+  .receipt-card {
+    width: 88mm !important;
+    padding: 3mm 4mm !important;
+    border: 0.35mm solid #000 !important;
+    box-shadow: none !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+  .receipt-emblem {
+    width: 16mm !important;
+    height: 16mm !important;
+  }
+  .receipt-header {
+    padding-bottom: 2mm !important;
+    margin-bottom: 2mm !important;
+  }
+  .receipt-row {
+    padding: 0.7mm 0 !important;
+  }
+  .receipt-language-notices,
+  .receipt-law-notices {
+    margin: 2mm 0 !important;
+  }
+  .receipt-language-row {
+    padding: 1.1mm 0 !important;
+  }
+  .receipt-language-row p {
+    font-size: 9px !important;
+    line-height: 1.25 !important;
+  }
+  .receipt-qr-box {
+    margin: 2mm 0 0 !important;
+    padding: 2mm 0 1mm !important;
+  }
+  .receipt-qr-img {
+    width: 43mm !important;
+    height: 43mm !important;
+  }
+  .receipt-stamp {
+    margin-top: 2mm !important;
+    padding: 1.3mm !important;
   }
 }
 
