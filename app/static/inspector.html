@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/webapp/inspector.css?v=7">
+  <link rel="stylesheet" href="/static/webapp/inspector.css?v=8">
 </head>
 <body>
   <!-- Top Government Bar -->
@@ -343,6 +343,12 @@
           <div class="receipt-qr-box">
             <img id="rcpt-qr-img" src="/static/webapp/customs-emblem.png" alt="QR-kod" class="receipt-qr-img preview-placeholder">
             <div class="receipt-public-url" id="rcpt-public-url">https://bojxonanazoratibot.onrender.com/</div>
+            <div class="receipt-telegram" aria-label="Bizning Telegram bot">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M21.7 2.3 2.9 9.55c-1.28.51-1.27 1.22-.23 1.54l4.82 1.5 1.85 5.72c.23.65.12.91.79.91.52 0 .75-.24 1.04-.52l2.32-2.25 4.83 3.57c.89.49 1.53.24 1.75-.83l3.17-14.94c.32-1.3-.5-1.89-1.54-1.95ZM8.25 12.25l10.86-6.85c.54-.33 1.03-.15.63.21l-8.96 8.08-.35 3.76-2.18-5.2Z"/>
+              </svg>
+              <span><strong>@cargo_customs_bot</strong><small>Bizning Telegram bot</small></span>
+            </div>
           </div>
         </div>
 
@@ -440,6 +446,6 @@
   <!-- Toast notification -->
   <div class="toast-msg" id="toast"></div>
 
-  <script src="/static/webapp/inspector.js?v=5"></script>
+  <script src="/static/webapp/inspector.js?v=7"></script>
 </body>
 </html>

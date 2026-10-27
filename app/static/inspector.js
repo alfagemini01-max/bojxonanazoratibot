@@ -598,28 +598,37 @@ issuanceForm.addEventListener('submit', async (e) => {
 
 function displayGeneratedReceipt(doc) {
   const details = doc.payload || {};
-  if (doc.post_name) document.getElementById('rcpt-post').textContent = `“${doc.post_name}” CBP`;
-  if (doc.crossing_at) document.getElementById('rcpt-time').textContent = formatReceiptDate(doc.crossing_at);
-  if (doc.vehicle_plate) document.getElementById('rcpt-plate').textContent = doc.vehicle_plate;
-  if (doc.driver_name) document.getElementById('rcpt-driver').textContent = doc.driver_name;
+  const setReceiptText = (id, value) => {
+    const node = document.getElementById(id);
+    if (node && value !== undefined && value !== null) node.textContent = value;
+  };
+  if (doc.post_name) setReceiptText('rcpt-post', `“${doc.post_name}” CBP`);
+  if (doc.crossing_at) setReceiptText('rcpt-time', formatReceiptDate(doc.crossing_at));
+  if (doc.vehicle_plate) setReceiptText('rcpt-plate', doc.vehicle_plate);
+  if (doc.driver_name) setReceiptText('rcpt-driver', doc.driver_name);
   const cargoNode = document.getElementById('rcpt-cargo');
   if (details.cargo && cargoNode) cargoNode.textContent = details.cargo;
   if (Array.isArray(details.documents) && details.documents.length) {
-    document.getElementById('rcpt-docs-list').replaceChildren(...details.documents.map((item, index) => {
+    const docsList = document.getElementById('rcpt-docs-list');
+    if (docsList) docsList.replaceChildren(...details.documents.map((item, index) => {
       const row = document.createElement('div');
       row.textContent = `${index + 1}. ${item.number || item.code || '—'}  –  ${item.title || item.type || 'Hujjat'}`;
       return row;
     }));
   }
   const qrImage = document.getElementById('rcpt-qr-img');
-  qrImage.src = doc.qr_url || `/api/inspector/documents/${doc.public_token}/qr.svg`;
-  qrImage.classList.remove('preview-placeholder');
-  document.getElementById('rcpt-actions').style.display = 'flex';
+  if (qrImage) {
+    qrImage.src = doc.qr_url || `/api/inspector/documents/${doc.public_token}/qr.svg`;
+    qrImage.classList.remove('preview-placeholder');
+  }
+  const actions = document.getElementById('rcpt-actions');
+  if (actions) actions.style.display = 'flex';
+  const publicUrl = doc.public_url || `${window.location.origin}/visit/${doc.public_token || ''}`;
   const publicUrlNode = document.getElementById('rcpt-public-url');
-  if (publicUrlNode && doc.public_url) publicUrlNode.textContent = doc.public_url;
+  if (publicUrlNode) publicUrlNode.textContent = publicUrl;
 
   const viewBtn = document.getElementById('btn-rcpt-view');
-  if (viewBtn) viewBtn.href = doc.public_url;
+  if (viewBtn) viewBtn.href = publicUrl;
 
   window.scrollTo({ top: 120, behavior: 'smooth' });
 }

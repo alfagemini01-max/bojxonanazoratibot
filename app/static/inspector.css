@@ -549,8 +549,8 @@ body {
 }
 
 .receipt-emblem {
-  width: 78px;
-  height: 78px;
+  width: 104px;
+  height: 104px;
   object-fit: contain;
   margin: 0 auto 4px;
   display: block;
@@ -640,6 +640,38 @@ body {
   font-weight: 600;
   margin-top: 3px;
   overflow-wrap: anywhere;
+}
+
+.receipt-telegram {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  margin-top: 5px;
+  color: #000;
+}
+
+.receipt-telegram svg {
+  display: block;
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+  fill: currentColor;
+}
+
+.receipt-telegram span {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.05;
+}
+
+.receipt-telegram strong {
+  font-size: 9px;
+}
+
+.receipt-telegram small {
+  font-size: 8px;
 }
 
 .receipt-stamp {
@@ -1136,8 +1168,8 @@ body {
     -webkit-print-color-adjust: exact !important;
   }
   .receipt-emblem {
-    width: 26mm !important;
-    height: 26mm !important;
+    width: 29mm !important;
+    height: 29mm !important;
     margin-bottom: 1mm !important;
   }
   .receipt-header {
@@ -1191,6 +1223,20 @@ body {
   .receipt-public-url {
     font-size: 6pt !important;
     margin-top: 1mm !important;
+  }
+  .receipt-telegram {
+    gap: 1.2mm !important;
+    margin-top: 1.2mm !important;
+  }
+  .receipt-telegram svg {
+    width: 4mm !important;
+    height: 4mm !important;
+  }
+  .receipt-telegram strong {
+    font-size: 7pt !important;
+  }
+  .receipt-telegram small {
+    font-size: 6pt !important;
   }
 }
 

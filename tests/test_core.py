@@ -558,6 +558,8 @@ class AdminTemplateTests(unittest.TestCase):
         self.assertIn("Dear visitor!", html)
         self.assertIn("Уважаемый посетитель!", html)
         self.assertIn('id="rcpt-public-url"', html)
+        self.assertIn("@cargo_customs_bot", html)
+        self.assertIn("inspector.js?v=7", html)
         self.assertNotIn("Jami to'lov:", html)
         self.assertEqual(DEFAULT_INSPECTOR_PAYMENT_TOTAL_UZS, 621_632)
         self.assertEqual(len(default_inspector_payments()), 4)
