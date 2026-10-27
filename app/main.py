@@ -19,7 +19,7 @@ from app.portal_store import PortalStore
 from app.webapp import setup_webapp_routes, webapp_page
 
 logger = logging.getLogger(__name__)
-APP_VERSION = "2026-10-27-inspector-v7-csp-vehicles"
+APP_VERSION = "2026-10-27-inspector-v8-receipt-pdf"
 
 
 def create_http_middlewares(settings: Settings):

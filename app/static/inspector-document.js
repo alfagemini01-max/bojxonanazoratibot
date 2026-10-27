@@ -250,6 +250,13 @@ let allPaymentsPaid = false;
 let paidDocs = {}; // doc.code -> boolean
 let selectedPayMethod = 'payme';
 
+const DEFAULT_PAYMENT_ITEMS = [
+  { code: 'customs-entry', title_uz: "Bojxona yig'imi (kirish)", title_ru: 'Таможенный сбор (въезд)', title_en: 'Customs entry fee', amount_uzs: 110000 },
+  { code: 'veterinary-control', title_uz: 'Veterinariya nazorati', title_ru: 'Ветеринарный контроль', title_en: 'Veterinary control', amount_uzs: 93632 },
+  { code: 'osago-insurance', title_uz: "OSAGO sug'urta polisi", title_ru: 'Страховой полис ОСАГО', title_en: 'OSAGO insurance policy', amount_uzs: 308000 },
+  { code: 'terminal-warehouse', title_uz: "Terminal / ombor yig'imi", title_ru: 'Терминальный / складской сбор', title_en: 'Terminal / warehouse fee', amount_uzs: 110000 }
+];
+
 const VEHICLE_CATALOG = {
   sedan: 'Yengil sedan', hatchback: 'Xetchbek', suv: 'Krossover / SUV', minivan: 'Miniven', pickup: 'Pikap',
   microbus: 'Mikroavtobus', 'city-bus': 'Shahar avtobusi', 'coach-bus': 'Sayohat avtobusi', 'cargo-van': 'Yuk furgoni',
@@ -302,13 +309,39 @@ function escapeHTML(value) {
   }[char]));
 }
 
+function paymentItems() {
+  const stored = record?.payload?.payments;
+  return Array.isArray(stored) && stored.length ? stored : DEFAULT_PAYMENT_ITEMS;
+}
+
 function paymentTotalUzs() {
-  const raw = Number(record?.payload?.payment_total_uzs || 0);
-  return Number.isFinite(raw) && raw > 0 ? Math.round(raw) : 0;
+  const listedTotal = paymentItems().reduce((sum, item) => sum + Math.max(0, Number(item?.amount_uzs) || 0), 0);
+  const storedTotal = Number(record?.payload?.payment_total_uzs || 0);
+  return Math.round(listedTotal || (Number.isFinite(storedTotal) ? storedTotal : 0));
 }
 
 function formatUzs(value = paymentTotalUzs()) {
   return `${new Intl.NumberFormat('uz-UZ').format(value)} UZS`;
+}
+
+function renderPaymentBreakdown() {
+  const container = $('payment-fee-list');
+  if (!container) return;
+  container.replaceChildren();
+  paymentItems().forEach(item => {
+    const row = document.createElement('div');
+    row.className = 'fee-row-item';
+    const info = document.createElement('div');
+    const title = document.createElement('b');
+    title.textContent = item[`title_${lang}`] || item.title_uz || item.code || t('documentPayment');
+    const status = document.createElement('small');
+    status.textContent = t(allPaymentsPaid ? 'paidStatus' : 'unpaidStatus');
+    info.append(title, status);
+    const amount = document.createElement('span');
+    amount.textContent = formatUzs(item.amount_uzs);
+    row.append(info, amount);
+    container.appendChild(row);
+  });
 }
 
 function formatDate(val) {
@@ -566,11 +599,10 @@ function render(item) {
   setText('driver-name', item.driver_name);
   setText('document-number', item.document_no);
   const totalLabel = formatUzs();
-  setText('payment-document-label', item.document_no);
-  setText('payment-line-total', totalLabel);
   setText('modal-total', totalLabel);
   setText('confirm-total', totalLabel);
   setText('success-total', totalLabel);
+  renderPaymentBreakdown();
 
   // Vehicle Hero Card
   renderVehiclePlate(item.vehicle_plate, payload.vehicle_country);
@@ -820,33 +852,17 @@ function processUnifiedPayment() {
 
 /* ── PDF Generation Logic ── */
 async function downloadDocumentPDF(doc, dlLang, fallbackIdx = 0) {
-  const L = dictionary[dlLang] || dictionary.uz;
-  const item = record;
-  if (!item) return;
-
-  const isPaid = allPaymentsPaid || (doc ? (paidDocs[doc.code] || doc.paid) : false);
-
-  let htmlContent;
-  if (fallbackIdx === 0 || (doc && doc.code && doc.code.startsWith('AT'))) {
-    htmlContent = buildInvoicePDF(item, doc, L, isPaid);
-  } else if (fallbackIdx === 2 || (doc && doc.code && doc.code.startsWith('ETSD'))) {
-    htmlContent = buildInsurancePDF(item, doc, L, isPaid);
-  } else {
-    htmlContent = buildTransitPDF(item, doc, L, isPaid);
-  }
-
-  openPrintWindow(htmlContent);
-}
-
-function openPrintWindow(html) {
-  const w = window.open('', '_blank', 'width=900,height=700');
-  if (!w) {
-    alert('Pop-up oyna bloklandi. Brauzer sozlamalaridan ruxsat bering.');
-    return;
-  }
-  w.document.write(html);
-  w.document.close();
-  setTimeout(() => { w.focus(); w.print(); }, 800);
+  if (!record) return;
+  const pathParts = location.pathname.split('/').filter(Boolean);
+  const token = pathParts[pathParts.length - 1];
+  if (!token || token === 'visit') return;
+  const link = document.createElement('a');
+  link.href = `/api/inspector/documents/${encodeURIComponent(token)}/documents/${fallbackIdx}.pdf?lang=${encodeURIComponent(dlLang || 'uz')}`;
+  link.download = `bojxona-${record.document_no || 'hujjat'}-${fallbackIdx + 1}.pdf`;
+  link.hidden = true;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
 }
 
 function getLogoSvg() {

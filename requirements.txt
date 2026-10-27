@@ -4,4 +4,6 @@ aiosqlite==0.22.1
 asyncpg==0.31.0
 python-dotenv==1.2.2
 qrcode==8.2
+reportlab==4.4.9
+pillow==12.3.0
 tzdata==2025.2

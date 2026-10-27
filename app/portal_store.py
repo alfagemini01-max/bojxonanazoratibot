@@ -15,6 +15,44 @@ import aiosqlite
 logger = logging.getLogger(__name__)
 
 
+DEFAULT_INSPECTOR_PAYMENTS = (
+    {
+        "code": "customs-entry",
+        "title_uz": "Bojxona yig'imi (kirish)",
+        "title_ru": "Таможенный сбор (въезд)",
+        "title_en": "Customs entry fee",
+        "amount_uzs": 110_000,
+    },
+    {
+        "code": "veterinary-control",
+        "title_uz": "Veterinariya nazorati",
+        "title_ru": "Ветеринарный контроль",
+        "title_en": "Veterinary control",
+        "amount_uzs": 93_632,
+    },
+    {
+        "code": "osago-insurance",
+        "title_uz": "OSAGO sug'urta polisi",
+        "title_ru": "Страховой полис ОСАГО",
+        "title_en": "OSAGO insurance policy",
+        "amount_uzs": 308_000,
+    },
+    {
+        "code": "terminal-warehouse",
+        "title_uz": "Terminal / ombor yig'imi",
+        "title_ru": "Терминальный / складской сбор",
+        "title_en": "Terminal / warehouse fee",
+        "amount_uzs": 110_000,
+    },
+)
+DEFAULT_INSPECTOR_PAYMENT_TOTAL_UZS = sum(item["amount_uzs"] for item in DEFAULT_INSPECTOR_PAYMENTS)
+
+
+def default_inspector_payments() -> list[dict[str, Any]]:
+    """Return a fresh list so one document cannot mutate another document's fees."""
+    return [dict(item) for item in DEFAULT_INSPECTOR_PAYMENTS]
+
+
 POST_SEED = [
     # Qoraqalpogʻiston Respublikasi boʻyicha
     ("35001", "Nukus aeroporti", "AERO", "Qoraqalpog'iston", "", 42.4869, 59.6223),
@@ -166,7 +204,11 @@ def _inspector_record(row: Any, *, include_token: bool = False) -> dict[str, Any
             payload = json.loads(payload)
         except (TypeError, ValueError, json.JSONDecodeError):
             payload = {}
-    result["payload"] = payload if isinstance(payload, dict) else {}
+    payload = payload if isinstance(payload, dict) else {}
+    if not isinstance(payload.get("payments"), list) or not payload["payments"]:
+        payload["payments"] = default_inspector_payments()
+    payload["payment_total_uzs"] = DEFAULT_INSPECTOR_PAYMENT_TOTAL_UZS
+    result["payload"] = payload
     if not include_token:
         result.pop("public_token", None)
     return result
@@ -622,11 +664,6 @@ class PortalStore:
         vehicle_image_type = str(body.get("vehicle_image_type") or "auto").strip().lower()
         if vehicle_image_type not in allowed_vehicle_images:
             vehicle_image_type = "auto"
-        try:
-            payment_total_uzs = max(0, min(10_000_000_000_000, int(float(body.get("payment_total_uzs") or 0))))
-        except (TypeError, ValueError):
-            payment_total_uzs = 0
-
         payload = {
             "nationality": str(body.get("nationality") or body.get("driver_country") or "UZ").strip()[:120],
             "passport": str(body.get("passport") or body.get("driver_passport") or "").strip().upper()[:80],
@@ -635,7 +672,8 @@ class PortalStore:
             "vehicle_model": str(body.get("vehicle_model") or "").strip()[:160],
             "vehicle_image_type": vehicle_image_type,
             "trailer_plate": str(body.get("trailer_plate") or "").strip().upper()[:80],
-            "payment_total_uzs": payment_total_uzs,
+            "payments": default_inspector_payments(),
+            "payment_total_uzs": DEFAULT_INSPECTOR_PAYMENT_TOTAL_UZS,
             "location": str(body.get("location") or body.get("destination") or "").strip()[:240],
             "cargo": str(body.get("cargo") or body.get("cargo_description") or "").strip()[:500],
             "additional_info": str(body.get("additional_info") or body.get("service_note") or "").strip()[:2000],

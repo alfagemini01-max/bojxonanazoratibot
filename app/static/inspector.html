@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/webapp/inspector.css?v=3">
+  <link rel="stylesheet" href="/static/webapp/inspector.css?v=4">
 </head>
 <body>
   <!-- Top Government Bar -->
@@ -262,10 +262,10 @@
             <label for="service-note">Xizmat xulosasi</label>
             <input type="text" id="service-note" value="Chegara ko'rigidan o'tkazildi, hujjatlar to'liq.">
           </div>
-          <div class="field">
-            <label for="payment-total-uzs">Jami to'lov summasi (UZS)</label>
-            <input type="number" id="payment-total-uzs" min="0" step="1" value="0" placeholder="Masalan: 621632">
-            <small>0 bo'lsa QR sahifada to'lov tugmasi ko'rsatilmaydi.</small>
+          <div class="field fixed-payment-summary">
+            <label>Avtomatik to'lovlar</label>
+            <div class="fixed-payment-total">621 632 UZS</div>
+            <small>4 ta dastlabki yig'im har bir yangi chek uchun serverda avtomatik qo'shiladi.</small>
           </div>
         </div>
 
@@ -290,8 +290,8 @@
       <div class="receipt-card" id="printable-receipt">
         <div class="receipt-header">
           <img src="/static/webapp/customs-emblem.png" alt="Bojxona Gerbi" class="receipt-emblem">
-          <div class="receipt-title">O'zbekiston Respublikasi Davlat Bojxona Xizmati</div>
-          <div class="receipt-subtitle">ELEKTRON NAZORAT KVITANSIYASI</div>
+          <div class="receipt-title">O'zbekiston Respublikasi<br>Davlat Bojxona Xizmati</div>
+          <div class="receipt-subtitle">NAZORAT KVITANSIYASI</div>
           <div class="receipt-doc-no" id="rcpt-doc-no">PREVYU HOLATIDA</div>
         </div>
 
@@ -317,6 +317,21 @@
             <span class="val" id="rcpt-cargo">—</span>
           </div>
 
+          <div class="receipt-language-notices">
+            <div class="receipt-language-row">
+              <b>UZ</b>
+              <p>Hurmatli <strong id="rcpt-name-uz">tashrif buyuruvchi</strong>! Siz <span id="rcpt-date-uz">shu kuni</span> <span id="rcpt-border-uz">ushbu post</span> orqali chegarani kesib o'tdingiz. To'liq ma'lumot va hujjatlaringizni olish uchun QR-kodni skanerlang.</p>
+            </div>
+            <div class="receipt-language-row">
+              <b>RU</b>
+              <p>Уважаемый(ая) <strong id="rcpt-name-ru">посетитель</strong>! Вы пересекли границу <span id="rcpt-date-ru">в этот день</span> через пункт <span id="rcpt-border-ru">таможни</span>. Отсканируйте QR-код, чтобы получить полную информацию и документы.</p>
+            </div>
+            <div class="receipt-language-row">
+              <b>EN</b>
+              <p>Dear <strong id="rcpt-name-en">visitor</strong>! You crossed the border on <span id="rcpt-date-en">this date</span> through <span id="rcpt-border-en">this post</span>. Scan the QR code to view full details and download your documents.</p>
+            </div>
+          </div>
+
           <div style="margin-top:12px;font-size:11px;font-weight:750;color:var(--muted);text-transform:uppercase;">
             Rasmiylashtirilgan Hujjatlar:
           </div>
@@ -324,9 +339,18 @@
             • Invoys<br>• Majburiyatnoma<br>• OSAGO sug'urta
           </div>
 
+          <div class="receipt-payments">
+            <div class="receipt-section-title">Avtomatik hisoblangan to'lovlar:</div>
+            <div class="receipt-payment-row"><span>1. Bojxona yig'imi (kirish)</span><b>110 000</b></div>
+            <div class="receipt-payment-row"><span>2. Veterinariya nazorati</span><b>93 632</b></div>
+            <div class="receipt-payment-row"><span>3. OSAGO sug'urta polisi</span><b>308 000</b></div>
+            <div class="receipt-payment-row"><span>4. Terminal / ombor yig'imi</span><b>110 000</b></div>
+            <div class="receipt-payment-row total"><span>JAMI (UZS)</span><b>621 632</b></div>
+          </div>
+
           <div class="receipt-qr-box">
-            <img id="rcpt-qr-img" src="/static/webapp/customs-emblem.png" alt="QR-kod" class="receipt-qr-img" style="opacity:0.25;padding:15px;">
-            <div class="receipt-qr-hint">QR-kod skaner qilinganda rasmiy davlat bojxona tasdiq varaqasi ochiladi</div>
+            <img id="rcpt-qr-img" src="/static/webapp/customs-emblem.png" alt="QR-kod" class="receipt-qr-img preview-placeholder">
+            <div class="receipt-qr-hint">TO'LIQ MA'LUMOT VA HUJJATLAR UCHUN<br>QR-KODNI SKANERLANG</div>
           </div>
 
           <div class="receipt-stamp" id="rcpt-stamp" style="display:none;">
@@ -428,6 +452,6 @@
   <!-- Toast notification -->
   <div class="toast-msg" id="toast"></div>
 
-  <script src="/static/webapp/inspector.js?v=3"></script>
+  <script src="/static/webapp/inspector.js?v=4"></script>
 </body>
 </html>

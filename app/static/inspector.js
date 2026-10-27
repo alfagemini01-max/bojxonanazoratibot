@@ -241,7 +241,6 @@ const vehicleModelInput = document.getElementById('vehicle-model');
 const vehicleImageTypeInput = document.getElementById('vehicle-image-type');
 const trailerPlateInput = document.getElementById('trailer-plate');
 const cargoDescInput = document.getElementById('cargo-desc');
-const paymentTotalInput = document.getElementById('payment-total-uzs');
 const inspectorNameInput = document.getElementById('inspector-name');
 const directionSelect = document.getElementById('direction-type');
 const destinationInput = document.getElementById('destination-name');
@@ -482,6 +481,15 @@ function updateReceiptPreview() {
   document.getElementById('rcpt-driver').textContent = `${driver} (${driverCountry})`;
   document.getElementById('rcpt-cargo').textContent = cargo;
   document.getElementById('rcpt-time').textContent = time;
+  const dateLabel = time === '—' ? 'shu kuni' : time.replace('T', ' ');
+  ['uz', 'ru', 'en'].forEach(code => {
+    const nameNode = document.getElementById(`rcpt-name-${code}`);
+    const dateNode = document.getElementById(`rcpt-date-${code}`);
+    const borderNode = document.getElementById(`rcpt-border-${code}`);
+    if (nameNode) nameNode.textContent = driver === '—' ? (code === 'ru' ? 'посетитель' : code === 'en' ? 'visitor' : 'tashrif buyuruvchi') : driver;
+    if (dateNode) dateNode.textContent = dateLabel;
+    if (borderNode) borderNode.textContent = postName;
+  });
 
   const docs = getDocumentsPayload();
   const rcptDocsWrap = document.getElementById('rcpt-docs-list');
@@ -553,7 +561,6 @@ issuanceForm.addEventListener('submit', async (e) => {
     cargo: cargoDescInput.value.trim(),
     inspector_name: inspectorNameInput.value.trim() || "Navbatchi inspektor",
     service_note: document.getElementById('service-note')?.value.trim() || "",
-    payment_total_uzs: Math.max(0, Math.round(Number(paymentTotalInput?.value || 0))),
     documents: getDocumentsPayload()
   };
 
@@ -591,8 +598,31 @@ issuanceForm.addEventListener('submit', async (e) => {
 });
 
 function displayGeneratedReceipt(doc) {
+  const details = doc.payload || {};
+  if (doc.post_name) document.getElementById('rcpt-post').textContent = doc.post_name;
+  if (doc.crossing_at) document.getElementById('rcpt-time').textContent = String(doc.crossing_at).replace('T', ' ').slice(0, 19);
+  if (doc.vehicle_plate) document.getElementById('rcpt-plate').textContent = `${doc.vehicle_plate} (${details.vehicle_country || 'UZ'})`;
+  if (doc.driver_name) document.getElementById('rcpt-driver').textContent = `${doc.driver_name} (${details.nationality || 'UZ'})`;
+  if (details.cargo) document.getElementById('rcpt-cargo').textContent = details.cargo;
+  ['uz', 'ru', 'en'].forEach(code => {
+    const nameNode = document.getElementById(`rcpt-name-${code}`);
+    const dateNode = document.getElementById(`rcpt-date-${code}`);
+    const borderNode = document.getElementById(`rcpt-border-${code}`);
+    if (nameNode) nameNode.textContent = doc.driver_name || (code === 'ru' ? 'посетитель' : code === 'en' ? 'visitor' : 'tashrif buyuruvchi');
+    if (dateNode) dateNode.textContent = String(doc.crossing_at || '').replace('T', ' ').slice(0, 16) || '—';
+    if (borderNode) borderNode.textContent = doc.post_name || '—';
+  });
+  if (Array.isArray(details.documents) && details.documents.length) {
+    document.getElementById('rcpt-docs-list').replaceChildren(...details.documents.map(item => {
+      const row = document.createElement('div');
+      row.textContent = `• ${item.title || item.type || 'Hujjat'} ${item.code ? '№ ' + item.code : ''}`;
+      return row;
+    }));
+  }
   document.getElementById('rcpt-doc-no').textContent = doc.document_no || "№ " + (doc.public_token || "").slice(0, 8).toUpperCase();
-  document.getElementById('rcpt-qr-img').src = doc.qr_url || `/api/inspector/documents/${doc.public_token}/qr.svg`;
+  const qrImage = document.getElementById('rcpt-qr-img');
+  qrImage.src = doc.qr_url || `/api/inspector/documents/${doc.public_token}/qr.svg`;
+  qrImage.classList.remove('preview-placeholder');
   document.getElementById('rcpt-stamp').style.display = 'block';
   document.getElementById('rcpt-actions').style.display = 'flex';
 
@@ -687,9 +717,10 @@ window.previewFromJournal = async function(token) {
   try {
     const res = await fetch(`/api/inspector/documents/${token}`);
     const data = await res.json();
-    if (data.ok && data.item) {
+    if (data.ok && data.document) {
       currentGeneratedDocument = {
-        ...data.item,
+        ...data.document,
+        public_token: token,
         qr_url: `/api/inspector/documents/${token}/qr.svg`,
         public_url: window.location.origin + `/visit/${token}`
       };

@@ -9,8 +9,10 @@ from pathlib import Path
 
 from app.i18n import t
 from app.rule_normalization import repair_broken_rule_labels
+from app.portal_store import DEFAULT_INSPECTOR_PAYMENT_TOTAL_UZS, default_inspector_payments
 from app.services.fee_calculator import FeeCalculator
 from app.services.currency_rates import CurrencyRateService
+from app.services.inspector_pdf import build_inspector_document_pdf
 from app.services.oversize_calculator import OversizeCalculator, OversizeInputError
 from app.services.permit import (
     Country,
@@ -545,6 +547,41 @@ class AdminTemplateTests(unittest.TestCase):
         self.assertIn("inferVehicleImageType", script)
         self.assertIn("data-payment-method", public)
         self.assertNotIn('id="card-number"', public)
+
+    def test_inspector_receipt_has_fixed_fees_three_languages_and_direct_pdf(self) -> None:
+        html = (ROOT / "app" / "static" / "inspector.html").read_text(encoding="utf-8")
+        public_script = (ROOT / "app" / "static" / "inspector-document.js").read_text(encoding="utf-8")
+        backend = (ROOT / "app" / "webapp.py").read_text(encoding="utf-8")
+        self.assertNotIn('id="payment-total-uzs"', html)
+        self.assertIn('id="rcpt-name-uz"', html)
+        self.assertIn('id="rcpt-name-ru"', html)
+        self.assertIn('id="rcpt-name-en"', html)
+        self.assertEqual(DEFAULT_INSPECTOR_PAYMENT_TOTAL_UZS, 621_632)
+        self.assertEqual(len(default_inspector_payments()), 4)
+        self.assertIn("/documents/${fallbackIdx}.pdf", public_script)
+        self.assertIn('/documents/{document_index}.pdf', backend)
+
+    def test_inspector_pdf_is_a_real_single_downloadable_document(self) -> None:
+        item = {
+            "document_no": "BXT-TEST",
+            "driver_name": "Test Driver",
+            "vehicle_plate": "01 A 001 AA",
+            "post_name": "Yallama",
+            "crossing_at": "2026-10-27T12:00",
+            "payload": {
+                "documents": [{"code": "INV-1", "title": "Invoys"}],
+                "payments": default_inspector_payments(),
+                "payment_total_uzs": DEFAULT_INSPECTOR_PAYMENT_TOTAL_UZS,
+            },
+        }
+        result = build_inspector_document_pdf(
+            item,
+            public_url="https://example.test/visit/token",
+            document_index=0,
+            language="uz",
+        )
+        self.assertTrue(result.startswith(b"%PDF-"))
+        self.assertGreater(len(result), 25_000)
 
 
 class RuntimeCountryLabelTests(unittest.TestCase):

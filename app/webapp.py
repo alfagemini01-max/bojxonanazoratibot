@@ -21,6 +21,7 @@ from app.metrics import metrics
 from app.portal_store import PortalStore
 from app.services.fee_calculator import FeeCalculator
 from app.services.currency_rates import get_currency_rate_service, setup_currency_rate_lifecycle
+from app.services.inspector_pdf import build_inspector_document_pdf
 from app.services.oversize_calculator import OversizeCalculator, OversizeInputError
 from app.services.permit import (
     IRAN_CODE,
@@ -47,13 +48,29 @@ def _inspector_qr_svg(public_url: str) -> bytes:
 
     image = qrcode.make(
         public_url,
+        error_correction=qrcode.constants.ERROR_CORRECT_H,
         image_factory=qrcode.image.svg.SvgPathImage,
-        box_size=8,
-        border=2,
+        box_size=12,
+        border=4,
     )
     output = io.BytesIO()
     image.save(output)
     return output.getvalue()
+
+
+@lru_cache(maxsize=64)
+def _cached_inspector_pdf(
+    document_json: str,
+    public_url: str,
+    document_index: int,
+    language: str,
+) -> bytes:
+    return build_inspector_document_pdf(
+        json.loads(document_json),
+        public_url=public_url,
+        document_index=document_index,
+        language=language,
+    )
 logger = logging.getLogger(__name__)
 ISO_NUMERIC_TO_ALPHA2 = dict(
     item.split(":")
@@ -931,6 +948,47 @@ def setup_webapp_routes(app: web.Application, settings: Settings, portal_store: 
             },
         )
 
+    async def inspector_document_pdf(request: web.Request) -> web.Response:
+        if not portal_store:
+            raise web.HTTPServiceUnavailable(text="Hujjatlar ombori ishga tushmagan.")
+        token = request.match_info.get("token", "")
+        item = await portal_store.get_inspector_document(token)
+        if not item:
+            raise web.HTTPNotFound(text="Hujjat topilmadi.")
+        try:
+            document_index = max(0, int(request.match_info.get("document_index", "0")))
+        except ValueError as exc:
+            raise web.HTTPBadRequest(text="Hujjat tartib raqami noto'g'ri.") from exc
+        documents = item.get("payload", {}).get("documents", [])
+        if documents and document_index >= len(documents):
+            raise web.HTTPNotFound(text="Qo'shimcha hujjat topilmadi.")
+        language = request.query.get("lang", "uz").lower()
+        if language not in {"uz", "ru", "en"}:
+            language = "uz"
+        base_url = settings.webhook_url.rstrip("/") if settings.webhook_url else f"{request.scheme}://{request.host}"
+        public_url = f"{base_url}/visit/{token}"
+        document_json = json.dumps(item, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        pdf_bytes = await asyncio.to_thread(
+            _cached_inspector_pdf,
+            document_json,
+            public_url,
+            document_index,
+            language,
+        )
+        raw_name = f"bojxona-{item.get('document_no', 'hujjat')}-{document_index + 1}.pdf"
+        file_name = "".join(char for char in raw_name if char.isalnum() or char in {"-", "_", "."})
+        logger.info("Inspector PDF downloaded document=%s index=%s", item.get("document_no"), document_index)
+        return web.Response(
+            body=pdf_bytes,
+            content_type="application/pdf",
+            headers={
+                "Content-Disposition": f'attachment; filename="{file_name}"',
+                "Cache-Control": "private, max-age=300",
+                "X-Content-Type-Options": "nosniff",
+                "X-Robots-Tag": "noindex, nofollow, noarchive",
+            },
+        )
+
     app.router.add_get("/app", webapp_page)
     app.router.add_get("/webapp", webapp_page)
     app.router.add_get("/visit/{token}", inspector_document_page)
@@ -948,4 +1006,5 @@ def setup_webapp_routes(app: web.Application, settings: Settings, portal_store: 
     app.router.add_post("/api/webapp/saved-routes", save_route)
     app.router.add_get("/api/inspector/documents/{token}", inspector_document)
     app.router.add_get("/api/inspector/documents/{token}/qr.svg", inspector_qr)
+    app.router.add_get("/api/inspector/documents/{token}/documents/{document_index}.pdf", inspector_document_pdf)
     app.router.add_static("/static/webapp", STATIC_DIR, show_index=False, append_version=True)

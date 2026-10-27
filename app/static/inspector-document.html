@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/webapp/inspector-document.css?v=7">
+  <link rel="stylesheet" href="/static/webapp/inspector-document.css?v=8">
   <title>E-Bojxona · Hujjat tekshiruvi</title>
 </head>
 <body>
@@ -377,13 +377,7 @@
         </div>
 
         <div class="fee-items-box">
-          <div class="fee-row-item">
-            <div>
-              <b data-i18n="documentPayment">Hujjat bo'yicha to'lov</b>
-              <small id="payment-document-label">—</small>
-            </div>
-            <span id="payment-line-total">0 UZS</span>
-          </div>
+          <div id="payment-fee-list"></div>
           <div class="fee-total-row">
             <span data-i18n="totalAmount">Jami to'lov:</span>
             <strong id="modal-total">0 UZS</strong>
@@ -554,6 +548,6 @@
     </div>
   </div>
 
-  <script src="/static/webapp/inspector-document.js?v=7"></script>
+  <script src="/static/webapp/inspector-document.js?v=8"></script>
 </body>
 </html>
