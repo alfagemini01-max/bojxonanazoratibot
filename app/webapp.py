@@ -21,7 +21,7 @@ from app.metrics import metrics
 from app.portal_store import PortalStore
 from app.services.fee_calculator import FeeCalculator
 from app.services.currency_rates import get_currency_rate_service, setup_currency_rate_lifecycle
-from app.services.inspector_pdf import build_inspector_document_pdf
+from app.services.inspector_a4_pdf import build_inspector_document_pdf
 from app.services.oversize_calculator import OversizeCalculator, OversizeInputError
 from app.services.permit import (
     IRAN_CODE,
@@ -989,6 +989,24 @@ def setup_webapp_routes(app: web.Application, settings: Settings, portal_store: 
             },
         )
 
+    async def accept_inspector_payment(request: web.Request) -> web.Response:
+        if not portal_store:
+            raise web.HTTPServiceUnavailable(text="Hujjatlar ombori ishga tushmagan.")
+        token = request.match_info.get("token", "")
+        try:
+            item = await portal_store.accept_inspector_payment(token)
+        except ValueError as exc:
+            raise web.HTTPBadRequest(text=str(exc)) from exc
+        logger.info("Inspector automatic test payment accepted document=%s", item.get("document_no"))
+        return web.json_response(
+            {
+                "ok": True,
+                "payment_status": item.get("payload", {}).get("payment_status"),
+                "paid_at": item.get("payload", {}).get("paid_at"),
+            },
+            headers={"Cache-Control": "no-store, private"},
+        )
+
     app.router.add_get("/app", webapp_page)
     app.router.add_get("/webapp", webapp_page)
     app.router.add_get("/visit/{token}", inspector_document_page)
@@ -1007,4 +1025,5 @@ def setup_webapp_routes(app: web.Application, settings: Settings, portal_store: 
     app.router.add_get("/api/inspector/documents/{token}", inspector_document)
     app.router.add_get("/api/inspector/documents/{token}/qr.svg", inspector_qr)
     app.router.add_get("/api/inspector/documents/{token}/documents/{document_index}.pdf", inspector_document_pdf)
+    app.router.add_post("/api/inspector/documents/{token}/payments/accept", accept_inspector_payment)
     app.router.add_static("/static/webapp", STATIC_DIR, show_index=False, append_version=True)

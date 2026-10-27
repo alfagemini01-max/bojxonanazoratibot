@@ -766,6 +766,62 @@ class PortalStore:
                 if cursor.rowcount == 0:
                     raise ValueError("Hujjat topilmadi.")
 
+    async def accept_inspector_payment(self, public_token: str) -> dict[str, Any]:
+        """Mark the test payment as accepted for the token-backed public document."""
+        token = str(public_token or "").strip()
+        if not 20 <= len(token) <= 80:
+            raise ValueError("Hujjat tokeni noto'g'ri.")
+        paid_at = _now()
+        async with self._write_lock:
+            if self.pool:
+                async with self.pool.acquire() as db:
+                    async with db.transaction():
+                        row = await db.fetchrow(
+                            "SELECT * FROM inspector_documents WHERE public_token=$1 FOR UPDATE",
+                            token,
+                        )
+                        if not row:
+                            raise ValueError("Hujjat topilmadi.")
+                        item = _inspector_record(row, include_token=True)
+                        payload = item["payload"]
+                        payload.update({
+                            "payment_status": "paid",
+                            "paid_at": paid_at,
+                            "payment_method": "automatic-test",
+                        })
+                        row = await db.fetchrow(
+                            """UPDATE inspector_documents
+                               SET payload=$1::jsonb,updated_at=NOW()
+                               WHERE public_token=$2 RETURNING *""",
+                            _json(payload), token,
+                        )
+            else:
+                async with aiosqlite.connect(self.sqlite_path) as db:
+                    db.row_factory = aiosqlite.Row
+                    await db.execute("BEGIN IMMEDIATE")
+                    row = await (await db.execute(
+                        "SELECT * FROM inspector_documents WHERE public_token=?", (token,)
+                    )).fetchone()
+                    if not row:
+                        await db.rollback()
+                        raise ValueError("Hujjat topilmadi.")
+                    item = _inspector_record(row, include_token=True)
+                    payload = item["payload"]
+                    payload.update({
+                        "payment_status": "paid",
+                        "paid_at": paid_at,
+                        "payment_method": "automatic-test",
+                    })
+                    await db.execute(
+                        "UPDATE inspector_documents SET payload=?,updated_at=? WHERE public_token=?",
+                        (_json(payload), paid_at, token),
+                    )
+                    await db.commit()
+                    row = await (await db.execute(
+                        "SELECT * FROM inspector_documents WHERE public_token=?", (token,)
+                    )).fetchone()
+        return _inspector_record(row, include_token=True)
+
     async def list_posts(self, include_inactive: bool = False) -> list[dict[str, Any]]:
         where = "" if include_inactive else " WHERE is_active=" + ("TRUE" if self.pool else "1")
         query = "SELECT * FROM customs_posts" + where + " ORDER BY region,name_uz"

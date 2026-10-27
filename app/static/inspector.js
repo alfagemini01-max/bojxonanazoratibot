@@ -479,7 +479,8 @@ function updateReceiptPreview() {
   document.getElementById('rcpt-post').textContent = `${postCode ? postCode + ' · ' : ''}${postName}`;
   document.getElementById('rcpt-plate').textContent = `${plate} (${vehicleCountry})`;
   document.getElementById('rcpt-driver').textContent = `${driver} (${driverCountry})`;
-  document.getElementById('rcpt-cargo').textContent = cargo;
+  const cargoNode = document.getElementById('rcpt-cargo');
+  if (cargoNode) cargoNode.textContent = cargo;
   document.getElementById('rcpt-time').textContent = time;
   const dateLabel = time === '—' ? 'shu kuni' : time.replace('T', ' ');
   ['uz', 'ru', 'en'].forEach(code => {
@@ -603,7 +604,8 @@ function displayGeneratedReceipt(doc) {
   if (doc.crossing_at) document.getElementById('rcpt-time').textContent = String(doc.crossing_at).replace('T', ' ').slice(0, 19);
   if (doc.vehicle_plate) document.getElementById('rcpt-plate').textContent = `${doc.vehicle_plate} (${details.vehicle_country || 'UZ'})`;
   if (doc.driver_name) document.getElementById('rcpt-driver').textContent = `${doc.driver_name} (${details.nationality || 'UZ'})`;
-  if (details.cargo) document.getElementById('rcpt-cargo').textContent = details.cargo;
+  const cargoNode = document.getElementById('rcpt-cargo');
+  if (details.cargo && cargoNode) cargoNode.textContent = details.cargo;
   ['uz', 'ru', 'en'].forEach(code => {
     const nameNode = document.getElementById(`rcpt-name-${code}`);
     const dateNode = document.getElementById(`rcpt-date-${code}`);

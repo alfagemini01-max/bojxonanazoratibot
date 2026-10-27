@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/webapp/inspector.css?v=4">
+  <link rel="stylesheet" href="/static/webapp/inspector.css?v=5">
 </head>
 <body>
   <!-- Top Government Bar -->
@@ -312,11 +312,6 @@
             <span class="label">Haydovchi:</span>
             <span class="val" id="rcpt-driver">—</span>
           </div>
-          <div class="receipt-row">
-            <span class="label">Yuk tavsifi:</span>
-            <span class="val" id="rcpt-cargo">—</span>
-          </div>
-
           <div class="receipt-language-notices">
             <div class="receipt-language-row">
               <b>UZ</b>
@@ -339,13 +334,14 @@
             • Invoys<br>• Majburiyatnoma<br>• OSAGO sug'urta
           </div>
 
-          <div class="receipt-payments">
-            <div class="receipt-section-title">Avtomatik hisoblangan to'lovlar:</div>
-            <div class="receipt-payment-row"><span>1. Bojxona yig'imi (kirish)</span><b>110 000</b></div>
-            <div class="receipt-payment-row"><span>2. Veterinariya nazorati</span><b>93 632</b></div>
-            <div class="receipt-payment-row"><span>3. OSAGO sug'urta polisi</span><b>308 000</b></div>
-            <div class="receipt-payment-row"><span>4. Terminal / ombor yig'imi</span><b>110 000</b></div>
-            <div class="receipt-payment-row total"><span>JAMI (UZS)</span><b>621 632</b></div>
+          <div class="receipt-total-line">
+            <span>Jami to'lov:</span><b>621 632 UZS</b>
+          </div>
+
+          <div class="receipt-law-notices">
+            <div class="receipt-language-row"><b>UZ</b><p>O'zbekiston Respublikasi qonunchiligi talablariga rioya qiling!</p></div>
+            <div class="receipt-language-row"><b>EN</b><p>Please comply with the laws of the Republic of Uzbekistan!</p></div>
+            <div class="receipt-language-row"><b>RU</b><p>Соблюдайте требования законодательства Республики Узбекистан!</p></div>
           </div>
 
           <div class="receipt-qr-box">
@@ -452,6 +448,6 @@
   <!-- Toast notification -->
   <div class="toast-msg" id="toast"></div>
 
-  <script src="/static/webapp/inspector.js?v=4"></script>
+  <script src="/static/webapp/inspector.js?v=5"></script>
 </body>
 </html>

@@ -12,7 +12,7 @@ from app.rule_normalization import repair_broken_rule_labels
 from app.portal_store import DEFAULT_INSPECTOR_PAYMENT_TOTAL_UZS, default_inspector_payments
 from app.services.fee_calculator import FeeCalculator
 from app.services.currency_rates import CurrencyRateService
-from app.services.inspector_pdf import build_inspector_document_pdf
+from app.services.inspector_a4_pdf import build_inspector_document_pdf
 from app.services.oversize_calculator import OversizeCalculator, OversizeInputError
 from app.services.permit import (
     Country,
@@ -561,6 +561,19 @@ class AdminTemplateTests(unittest.TestCase):
         self.assertIn("/documents/${fallbackIdx}.pdf", public_script)
         self.assertIn('/documents/{document_index}.pdf', backend)
 
+    def test_mobile_payment_and_full_translation_fixes_are_present(self) -> None:
+        css = (ROOT / "app" / "static" / "inspector-document.css").read_text(encoding="utf-8")
+        script = (ROOT / "app" / "static" / "inspector-document.js").read_text(encoding="utf-8")
+        backend = (ROOT / "app" / "webapp.py").read_text(encoding="utf-8")
+        store = (ROOT / "app" / "portal_store.py").read_text(encoding="utf-8")
+        self.assertIn("@media (max-width: 430px)", css)
+        self.assertIn("grid-template-columns: repeat(3, minmax(0, 1fr))", css)
+        self.assertIn("allPaymentsPaid = payload.payment_status === 'paid'", script)
+        self.assertIn("localizedDocumentTitle", script)
+        self.assertIn("selectedDlLang = newLang", script)
+        self.assertIn("/payments/accept", backend)
+        self.assertIn("accept_inspector_payment", store)
+
     def test_inspector_pdf_is_a_real_single_downloadable_document(self) -> None:
         item = {
             "document_no": "BXT-TEST",
@@ -569,19 +582,27 @@ class AdminTemplateTests(unittest.TestCase):
             "post_name": "Yallama",
             "crossing_at": "2026-10-27T12:00",
             "payload": {
-                "documents": [{"code": "INV-1", "title": "Invoys"}],
+                "documents": [
+                    {"code": "INV-1", "title": "Invoys"},
+                    {"code": "MB-2", "title": "Majburiyatnoma"},
+                    {"code": "ETSD-3", "title": "Sug'urta polisi"},
+                ],
                 "payments": default_inspector_payments(),
                 "payment_total_uzs": DEFAULT_INSPECTOR_PAYMENT_TOTAL_UZS,
             },
         }
-        result = build_inspector_document_pdf(
-            item,
-            public_url="https://example.test/visit/token",
-            document_index=0,
-            language="uz",
-        )
-        self.assertTrue(result.startswith(b"%PDF-"))
-        self.assertGreater(len(result), 25_000)
+        results = [
+            build_inspector_document_pdf(
+                item,
+                public_url="https://example.test/visit/token",
+                document_index=index,
+                language=language,
+            )
+            for index, language in enumerate(("uz", "ru", "en"))
+        ]
+        self.assertTrue(all(result.startswith(b"%PDF-") for result in results))
+        self.assertTrue(all(len(result) > 25_000 for result in results))
+        self.assertEqual(len(set(results)), 3)
 
 
 class RuntimeCountryLabelTests(unittest.TestCase):

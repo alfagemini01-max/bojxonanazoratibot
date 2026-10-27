@@ -56,6 +56,16 @@ const dictionary = {
     allPaid: 'Barcha to\'lovlar to\'langan',
     paidBadge: 'To\'langan',
     unpaidBadge: 'To\'lov kutilmoqda',
+    feeLabel: 'Yig\'im:',
+    stateLabel: 'Holati:',
+    completedStatus: 'Rasmiylashtirilgan',
+    paymentVia: 'orqali avtomatik to\'lov',
+    processing: 'To\'lov tasdiqlanmoqda…',
+    paymentFailed: 'To\'lovni tasdiqlab bo\'lmadi. Qayta urinib ko\'ring.',
+    inspectorDefault: 'Bojxona inspektori',
+    footerAgency: 'O\'ZBEKISTON RESPUBLIKASI DAVLAT BOJXONA QO\'MITASI',
+    footerSystem: 'Yagona axborot tizimi · Ishonch telefoni: 1108',
+    supportPhone: '1108 · Ishonch telefoni',
     paymentBreakdown: 'Bojxona to\'lovlari',
     paymentBreakdownDesc: 'Quyidagi xizmatlar va yig\'imlar uchun to\'lov amalga oshiriladi',
     choosePaymentSystem: 'To\'lov usulini tanlash',
@@ -68,11 +78,11 @@ const dictionary = {
     confirmPay: 'Sinov jarayonini tekshirish',
     back: 'Orqaga',
     close: 'Yopish va qaytish',
-    paymentSuccess: 'Sinov jarayoni muvaffaqiyatli yakunlandi',
-    paymentSuccessDesc: 'Tanlangan usul va to\'lov oynasi ishladi. Bu sinov tranzaksiyasi, haqiqiy pul yechilmadi.',
-    transactionId: 'Sinov ID:',
+    paymentSuccess: 'To\'lov qabul qilindi',
+    paymentSuccessDesc: 'To\'lov sinov tartibida avtomatik tasdiqlandi. Haqiqiy bank tranzaksiyasi amalga oshirilmadi.',
+    transactionId: 'Tranzaksiya ID:',
     paidAt: 'To\'langan vaqt:',
-    paidAmount: 'Sinov summasi:',
+    paidAmount: 'Tasdiqlangan summa:',
     transitDeclaration: 'Tranzit Majburiyatnomasi',
     insurancePolicy: 'Sug\'urta Polisi',
     paymentInvoice: 'Bojxona To\'lov Invoysi',
@@ -86,7 +96,7 @@ const dictionary = {
     unpaidWarning: 'DIQQAT: Ushbu hujjat uchun to\'lov amalga oshirilmagan!',
     demoPaymentTitle: 'Sinov to\'lov oynasi',
     demoPaymentHelp: 'Bu bosqich interfeysni tekshirish uchun. Karta ma\'lumoti so\'ralmaydi va pul yechilmaydi. Haqiqiy to\'lov uchun bank provayderining merchant API kalitlari ulanishi kerak.',
-    demoStatus: '✓ SINOV YAKUNLANDI',
+    demoStatus: '✓ TO\'LOV QABUL QILINDI',
   },
   ru: {
     service: 'Государственная таможенная служба',
@@ -132,6 +142,16 @@ const dictionary = {
     allPaid: 'Все платежи оплачены',
     paidBadge: 'Оплачено',
     unpaidBadge: 'Ожидает оплаты',
+    feeLabel: 'Сбор:',
+    stateLabel: 'Статус:',
+    completedStatus: 'Оформлено',
+    paymentVia: '— автоматическая оплата',
+    processing: 'Платёж подтверждается…',
+    paymentFailed: 'Не удалось подтвердить платёж. Попробуйте ещё раз.',
+    inspectorDefault: 'Таможенный инспектор',
+    footerAgency: 'ГОСУДАРСТВЕННЫЙ ТАМОЖЕННЫЙ КОМИТЕТ РЕСПУБЛИКИ УЗБЕКИСТАН',
+    footerSystem: 'Единая информационная система · Телефон доверия: 1108',
+    supportPhone: '1108 · Телефон доверия',
     paymentBreakdown: 'Таможенные платежи',
     paymentBreakdownDesc: 'Оплата за следующие услуги и таможенные сборы',
     choosePaymentSystem: 'Выбрать способ оплаты',
@@ -144,11 +164,11 @@ const dictionary = {
     confirmPay: 'Проверить тестовый процесс',
     back: 'Назад',
     close: 'Закрыть и вернуться',
-    paymentSuccess: 'Тестовый процесс успешно завершён',
-    paymentSuccessDesc: 'Выбор способа и платёжное окно работают. Это тестовая операция, реальные деньги не списывались.',
-    transactionId: 'Тестовый ID:',
+    paymentSuccess: 'Платёж принят',
+    paymentSuccessDesc: 'Платёж автоматически подтверждён в тестовом режиме. Реальная банковская операция не выполнялась.',
+    transactionId: 'ID транзакции:',
     paidAt: 'Время оплаты:',
-    paidAmount: 'Тестовая сумма:',
+    paidAmount: 'Подтверждённая сумма:',
     transitDeclaration: 'Транзитное Обязательство',
     insurancePolicy: 'Страховой Полис',
     paymentInvoice: 'Таможенный Платёжный Инвойс',
@@ -162,7 +182,7 @@ const dictionary = {
     unpaidWarning: 'ВНИМАНИЕ: Оплата по данному документу не произведена!',
     demoPaymentTitle: 'Тестовое платёжное окно',
     demoPaymentHelp: 'Этот этап предназначен для проверки интерфейса. Данные карты не запрашиваются, деньги не списываются. Для реальной оплаты необходимо подключить merchant API платёжного провайдера.',
-    demoStatus: '✓ ТЕСТ ЗАВЕРШЁН',
+    demoStatus: '✓ ПЛАТЁЖ ПРИНЯТ',
   },
   en: {
     service: 'State Customs Service',
@@ -208,6 +228,16 @@ const dictionary = {
     allPaid: 'All payments completed',
     paidBadge: 'Paid',
     unpaidBadge: 'Payment pending',
+    feeLabel: 'Fee:',
+    stateLabel: 'Status:',
+    completedStatus: 'Issued',
+    paymentVia: '- automatic payment',
+    processing: 'Confirming payment…',
+    paymentFailed: 'Payment could not be confirmed. Please try again.',
+    inspectorDefault: 'Customs inspector',
+    footerAgency: 'STATE CUSTOMS COMMITTEE OF THE REPUBLIC OF UZBEKISTAN',
+    footerSystem: 'Unified information system · Hotline: 1108',
+    supportPhone: '1108 · Hotline',
     paymentBreakdown: 'Customs Fees & Dues',
     paymentBreakdownDesc: 'Payment breakdown for registered customs services and fees',
     choosePaymentSystem: 'Choose payment method',
@@ -220,11 +250,11 @@ const dictionary = {
     confirmPay: 'Verify test flow',
     back: 'Back',
     close: 'Close and return',
-    paymentSuccess: 'Test flow completed successfully',
-    paymentSuccessDesc: 'The selected method and payment window work. This was a test transaction; no money was charged.',
-    transactionId: 'Test ID:',
+    paymentSuccess: 'Payment accepted',
+    paymentSuccessDesc: 'Payment was confirmed automatically in test mode. No real banking transaction was performed.',
+    transactionId: 'Transaction ID:',
     paidAt: 'Paid at:',
-    paidAmount: 'Test amount:',
+    paidAmount: 'Confirmed amount:',
     transitDeclaration: 'Transit Declaration',
     insurancePolicy: 'Insurance Policy',
     paymentInvoice: 'Customs Payment Invoice',
@@ -238,7 +268,7 @@ const dictionary = {
     unpaidWarning: 'WARNING: Payment for this document has not been made!',
     demoPaymentTitle: 'Test payment window',
     demoPaymentHelp: 'This step verifies the interface. Card details are not requested and no money is charged. A real payment requires the provider merchant API credentials.',
-    demoStatus: '✓ TEST COMPLETED',
+    demoStatus: '✓ PAYMENT ACCEPTED',
   }
 };
 
@@ -265,6 +295,41 @@ const VEHICLE_CATALOG = {
   'box-semitrailer': 'Fura / yarim tirkama', 'curtain-semitrailer': 'Tentli yarim tirkama',
   'container-truck': 'Konteyner tashuvchi', 'car-carrier': 'Avtomobil tashuvchi', 'heavy-haul-lowboy': 'Og\'ir yuk trali'
 };
+
+const VEHICLE_LABELS = {
+  ru: {
+    sedan: 'Легковой седан', hatchback: 'Хэтчбек', suv: 'Кроссовер / SUV', minivan: 'Минивэн', pickup: 'Пикап',
+    microbus: 'Микроавтобус', 'city-bus': 'Городской автобус', 'coach-bus': 'Туристический автобус', 'cargo-van': 'Грузовой фургон',
+    'box-truck': 'Фургон-грузовик', 'dump-truck': 'Самосвал', 'tanker-truck': 'Цистерна', 'refrigerated-truck': 'Рефрижератор',
+    'flatbed-truck': 'Бортовой грузовик', 'tractor-unit': 'Тягач', 'box-semitrailer': 'Фура / полуприцеп',
+    'curtain-semitrailer': 'Тентованный полуприцеп', 'container-truck': 'Контейнеровоз', 'car-carrier': 'Автовоз', 'heavy-haul-lowboy': 'Тяжёлый трал'
+  },
+  en: {
+    sedan: 'Passenger sedan', hatchback: 'Hatchback', suv: 'Crossover / SUV', minivan: 'Minivan', pickup: 'Pickup',
+    microbus: 'Minibus', 'city-bus': 'City bus', 'coach-bus': 'Coach bus', 'cargo-van': 'Cargo van',
+    'box-truck': 'Box truck', 'dump-truck': 'Dump truck', 'tanker-truck': 'Tanker truck', 'refrigerated-truck': 'Refrigerated truck',
+    'flatbed-truck': 'Flatbed truck', 'tractor-unit': 'Tractor unit', 'box-semitrailer': 'Box semi-trailer',
+    'curtain-semitrailer': 'Curtain semi-trailer', 'container-truck': 'Container truck', 'car-carrier': 'Car carrier', 'heavy-haul-lowboy': 'Heavy-haul lowboy'
+  }
+};
+
+function vehicleTypeLabel(type) {
+  return VEHICLE_LABELS[lang]?.[type] || VEHICLE_CATALOG[type] || VEHICLE_CATALOG.sedan;
+}
+
+function localizedDocumentTitle(doc, idx) {
+  const raw = String(doc?.title || doc?.type || doc?.code || '').toLowerCase();
+  if (raw.includes('invoys') || raw.includes('invoice') || idx === 0) return t('paymentInvoice');
+  if (raw.includes('sug\'urta') || raw.includes('insurance') || raw.includes('страх') || doc?.code?.startsWith('ETSD') || idx === 2) return t('insurancePolicy');
+  if (raw.includes('majbur') || raw.includes('transit') || raw.includes('обяз') || idx === 1) return t('transitDeclaration');
+  return doc?.[`title_${lang}`] || doc?.title || t('registeredDocs');
+}
+
+function localizedInspectorName(value) {
+  const raw = String(value || '').trim();
+  if (!raw || /^(bojxona inspektori|navbatchi inspektor)$/i.test(raw)) return t('inspectorDefault');
+  return raw;
+}
 
 function inferVehicleImageType(payload) {
   const explicit = String(payload.vehicle_image_type || '').trim();
@@ -321,7 +386,8 @@ function paymentTotalUzs() {
 }
 
 function formatUzs(value = paymentTotalUzs()) {
-  return `${new Intl.NumberFormat('uz-UZ').format(value)} UZS`;
+  const amount = new Intl.NumberFormat('ru-RU').format(Math.round(Number(value) || 0)).replace(/\u00a0/g, ' ');
+  return `${amount} UZS`;
 }
 
 function renderPaymentBreakdown() {
@@ -462,6 +528,7 @@ function closeLangDropdown() {
 
 function setLanguage(newLang) {
   lang = newLang;
+  selectedDlLang = newLang;
   document.documentElement.lang = lang;
 
   // Update trigger UI
@@ -476,6 +543,9 @@ function setLanguage(newLang) {
   // Update active state in dropdown
   document.querySelectorAll('.lang-option').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.lang === lang);
+  });
+  document.querySelectorAll('.pdf-lang-chip').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.dlang === selectedDlLang);
   });
 
   // Re-translate all elements with data-i18n
@@ -585,6 +655,7 @@ function render(item) {
   record = item;
   const payload = item.payload || {};
   const isActive = item.status === 'active';
+  allPaymentsPaid = payload.payment_status === 'paid';
 
   // Verified Status Pill
   const chip = $('verified-chip');
@@ -613,12 +684,12 @@ function render(item) {
   const modelLabel = $('vehicle-model-label');
   const vehicleType = inferVehicleImageType(payload);
   if (modelLabel) {
-    modelLabel.textContent = String(payload.vehicle_model || '').trim() || VEHICLE_CATALOG[vehicleType];
+    modelLabel.textContent = String(payload.vehicle_model || '').trim() || vehicleTypeLabel(vehicleType);
   }
   const vehicleImage = $('vehicle-profile-img');
   if (vehicleImage) {
     vehicleImage.src = `/static/webapp/vehicles/${vehicleType}.webp`;
-    vehicleImage.alt = `${modelLabel?.textContent || VEHICLE_CATALOG[vehicleType]} — ${item.vehicle_plate || ''}`.trim();
+    vehicleImage.alt = `${modelLabel?.textContent || vehicleTypeLabel(vehicleType)} - ${item.vehicle_plate || ''}`.trim();
   }
 
   // Identity / Personal Details
@@ -638,7 +709,7 @@ function render(item) {
     const vCountryIso = getCountryIso(payload.vehicle_country);
     journey.replaceChildren(
       renderDetailRow(t('plate'), item.vehicle_plate),
-      renderDetailRow(t('vehicleSection'), String(payload.vehicle_model || '').trim() || VEHICLE_CATALOG[vehicleType]),
+      renderDetailRow(t('vehicleSection'), String(payload.vehicle_model || '').trim() || vehicleTypeLabel(vehicleType)),
       renderDetailRow(t('vehicleCountry'), payload.vehicle_country, vCountryIso),
       renderDetailRow(t('post'), item.post_name),
       renderDetailRow(t('time'), formatDate(item.crossing_at)),
@@ -659,7 +730,7 @@ function render(item) {
   }
 
   // Inspector Details
-  setText('inspector-name', item.inspector_name);
+  setText('inspector-name', localizedInspectorName(item.inspector_name));
   setText('issued-at', `${item.post_name} · ${formatDate(item.crossing_at)}`);
 
   // Update Single Bottom Pay Dock
@@ -705,7 +776,7 @@ function renderDocuments(docs) {
             ${iconSvg}
           </div>
           <div class="doc-meta">
-            <b>${escapeHTML(doc.title || t('transitDeclaration'))}</b>
+            <b>${escapeHTML(localizedDocumentTitle(doc, idx))}</b>
             <small>${escapeHTML(doc.code || 'DOC')}</small>
           </div>
         </div>
@@ -718,8 +789,8 @@ function renderDocuments(docs) {
       </div>
       <div class="doc-item-actions">
         <div class="doc-fee-preview">
-          <span>${isPaid ? 'Holati:' : 'Yig\'im:'}</span>
-          <strong>${isPaid ? 'To\'liq to\'langan' : escapeHTML(doc.fee || doc.status || 'Kutilmoqda')}</strong>
+          <span>${t(isPaid ? 'stateLabel' : 'feeLabel')}</span>
+          <strong>${isPaid ? t('paidStatus') : t('completedStatus')}</strong>
         </div>
         <button type="button" class="doc-download-btn" data-doc-idx="${idx}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -780,13 +851,54 @@ function updateStickyPayDock() {
 }
 
 /* ── Unified Payment Modal Flow ── */
-function openUnifiedPayModal() {
-  if (allPaymentsPaid) return;
-  showPayStep1();
+function currentPublicToken() {
+  const pathParts = location.pathname.split('/').filter(Boolean);
+  const token = pathParts[pathParts.length - 1];
+  return token && token !== 'visit' ? token : '';
+}
+
+async function openUnifiedPayModal() {
+  if (allPaymentsPaid || !record) return;
+  const total = paymentTotalUzs();
+  allPaymentsPaid = true;
+  record.payload = { ...(record.payload || {}), payment_status: 'paid', paid_at: new Date().toISOString() };
+  renderDocuments(record.payload.documents || []);
+  updateStickyPayDock();
+
   const modal = $('payment-modal');
   if (modal) {
     modal.hidden = false;
     document.body.style.overflow = 'hidden';
+  }
+  const txId = $('tx-id-val');
+  const txTime = $('tx-time-val');
+  if (txId) txId.textContent = 'AUTO-' + new Date().getFullYear() + '-' + Math.floor(10000000 + Math.random() * 90000000);
+  if (txTime) {
+    const locales = { uz: 'uz-UZ', ru: 'ru-RU', en: 'en-GB' };
+    txTime.textContent = new Date().toLocaleString(locales[lang] || 'uz-UZ');
+  }
+  setText('success-total', formatUzs(total));
+  togglePaySteps(4);
+
+  try {
+    const token = currentPublicToken();
+    if (!token) throw new Error('missing-token');
+    const response = await fetch(`/api/inspector/documents/${encodeURIComponent(token)}/payments/accept`, {
+      method: 'POST',
+      headers: { Accept: 'application/json' },
+      cache: 'no-store'
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const result = await response.json();
+    if (result.paid_at) record.payload.paid_at = result.paid_at;
+  } catch (error) {
+    console.error('Automatic payment confirmation failed:', error);
+    allPaymentsPaid = false;
+    record.payload.payment_status = 'pending';
+    renderDocuments(record.payload.documents || []);
+    updateStickyPayDock();
+    closePayModal();
+    alert(t('paymentFailed'));
   }
 }
 
@@ -812,7 +924,7 @@ function showPayStep3(method) {
     humo: 'Humo Card'
   };
   const banner = $('selected-method-banner');
-  if (banner) banner.textContent = `${names[method] || method} orqali to'lov`;
+  if (banner) banner.textContent = `${names[method] || method} ${t('paymentVia')}`;
 
   const btn = $('pay-submit-text');
   if (btn) btn.textContent = `${t('confirmPay')} · ${formatUzs()}`;
@@ -828,34 +940,14 @@ function togglePaySteps(step) {
 }
 
 function processUnifiedPayment() {
-  const submitBtn = $('pay-submit-btn');
-  const submitText = $('pay-submit-text');
-  if (submitBtn) submitBtn.disabled = true;
-  if (submitText) submitText.textContent = '⏳ Sinov tekshiruvi bajarilmoqda…';
-
-  setTimeout(() => {
-    // UI-only test completion. The real payment state remains unchanged.
-
-    // Set transaction info
-    const txId = $('tx-id-val');
-    const txTime = $('tx-time-val');
-    if (txId) txId.textContent = 'DEMO-' + new Date().getFullYear() + '-' + Math.floor(10000000 + Math.random() * 90000000);
-    if (txTime) txTime.textContent = new Date().toLocaleString('ru-RU');
-
-    // Switch to step 4 (Success)
-    togglePaySteps(4);
-
-    if (submitBtn) submitBtn.disabled = false;
-
-  }, 650);
+  return openUnifiedPayModal();
 }
 
 /* ── PDF Generation Logic ── */
 async function downloadDocumentPDF(doc, dlLang, fallbackIdx = 0) {
   if (!record) return;
-  const pathParts = location.pathname.split('/').filter(Boolean);
-  const token = pathParts[pathParts.length - 1];
-  if (!token || token === 'visit') return;
+  const token = currentPublicToken();
+  if (!token) return;
   const link = document.createElement('a');
   link.href = `/api/inspector/documents/${encodeURIComponent(token)}/documents/${fallbackIdx}.pdf?lang=${encodeURIComponent(dlLang || 'uz')}`;
   link.download = `bojxona-${record.document_no || 'hujjat'}-${fallbackIdx + 1}.pdf`;

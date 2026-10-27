@@ -1946,6 +1946,84 @@ input {
   to { opacity: 1; }
 }
 
+/* --- Small-phone layout fixes --- */
+@media (max-width: 430px) {
+  html { font-size: 14px; }
+  .app-header {
+    height: auto;
+    min-height: 62px;
+    padding: 9px 11px;
+    gap: 8px;
+  }
+  .header-brand {
+    flex: 1 1 auto;
+    min-width: 0;
+    gap: 8px;
+  }
+  .brand-logo-wrap { width: 34px; height: 38px; flex: 0 0 34px; }
+  .brand-text { min-width: 0; }
+  .brand-title { font-size: 14px; }
+  .brand-subtitle {
+    font-size: 8.5px;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+  }
+  .lang-dropdown-wrapper { flex: 0 0 auto; }
+  .lang-trigger-btn { gap: 5px; padding: 6px 8px; font-size: 11.5px; }
+  .lang-menu { width: min(195px, calc(100vw - 22px)); }
+  .app-main { padding: 12px 10px 34px; gap: 12px; }
+  .modern-card { padding: 14px 12px; border-radius: 18px; }
+  .vehicle-hero-card { padding: 15px 12px 13px; }
+  .vehicle-quick-stats { grid-template-columns: 1fr; }
+  .card-head-row { align-items: flex-start; gap: 8px; }
+  .vehicle-title-badge { min-width: 0; }
+  .vehicle-info-text { min-width: 0; }
+  .v-main, .quick-post-name, .stat-pill b, .welcome-driver-name, .sec-title {
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+  .vehicle-pass-badge { flex: 0 0 auto; font-size: 9px; padding: 4px 7px; }
+  .section-card-head { gap: 9px; margin-bottom: 13px; }
+  .sec-icon-circle { width: 36px; height: 36px; border-radius: 10px; }
+  .sec-title { font-size: 15px; }
+  .doc-item-card { padding: 12px; gap: 10px; }
+  .doc-item-top { flex-wrap: wrap; align-items: center; }
+  .doc-type-info { min-width: 0; flex: 1 1 150px; }
+  .doc-meta { min-width: 0; }
+  .doc-meta b { overflow-wrap: anywhere; }
+  .doc-status-badge {
+    flex: 0 1 auto;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.2;
+    margin-left: auto;
+  }
+  .doc-item-actions { gap: 10px; }
+  .doc-fee-preview { min-width: 0; }
+  .doc-download-btn { flex: 0 0 auto; padding: 8px 11px; }
+  .pdf-lang-bar { align-items: stretch; flex-direction: column; padding: 10px; }
+  .pdf-lang-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; }
+  .pdf-lang-chip { min-width: 0; justify-content: center; padding: 7px 5px; }
+  .sticky-pay-dock { padding: 9px 10px calc(9px + env(safe-area-inset-bottom)); }
+  .pay-dock-inner { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+  .pay-dock-meta { min-width: 0; }
+  .dock-price-row { flex-wrap: wrap; gap: 4px 6px; }
+  .dock-amount { font-size: 17px; }
+  .dock-status-badge { white-space: normal; line-height: 1.15; }
+  .dock-pay-btn { min-width: 124px; padding: 11px 14px; font-size: 13px; border-radius: 12px; }
+  .app-footer { padding-left: 12px; padding-right: 12px; }
+  .footer-center b { overflow-wrap: anywhere; }
+  .pay-modal-sheet { max-width: 100%; border-radius: 20px 20px 0 0; }
+}
+
+@media (max-width: 350px) {
+  .lang-cur-text { display: none; }
+  .doc-item-actions { align-items: stretch; flex-direction: column; }
+  .doc-download-btn { width: 100%; justify-content: center; }
+  .dock-pay-btn { min-width: 108px; padding-inline: 10px; }
+  .dock-pay-btn svg { display: none; }
+}
+
 /* --- Print Media Overrides --- */
 @media print {
   body { background: #fff; }
