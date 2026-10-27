@@ -494,7 +494,7 @@ class AdminTemplateTests(unittest.TestCase):
         self.assertIn('id="condition-list"', html)
         self.assertIn("additional_conditions", script)
         self.assertNotIn("Raw JSON", html)
-        self.assertIn("uzbekistan-emblem.png", login)
+        self.assertIn("customs-emblem.png", login)
 
     def test_rendered_javascript_preserves_apostrophe_escapes(self) -> None:
         tree = ast.parse((ROOT / "app" / "admin_panel.py").read_text(encoding="utf-8"))
@@ -526,14 +526,25 @@ class AdminTemplateTests(unittest.TestCase):
         self.assertEqual("".join(chunks), source)
 
     def test_inspector_admin_and_single_public_template_exist(self) -> None:
-        html = (ROOT / "app" / "static" / "admin.html").read_text(encoding="utf-8")
-        script = (ROOT / "app" / "static" / "admin.js").read_text(encoding="utf-8")
+        html = (ROOT / "app" / "static" / "inspector.html").read_text(encoding="utf-8")
+        script = (ROOT / "app" / "static" / "inspector.js").read_text(encoding="utf-8")
         public = (ROOT / "app" / "static" / "inspector-document.html").read_text(encoding="utf-8")
         backend = (ROOT / "app" / "webapp.py").read_text(encoding="utf-8")
-        self.assertIn('id="screen-inspector"', html)
-        self.assertIn("loadInspector", script)
+        self.assertIn('id="issuance-form"', html)
+        self.assertIn("loadJournal", script)
         self.assertIn("/api/inspector/documents/{token}", backend)
         self.assertIn('id="document-view"', public)
+
+    def test_inspector_public_page_is_csp_safe_and_has_vehicle_catalog(self) -> None:
+        public = (ROOT / "app" / "static" / "inspector-document.html").read_text(encoding="utf-8")
+        script = (ROOT / "app" / "static" / "inspector-document.js").read_text(encoding="utf-8")
+        vehicles = list((ROOT / "app" / "static" / "vehicles").glob("*.webp"))
+        self.assertNotRegex(public, r"\son(?:click|submit|error|load)=")
+        self.assertNotRegex(script, r"onclick=[\"']")
+        self.assertEqual(len(vehicles), 20)
+        self.assertIn("inferVehicleImageType", script)
+        self.assertIn("data-payment-method", public)
+        self.assertNotIn('id="card-number"', public)
 
 
 class RuntimeCountryLabelTests(unittest.TestCase):

@@ -12,6 +12,7 @@ CBU_RATES_URL = "https://cbu.uz/uz/arkhiv-kursov-valyut/json/"
 IMPORTANT_CURRENCIES = ("USD", "EUR", "RUB", "CNY", "KZT")
 REFRESH_INTERVAL = timedelta(hours=6)
 FAILURE_RETRY_INTERVAL = timedelta(minutes=5)
+MAX_FAILURE_RETRY_INTERVAL = timedelta(hours=6)
 
 
 class CurrencyRateService:
@@ -22,6 +23,9 @@ class CurrencyRateService:
         self._rates: dict[str, dict[str, Any]] = {}
         self._fetched_at: datetime | None = None
         self._last_attempt_at: datetime | None = None
+        self._next_attempt_at: datetime | None = None
+        self._last_warning_at: datetime | None = None
+        self._consecutive_failures = 0
         self._load_cache()
 
     @property
@@ -45,6 +49,7 @@ class CurrencyRateService:
             "fetched_at": self._fetched_at.isoformat() if self._fetched_at else None,
             "source": CBU_RATES_URL,
             "using_fallback": "USD" not in self._rates,
+            "next_retry_at": self._next_attempt_at.isoformat() if self._next_attempt_at else None,
         }
 
     def _load_cache(self) -> None:
@@ -92,11 +97,8 @@ class CurrencyRateService:
     async def refresh(self, force: bool = False) -> dict[str, Any]:
         if not force and self._fresh():
             return self.snapshot()
-        if (
-            not force
-            and self._last_attempt_at
-            and datetime.now(timezone.utc) - self._last_attempt_at < FAILURE_RETRY_INTERVAL
-        ):
+        now = datetime.now(timezone.utc)
+        if not force and self._next_attempt_at and now < self._next_attempt_at:
             return self.snapshot()
         async with self._lock:
             if not force and self._fresh():
@@ -115,9 +117,28 @@ class CurrencyRateService:
                     raise ValueError("CBU response does not contain USD")
                 self._rates = rates
                 self._fetched_at = datetime.now(timezone.utc)
+                if self._consecutive_failures:
+                    logger.info("CBU currency rates recovered after %s failed attempt(s)", self._consecutive_failures)
+                self._consecutive_failures = 0
+                self._next_attempt_at = None
+                self._last_warning_at = None
                 self._save_cache()
             except Exception as exc:
-                logger.warning("CBU currency rates could not be refreshed: %s", exc)
+                self._consecutive_failures += 1
+                delays = (5, 15, 30, 60, 180, 360)
+                retry_minutes = delays[min(self._consecutive_failures - 1, len(delays) - 1)]
+                retry_delta = min(timedelta(minutes=retry_minutes), MAX_FAILURE_RETRY_INTERVAL)
+                now = datetime.now(timezone.utc)
+                self._next_attempt_at = now + retry_delta
+                should_warn = self._last_warning_at is None or now - self._last_warning_at >= timedelta(hours=1)
+                log = logger.warning if should_warn else logger.debug
+                log(
+                    "CBU currency rates unavailable; cached/fallback values remain active, retry in %s minutes: %s",
+                    int(retry_delta.total_seconds() // 60),
+                    exc,
+                )
+                if should_warn:
+                    self._last_warning_at = now
             return self.snapshot()
 
     def _save_cache(self) -> None:

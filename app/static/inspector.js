@@ -237,8 +237,11 @@ const driverNameInput = document.getElementById('driver-name');
 const driverPassportInput = document.getElementById('driver-passport');
 const driverPhoneInput = document.getElementById('driver-phone');
 const vehiclePlateInput = document.getElementById('vehicle-plate');
+const vehicleModelInput = document.getElementById('vehicle-model');
+const vehicleImageTypeInput = document.getElementById('vehicle-image-type');
 const trailerPlateInput = document.getElementById('trailer-plate');
 const cargoDescInput = document.getElementById('cargo-desc');
+const paymentTotalInput = document.getElementById('payment-total-uzs');
 const inspectorNameInput = document.getElementById('inspector-name');
 const directionSelect = document.getElementById('direction-type');
 const destinationInput = document.getElementById('destination-name');
@@ -490,7 +493,7 @@ function updateReceiptPreview() {
 }
 
 // Bind live updates
-[driverNameInput, vehiclePlateInput, cargoDescInput, crossingTimeInput, postCodeSelect].forEach(el => {
+[driverNameInput, vehiclePlateInput, vehicleModelInput, vehicleImageTypeInput, cargoDescInput, crossingTimeInput, postCodeSelect].forEach(el => {
   if (el) el.addEventListener('input', updateReceiptPreview);
 });
 
@@ -542,12 +545,15 @@ issuanceForm.addEventListener('submit', async (e) => {
     driver_country: driverCountryInput.value,
     nationality: driverCountryInput.value,
     vehicle_plate: plate,
+    vehicle_model: vehicleModelInput.value.trim(),
+    vehicle_image_type: vehicleImageTypeInput.value || "auto",
     trailer_plate: trailerPlateInput.value.trim().toUpperCase(),
     vehicle_country: vehicleCountryInput.value,
     cargo_description: cargoDescInput.value.trim(),
     cargo: cargoDescInput.value.trim(),
     inspector_name: inspectorNameInput.value.trim() || "Navbatchi inspektor",
     service_note: document.getElementById('service-note')?.value.trim() || "",
+    payment_total_uzs: Math.max(0, Math.round(Number(paymentTotalInput?.value || 0))),
     documents: getDocumentsPayload()
   };
 

@@ -503,15 +503,15 @@ async def inspector_document_page(_: web.Request) -> web.FileResponse:
     return web.FileResponse(
         STATIC_DIR / "inspector-document.html",
         headers={
-            "Cache-Control": "public, max-age=300",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
             "X-Robots-Tag": "noindex, nofollow, noarchive",
-            # Allow Google Fonts and html2canvas CDN used by the new PDF/payment feature
+            # Public QR pages use external fonts only; all executable code is local and CSP-safe.
             "Content-Security-Policy": (
                 "default-src 'self'; "
-                "img-src 'self' data: https:; "
+                "img-src 'self' data:; "
                 "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
                 "font-src 'self' https://fonts.gstatic.com; "
-                "script-src 'self' https://cdnjs.cloudflare.com; "
+                "script-src 'self'; "
                 "connect-src 'self'; "
                 "base-uri 'none'; "
                 "frame-ancestors 'self'"
@@ -891,8 +891,14 @@ def setup_webapp_routes(app: web.Application, settings: Settings, portal_store: 
         token = request.match_info.get("token", "")
         item = await portal_store.get_inspector_document(token)
         if not item:
+            logger.info("Inspector QR lookup not found token_prefix=%s", token[:8])
             raise web.HTTPNotFound(text="Hujjat topilmadi.")
         item["verified"] = item.get("status") == "active"
+        logger.info(
+            "Inspector QR lookup ok document=%s status=%s",
+            item.get("document_no"),
+            item.get("status"),
+        )
         return web.json_response(
             {"ok": True, "document": item},
             headers={
@@ -907,6 +913,7 @@ def setup_webapp_routes(app: web.Application, settings: Settings, portal_store: 
         token = request.match_info.get("token", "")
         item = await portal_store.get_inspector_document(token)
         if not item:
+            logger.info("Inspector QR image not found token_prefix=%s", token[:8])
             raise web.HTTPNotFound(text="Hujjat topilmadi.")
         base_url = settings.webhook_url.rstrip("/") if settings.webhook_url else f"{request.scheme}://{request.host}"
         public_url = f"{base_url}/visit/{token}"
@@ -914,6 +921,7 @@ def setup_webapp_routes(app: web.Application, settings: Settings, portal_store: 
             svg = _inspector_qr_svg(public_url)
         except ImportError as exc:
             raise web.HTTPServiceUnavailable(text="QR moduli o'rnatilmagan.") from exc
+        logger.info("Inspector QR image generated document=%s", item.get("document_no"))
         return web.Response(
             body=svg,
             content_type="image/svg+xml",

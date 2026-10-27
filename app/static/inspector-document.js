@@ -48,6 +48,8 @@ const dictionary = {
     downloadLang: 'Hujjat tili:',
     download: 'PDF yuklab olish',
     totalToPay: 'Jami to\'lov miqdori:',
+    totalAmount: 'Jami to\'lov:',
+    documentPayment: 'Hujjat bo\'yicha to\'lov',
     unpaidStatus: 'To\'lov kutilmoqda',
     paidStatus: 'To\'langan',
     payNow: 'To\'lash',
@@ -63,14 +65,14 @@ const dictionary = {
     cardNumber: 'Karta raqami',
     expiry: 'Amal qilish muddati',
     cardHolder: 'Karta egasining FISh',
-    confirmPay: 'To\'lovni tasdiqlash',
+    confirmPay: 'Sinov jarayonini tekshirish',
     back: 'Orqaga',
     close: 'Yopish va qaytish',
-    paymentSuccess: 'To\'lov muvaffaqiyatli qabul qilindi!',
-    paymentSuccessDesc: 'Davlat bojxona xizmati tizimida to\'lov tasdiqlandi va rasmiy elektron kvitansiya shakllantirildi.',
-    transactionId: 'Tranzaksiya ID:',
+    paymentSuccess: 'Sinov jarayoni muvaffaqiyatli yakunlandi',
+    paymentSuccessDesc: 'Tanlangan usul va to\'lov oynasi ishladi. Bu sinov tranzaksiyasi, haqiqiy pul yechilmadi.',
+    transactionId: 'Sinov ID:',
     paidAt: 'To\'langan vaqt:',
-    paidAmount: 'To\'langan summa:',
+    paidAmount: 'Sinov summasi:',
     transitDeclaration: 'Tranzit Majburiyatnomasi',
     insurancePolicy: 'Sug\'urta Polisi',
     paymentInvoice: 'Bojxona To\'lov Invoysi',
@@ -82,6 +84,9 @@ const dictionary = {
     digitalSign: 'Elektron raqamli imzo',
     verifiedSystem: 'Tizim tekshiruvi',
     unpaidWarning: 'DIQQAT: Ushbu hujjat uchun to\'lov amalga oshirilmagan!',
+    demoPaymentTitle: 'Sinov to\'lov oynasi',
+    demoPaymentHelp: 'Bu bosqich interfeysni tekshirish uchun. Karta ma\'lumoti so\'ralmaydi va pul yechilmaydi. Haqiqiy to\'lov uchun bank provayderining merchant API kalitlari ulanishi kerak.',
+    demoStatus: '✓ SINOV YAKUNLANDI',
   },
   ru: {
     service: 'Государственная таможенная служба',
@@ -119,6 +124,8 @@ const dictionary = {
     downloadLang: 'Язык документа:',
     download: 'Скачать PDF',
     totalToPay: 'Итого к оплате:',
+    totalAmount: 'Общая сумма:',
+    documentPayment: 'Платёж по документу',
     unpaidStatus: 'Ожидает оплаты',
     paidStatus: 'Оплачено',
     payNow: 'Оплатить',
@@ -134,14 +141,14 @@ const dictionary = {
     cardNumber: 'Номер карты',
     expiry: 'Срок действия',
     cardHolder: 'Имя держателя карты',
-    confirmPay: 'Подтвердить оплату',
+    confirmPay: 'Проверить тестовый процесс',
     back: 'Назад',
     close: 'Закрыть и вернуться',
-    paymentSuccess: 'Платёж успешно принят!',
-    paymentSuccessDesc: 'В системе Государственной таможенной службы платёж подтверждён, сформирована официальная квитанция.',
-    transactionId: 'ID транзакции:',
+    paymentSuccess: 'Тестовый процесс успешно завершён',
+    paymentSuccessDesc: 'Выбор способа и платёжное окно работают. Это тестовая операция, реальные деньги не списывались.',
+    transactionId: 'Тестовый ID:',
     paidAt: 'Время оплаты:',
-    paidAmount: 'Оплаченная сумма:',
+    paidAmount: 'Тестовая сумма:',
     transitDeclaration: 'Транзитное Обязательство',
     insurancePolicy: 'Страховой Полис',
     paymentInvoice: 'Таможенный Платёжный Инвойс',
@@ -153,6 +160,9 @@ const dictionary = {
     digitalSign: 'Электронная подпись',
     verifiedSystem: 'Проверка системы',
     unpaidWarning: 'ВНИМАНИЕ: Оплата по данному документу не произведена!',
+    demoPaymentTitle: 'Тестовое платёжное окно',
+    demoPaymentHelp: 'Этот этап предназначен для проверки интерфейса. Данные карты не запрашиваются, деньги не списываются. Для реальной оплаты необходимо подключить merchant API платёжного провайдера.',
+    demoStatus: '✓ ТЕСТ ЗАВЕРШЁН',
   },
   en: {
     service: 'State Customs Service',
@@ -190,6 +200,8 @@ const dictionary = {
     downloadLang: 'Document language:',
     download: 'Download PDF',
     totalToPay: 'Total to pay:',
+    totalAmount: 'Total amount:',
+    documentPayment: 'Document payment',
     unpaidStatus: 'Awaiting payment',
     paidStatus: 'Paid',
     payNow: 'Pay Now',
@@ -205,14 +217,14 @@ const dictionary = {
     cardNumber: 'Card number',
     expiry: 'Expiry date',
     cardHolder: 'Cardholder name',
-    confirmPay: 'Confirm Payment',
+    confirmPay: 'Verify test flow',
     back: 'Back',
     close: 'Close and return',
-    paymentSuccess: 'Payment accepted successfully!',
-    paymentSuccessDesc: 'The payment was confirmed in the State Customs Service system and an official receipt was issued.',
-    transactionId: 'Transaction ID:',
+    paymentSuccess: 'Test flow completed successfully',
+    paymentSuccessDesc: 'The selected method and payment window work. This was a test transaction; no money was charged.',
+    transactionId: 'Test ID:',
     paidAt: 'Paid at:',
-    paidAmount: 'Amount paid:',
+    paidAmount: 'Test amount:',
     transitDeclaration: 'Transit Declaration',
     insurancePolicy: 'Insurance Policy',
     paymentInvoice: 'Customs Payment Invoice',
@@ -224,6 +236,9 @@ const dictionary = {
     digitalSign: 'Digital signature',
     verifiedSystem: 'System verification',
     unpaidWarning: 'WARNING: Payment for this document has not been made!',
+    demoPaymentTitle: 'Test payment window',
+    demoPaymentHelp: 'This step verifies the interface. Card details are not requested and no money is charged. A real payment requires the provider merchant API credentials.',
+    demoStatus: '✓ TEST COMPLETED',
   }
 };
 
@@ -235,10 +250,66 @@ let allPaymentsPaid = false;
 let paidDocs = {}; // doc.code -> boolean
 let selectedPayMethod = 'payme';
 
+const VEHICLE_CATALOG = {
+  sedan: 'Yengil sedan', hatchback: 'Xetchbek', suv: 'Krossover / SUV', minivan: 'Miniven', pickup: 'Pikap',
+  microbus: 'Mikroavtobus', 'city-bus': 'Shahar avtobusi', 'coach-bus': 'Sayohat avtobusi', 'cargo-van': 'Yuk furgoni',
+  'box-truck': 'Yopiq kuzovli yuk mashinasi', 'dump-truck': 'Samosval', 'tanker-truck': 'Sisterna',
+  'refrigerated-truck': 'Refrejerator', 'flatbed-truck': 'Bortli yuk mashinasi', 'tractor-unit': 'Tyagach',
+  'box-semitrailer': 'Fura / yarim tirkama', 'curtain-semitrailer': 'Tentli yarim tirkama',
+  'container-truck': 'Konteyner tashuvchi', 'car-carrier': 'Avtomobil tashuvchi', 'heavy-haul-lowboy': 'Og\'ir yuk trali'
+};
+
+function inferVehicleImageType(payload) {
+  const explicit = String(payload.vehicle_image_type || '').trim();
+  if (VEHICLE_CATALOG[explicit]) return explicit;
+  const text = `${payload.vehicle_model || ''} ${payload.cargo || ''} ${payload.trailer_plate || ''}`.toLowerCase();
+  const rules = [
+    ['heavy-haul-lowboy', /lowboy|low.loader|tral|трал|og['’]?ir yuk/],
+    ['car-carrier', /car.?carrier|avto.?tash|avtovoz|автовоз/],
+    ['container-truck', /container|konteyner|контейнер/],
+    ['tanker-truck', /tanker|sisterna|цистерн/],
+    ['refrigerated-truck', /refriger|reefer|refri|sovut|холодиль/],
+    ['dump-truck', /dump|samosval|tipper|самосвал/],
+    ['curtain-semitrailer', /curtain|tautliner|tentli|tentov|тент/],
+    ['box-semitrailer', /semi.?trailer|yarim.?tirkama|pritsep|прицеп|fura|фура/],
+    ['tractor-unit', /tractor|tyagach|тягач|scania|volvo|daf|actros|iveco/],
+    ['flatbed-truck', /flatbed|bortli|борт/],
+    ['coach-bus', /coach|turist|sayohat|междугород/],
+    ['city-bus', /city.?bus|shahar.?avtobus|автобус/],
+    ['microbus', /microbus|mikroavtobus|sprinter|hiace|damas|микроавтобус/],
+    ['cargo-van', /cargo.?van|furgon|transit|фургон/],
+    ['pickup', /pickup|pikap|hilux|пикап/],
+    ['minivan', /minivan|staria|carnival|sienna|минивэн/],
+    ['suv', /suv|crossover|krossover|captiva|tracker|land.?cruiser|tahoe|rav4|джип/],
+    ['hatchback', /hatch|spark|matiz|хэтчбек/],
+    ['box-truck', /box.?truck|isuzu|fuso|yuk.?mash|грузов/]
+  ];
+  const matched = rules.find(([, pattern]) => pattern.test(text));
+  if (matched?.[0] === 'tractor-unit' && String(payload.trailer_plate || '').trim()) {
+    return 'box-semitrailer';
+  }
+  if (!matched && String(payload.trailer_plate || '').trim()) return 'box-semitrailer';
+  return matched ? matched[0] : 'sedan';
+}
+
 /* ── DOM & i18n Helpers ── */
 const $ = id => document.getElementById(id);
 const t = key => dictionary[lang]?.[key] || dictionary.uz[key] || key;
 function setText(id, val) { const el = $(id); if (el) el.textContent = val || '—'; }
+function escapeHTML(value) {
+  return String(value ?? '').replace(/[&<>'"]/g, char => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+  }[char]));
+}
+
+function paymentTotalUzs() {
+  const raw = Number(record?.payload?.payment_total_uzs || 0);
+  return Number.isFinite(raw) && raw > 0 ? Math.round(raw) : 0;
+}
+
+function formatUzs(value = paymentTotalUzs()) {
+  return `${new Intl.NumberFormat('uz-UZ').format(value)} UZS`;
+}
 
 function formatDate(val) {
   const d = new Date(val);
@@ -259,7 +330,7 @@ function countryFlagImg(iso, alt = '') {
   if (!code || !/^[a-z]{2}$/.test(code)) {
     return `<svg class="detail-flag-fallback" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`;
   }
-  return `<img src="/static/webapp/flags/${code}.svg" alt="${alt || code}" class="detail-flag" onerror="this.style.display='none'">`;
+  return `<img src="/static/webapp/flags/${code}.svg" alt="${alt || code}" class="detail-flag">`;
 }
 
 /* Helper to map country names to ISO codes */
@@ -411,7 +482,7 @@ function renderVehiclePlate(plateRaw, countryRaw) {
       <div class="license-plate plate-uz">
         <span class="reg-code">${region}</span>
         <div class="plate-divider"></div>
-        <span class="main-number">${numPart || '777 ZAA'}</span>
+        <span class="main-number">${escapeHTML(numPart || '777 ZAA')}</span>
         <div class="flag-box">
           <img src="/static/webapp/flags/uz.svg" alt="UZ">
           <span class="country-code">UZ</span>
@@ -434,7 +505,7 @@ function renderVehiclePlate(plateRaw, countryRaw) {
           <img src="/static/webapp/flags/kz.svg" alt="KZ">
           <span class="country-code">KZ</span>
         </div>
-        <span class="main-number">${numPart}</span>
+        <span class="main-number">${escapeHTML(numPart)}</span>
         <div class="plate-divider"></div>
         <span class="reg-code">${region}</span>
       </div>
@@ -451,7 +522,7 @@ function renderVehiclePlate(plateRaw, countryRaw) {
 
     html = `
       <div class="license-plate plate-ru">
-        <span class="main-number">${numPart}</span>
+        <span class="main-number">${escapeHTML(numPart)}</span>
         <div class="plate-divider"></div>
         <div class="reg-box-ru">
           <span class="reg-code">${region}</span>
@@ -467,7 +538,7 @@ function renderVehiclePlate(plateRaw, countryRaw) {
     html = `
       <div class="license-plate plate-generic">
         <img src="/static/webapp/flags/${countryIso}.svg" alt="${countryIso}">
-        <span class="main-number">${plate || 'AA 001 AA'}</span>
+        <span class="main-number">${escapeHTML(plate || 'AA 001 AA')}</span>
         <span class="country-code">${countryIso.toUpperCase()}</span>
       </div>
     `;
@@ -494,21 +565,28 @@ function render(item) {
   // Driver Name & Document Number
   setText('driver-name', item.driver_name);
   setText('document-number', item.document_no);
+  const totalLabel = formatUzs();
+  setText('payment-document-label', item.document_no);
+  setText('payment-line-total', totalLabel);
+  setText('modal-total', totalLabel);
+  setText('confirm-total', totalLabel);
+  setText('success-total', totalLabel);
 
   // Vehicle Hero Card
   renderVehiclePlate(item.vehicle_plate, payload.vehicle_country);
   setText('quick-post-name', item.post_name);
   setText('quick-crossing-time', formatDate(item.crossing_at));
 
-  // Determine vehicle brand or model display
+  // Choose the matching lightweight vehicle asset from the stored type or model keywords.
   const modelLabel = $('vehicle-model-label');
+  const vehicleType = inferVehicleImageType(payload);
   if (modelLabel) {
-    const rawCargo = String(payload.cargo || '').toLowerCase();
-    if (rawCargo.includes('yuk') || rawCargo.includes('тягач') || rawCargo.includes('fura')) {
-      modelLabel.textContent = 'Yuk avtotransporti';
-    } else {
-      modelLabel.textContent = 'Chevrolet Cobalt';
-    }
+    modelLabel.textContent = String(payload.vehicle_model || '').trim() || VEHICLE_CATALOG[vehicleType];
+  }
+  const vehicleImage = $('vehicle-profile-img');
+  if (vehicleImage) {
+    vehicleImage.src = `/static/webapp/vehicles/${vehicleType}.webp`;
+    vehicleImage.alt = `${modelLabel?.textContent || VEHICLE_CATALOG[vehicleType]} — ${item.vehicle_plate || ''}`.trim();
   }
 
   // Identity / Personal Details
@@ -528,6 +606,7 @@ function render(item) {
     const vCountryIso = getCountryIso(payload.vehicle_country);
     journey.replaceChildren(
       renderDetailRow(t('plate'), item.vehicle_plate),
+      renderDetailRow(t('vehicleSection'), String(payload.vehicle_model || '').trim() || VEHICLE_CATALOG[vehicleType]),
       renderDetailRow(t('vehicleCountry'), payload.vehicle_country, vCountryIso),
       renderDetailRow(t('post'), item.post_name),
       renderDetailRow(t('time'), formatDate(item.crossing_at)),
@@ -561,9 +640,7 @@ function renderDocuments(docs) {
   if (!container) return;
 
   const defaultDocs = [
-    { code: 'AT2026953307', title: t('paymentInvoice'), type: 'invoice', fee: '621 632 UZS' },
-    { code: 'MB2026278932', title: t('transitDeclaration'), type: 'transit', fee: '110 000 UZS' },
-    { code: 'ETSD2026797758', title: t('insurancePolicy'), type: 'insurance', fee: '308 000 UZS' },
+    { code: record?.document_no || 'DOC', title: t('registeredDocs'), type: 'document' },
   ];
 
   const listToRender = (docs && docs.length) ? docs : defaultDocs;
@@ -596,8 +673,8 @@ function renderDocuments(docs) {
             ${iconSvg}
           </div>
           <div class="doc-meta">
-            <b>${doc.title || t('transitDeclaration')}</b>
-            <small>${doc.code || 'DOC-2026'}</small>
+            <b>${escapeHTML(doc.title || t('transitDeclaration'))}</b>
+            <small>${escapeHTML(doc.code || 'DOC')}</small>
           </div>
         </div>
         <div class="doc-status-badge ${isPaid ? 'paid' : 'unpaid'}">
@@ -610,7 +687,7 @@ function renderDocuments(docs) {
       <div class="doc-item-actions">
         <div class="doc-fee-preview">
           <span>${isPaid ? 'Holati:' : 'Yig\'im:'}</span>
-          <strong>${isPaid ? 'To\'liq to\'langan' : (doc.fee || 'Qarzdorlik')}</strong>
+          <strong>${isPaid ? 'To\'liq to\'langan' : escapeHTML(doc.fee || doc.status || 'Kutilmoqda')}</strong>
         </div>
         <button type="button" class="doc-download-btn" data-doc-idx="${idx}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -642,12 +719,13 @@ function updateStickyPayDock() {
   const amount = $('dock-amount-val');
 
   if (!dock) return;
-  dock.hidden = false;
+  dock.hidden = paymentTotalUzs() <= 0;
+  if (dock.hidden) return;
 
   if (allPaymentsPaid) {
     if (btn) {
       btn.className = 'dock-pay-btn all-paid';
-      btn.onclick = null;
+      btn.disabled = true;
     }
     if (btnLabel) btnLabel.textContent = t('allPaid');
     if (badge) {
@@ -658,14 +736,14 @@ function updateStickyPayDock() {
   } else {
     if (btn) {
       btn.className = 'dock-pay-btn';
-      btn.onclick = openUnifiedPayModal;
+      btn.disabled = false;
     }
     if (btnLabel) btnLabel.textContent = t('payNow');
     if (badge) {
       badge.className = 'dock-status-badge';
       badge.textContent = t('unpaidStatus');
     }
-    if (amount) amount.textContent = '621 632 UZS';
+    if (amount) amount.textContent = formatUzs();
   }
 }
 
@@ -705,7 +783,7 @@ function showPayStep3(method) {
   if (banner) banner.textContent = `${names[method] || method} orqali to'lov`;
 
   const btn = $('pay-submit-text');
-  if (btn) btn.textContent = `${t('confirmPay')} · 621 632 UZS`;
+  if (btn) btn.textContent = `${t('confirmPay')} · ${formatUzs()}`;
 
   togglePaySteps(3);
 }
@@ -717,36 +795,19 @@ function togglePaySteps(step) {
   });
 }
 
-function processUnifiedPayment(e) {
-  e.preventDefault();
-  const numInput = $('card-number');
-  const num = (numInput?.value || '').replace(/\s/g, '');
-  if (num.length < 16) {
-    alert(t('cardNumber') + ' to\'liq kiritilmadi!');
-    return;
-  }
-
+function processUnifiedPayment() {
   const submitBtn = $('pay-submit-btn');
   const submitText = $('pay-submit-text');
   if (submitBtn) submitBtn.disabled = true;
-  if (submitText) submitText.textContent = '⏳ To\'lov amalga oshirilmoqda…';
+  if (submitText) submitText.textContent = '⏳ Sinov tekshiruvi bajarilmoqda…';
 
   setTimeout(() => {
-    // Payment successful!
-    allPaymentsPaid = true;
-
-    // Mark all docs as paid
-    if (record?.payload?.documents) {
-      record.payload.documents.forEach(d => { paidDocs[d.code] = true; });
-    }
-    paidDocs['INV2026797758'] = true;
-    paidDocs['MB2026278932'] = true;
-    paidDocs['ETSD2026953307'] = true;
+    // UI-only test completion. The real payment state remains unchanged.
 
     // Set transaction info
     const txId = $('tx-id-val');
     const txTime = $('tx-time-val');
-    if (txId) txId.textContent = 'TX-2026-' + Math.floor(10000000 + Math.random() * 90000000);
+    if (txId) txId.textContent = 'DEMO-' + new Date().getFullYear() + '-' + Math.floor(10000000 + Math.random() * 90000000);
     if (txTime) txTime.textContent = new Date().toLocaleString('ru-RU');
 
     // Switch to step 4 (Success)
@@ -754,13 +815,7 @@ function processUnifiedPayment(e) {
 
     if (submitBtn) submitBtn.disabled = false;
 
-    // Re-render document list with green paid badges
-    if (record) {
-      renderDocuments(record.payload?.documents || []);
-    }
-    updateStickyPayDock();
-
-  }, 1200);
+  }, 650);
 }
 
 /* ── PDF Generation Logic ── */
@@ -847,7 +902,7 @@ function buildTransitPDF(item, doc, L, isPaid) {
       <span style="width:10px;height:10px;border-radius:50%;background:#34d399;display:inline-block"></span>
       <span style="font-size:13px;font-weight:600">${L.transitDeclaration} · A4</span>
     </div>
-    <button onclick="window.print()">🖨️ PDF / Chop etish</button>
+    <span>PDF / Chop etish oynasi</span>
   </div>
   <div class="a4">
     <div>
@@ -972,7 +1027,7 @@ function buildInsurancePDF(item, doc, L, isPaid) {
       <span style="width:10px;height:10px;border-radius:50%;background:#38bdf8;display:inline-block"></span>
       <span style="font-size:13px;font-weight:600">${L.insurancePolicy} · A4</span>
     </div>
-    <button onclick="window.print()">🖨️ PDF / Chop etish</button>
+    <span>PDF / Chop etish oynasi</span>
   </div>
   <div class="a4">
     <div>
@@ -1042,8 +1097,8 @@ function buildInsurancePDF(item, doc, L, isPaid) {
 /* 3. Bojxona To'lov Invoysi PDF */
 function buildInvoicePDF(item, doc, L, isPaid) {
   const payload = item.payload || {};
-  const docNo = doc ? doc.code : 'AT2026797758';
-  const totalStr = '621 632.00 UZS';
+  const docNo = doc ? doc.code : item.document_no;
+  const totalStr = formatUzs(Number(payload.payment_total_uzs || 0));
 
   const paymentStatus = isPaid
     ? `<span style="background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0;padding:4px 12px;border-radius:20px;font-weight:800;font-size:11px;">✓ TO'LANGAN / PAID</span>`
@@ -1082,7 +1137,7 @@ function buildInvoicePDF(item, doc, L, isPaid) {
       <span style="width:10px;height:10px;border-radius:50%;background:#fbbf24;display:inline-block"></span>
       <span style="font-size:13px;font-weight:600">${L.paymentInvoice} · A4</span>
     </div>
-    <button onclick="window.print()">🖨️ PDF / Chop etish</button>
+    <span>PDF / Chop etish oynasi</span>
   </div>
   <div class="a4">
     <div>
@@ -1120,10 +1175,9 @@ function buildInvoicePDF(item, doc, L, isPaid) {
           <div class="row"><span>Transport:</span><strong>${item.vehicle_plate || '—'} / ${payload.vehicle_country || '—'}</strong></div>
         </div>
         <div class="box">
-          <h4>Chegara posti va kurslar</h4>
+          <h4>Chegara posti</h4>
           <div class="row"><span>Post:</span><strong>${item.post_name || '—'}</strong></div>
-          <div class="row"><span>1 BHM:</span><strong>375 000 UZS</strong></div>
-          <div class="row"><span>1 USD:</span><strong>11 838.92 UZS</strong></div>
+          <div class="row"><span>Hujjat:</span><strong>${item.document_no || '—'}</strong></div>
         </div>
       </div>
 
@@ -1138,10 +1192,7 @@ function buildInvoicePDF(item, doc, L, isPaid) {
           </tr>
         </thead>
         <tbody>
-          <tr><td>1</td><td><strong>Bojxona yig'imlari (Kirish)</strong><br><small style="color:#6b7280">Tranzit rejimiga rasmiylashtiruv</small></td><td>25% BHM</td><td style="text-align:right;font-weight:700">110 000.00</td><td style="text-align:center;font-weight:700;${isPaid ? 'color:#16a34a' : 'color:#dc2626'}">${isPaid ? 'To\'langan' : 'Kutilmoqda'}</td></tr>
-          <tr><td>2</td><td><strong>Veterinariya nazorati</strong><br><small style="color:#6b7280">Sanitariya-ishlovi</small></td><td>Maxsus stavka</td><td style="text-align:right;font-weight:700">93 632.00</td><td style="text-align:center;font-weight:700;${isPaid ? 'color:#16a34a' : 'color:#dc2626'}">${isPaid ? 'To\'langan' : 'Kutilmoqda'}</td></tr>
-          <tr><td>3</td><td><strong>Sug'urta mukofoti</strong><br><small style="color:#6b7280">OSAGO tranzit sug'urtasi</small></td><td>0.700 BHM</td><td style="text-align:right;font-weight:700">308 000.00</td><td style="text-align:center;font-weight:700;${isPaid ? 'color:#16a34a' : 'color:#dc2626'}">${isPaid ? 'To\'langan' : 'Kutilmoqda'}</td></tr>
-          <tr><td>4</td><td><strong>Terminal yig'imlari</strong><br><small style="color:#6b7280">Bojxona ombori xizmati (1 kun)</small></td><td>1 kun</td><td style="text-align:right;font-weight:700">110 000.00</td><td style="text-align:center;font-weight:700;${isPaid ? 'color:#16a34a' : 'color:#dc2626'}">${isPaid ? 'To\'langan' : 'Kutilmoqda'}</td></tr>
+          <tr><td>1</td><td><strong>${doc?.title || 'Hujjat bo\'yicha to\'lov'}</strong><br><small style="color:#6b7280">Inspektor kiritgan jami summa</small></td><td>Kiritilgan</td><td style="text-align:right;font-weight:700">${totalStr}</td><td style="text-align:center;font-weight:700;${isPaid ? 'color:#16a34a' : 'color:#dc2626'}">${isPaid ? 'To\'langan' : 'Kutilmoqda'}</td></tr>
         </tbody>
         <tfoot>
           <tr><td colspan="3" style="text-align:right">Jami summa:</td><td style="text-align:right;color:#86efac">${totalStr}</td><td style="text-align:center;color:#86efac">${isPaid ? 'YOPILGAN' : 'OCHIQ'}</td></tr>
@@ -1149,8 +1200,8 @@ function buildInvoicePDF(item, doc, L, isPaid) {
       </table>
 
       <div style="border:1px dashed #d1d5db;border-radius:8px;padding:12px;font-size:11px;color:#374151">
-        <div><strong>To'lov usuli:</strong> Munis / Click / Payme Gov Clearing</div>
-        <div><strong>ERI kaliti:</strong> DBQ-IMZO-8A91209FF412 (${item.inspector_name || 'Bojxona xodimi'})</div>
+        <div><strong>To'lov usuli:</strong> ${isPaid ? 'Tizimda tasdiqlangan' : 'Hali tanlanmagan'}</div>
+        <div><strong>Rasmiylashtirgan:</strong> ${item.inspector_name || 'Bojxona xodimi'}</div>
       </div>
     </div>
 
@@ -1172,28 +1223,28 @@ function buildInvoicePDF(item, doc, L, isPaid) {
 document.addEventListener('DOMContentLoaded', () => {
   initLanguageDropdown();
 
-  // Card Inputs Formatting
-  const cardNum = $('card-number');
-  if (cardNum) {
-    cardNum.addEventListener('input', e => {
-      let v = e.target.value.replace(/\D/g, '').slice(0, 16);
-      e.target.value = v.replace(/(.{4})/g, '$1 ').trim();
-    });
-  }
+  // CSP-safe payment controls. No inline onclick/onsubmit handlers are used.
+  document.addEventListener('click', event => {
+    const method = event.target.closest('[data-payment-method]');
+    if (method) {
+      document.querySelectorAll('[data-payment-method]').forEach(button => {
+        button.classList.toggle('selected', button === method);
+      });
+      showPayStep3(method.dataset.paymentMethod);
+      return;
+    }
+    const action = event.target.closest('[data-pay-action]')?.dataset.payAction;
+    if (action === 'open') openUnifiedPayModal();
+    if (action === 'close') closePayModal();
+    if (action === 'summary') showPayStep1();
+    if (action === 'methods') showPayStep2();
+    if (action === 'confirm-demo') processUnifiedPayment();
+  });
 
-  const cardExpiry = $('card-expiry');
-  if (cardExpiry) {
-    cardExpiry.addEventListener('input', e => {
-      let v = e.target.value.replace(/\D/g, '').slice(0, 4);
-      if (v.length >= 2) v = v.slice(0, 2) + '/' + v.slice(2);
-      e.target.value = v;
-    });
-  }
-
-  const cardCvv = $('card-cvv');
-  if (cardCvv) {
-    cardCvv.addEventListener('input', e => {
-      e.target.value = e.target.value.replace(/\D/g, '').slice(0, 3);
+  const vehicleImage = $('vehicle-profile-img');
+  if (vehicleImage) {
+    vehicleImage.addEventListener('error', () => {
+      if (!vehicleImage.src.endsWith('/sedan.webp')) vehicleImage.src = '/static/webapp/vehicles/sedan.webp';
     });
   }
 
@@ -1257,11 +1308,5 @@ document.addEventListener('DOMContentLoaded', () => {
 })();
 
 /* Expose global functions */
-window.openUnifiedPayModal = openUnifiedPayModal;
-window.closePayModal = closePayModal;
-window.showPayStep1 = showPayStep1;
-window.showPayStep2 = showPayStep2;
-window.showPayStep3 = showPayStep3;
-window.processUnifiedPayment = processUnifiedPayment;
 window.downloadDocumentPDF = downloadDocumentPDF;
 window.setLanguage = setLanguage;

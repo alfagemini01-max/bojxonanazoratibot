@@ -19,7 +19,7 @@ from app.portal_store import PortalStore
 from app.webapp import setup_webapp_routes, webapp_page
 
 logger = logging.getLogger(__name__)
-APP_VERSION = "2026-10-26-inspector-v5-pdf-payment-optimize"
+APP_VERSION = "2026-10-27-inspector-v7-csp-vehicles"
 
 
 def create_http_middlewares(settings: Settings):
@@ -74,6 +74,12 @@ def setup_portal_lifecycle(app, settings: Settings, store: PortalStore) -> None:
     async def initialize(_: object) -> None:
         await store.initialize()
         app["portal_ready"] = True
+        app["portal_backend"] = store.backend
+        if store.backend == "sqlite" and settings.webhook_url:
+            logger.warning(
+                "Portal is using local SQLite. Inspector QR records can disappear after a Render restart; "
+                "configure USER_DATABASE_URL with persistent PostgreSQL."
+            )
 
         async def notification_worker() -> None:
             from aiohttp import ClientSession
@@ -159,7 +165,16 @@ async def start_health_server(settings: Settings):
 
     async def health(request: web.Request) -> web.Response:
         ready = bool(request.app.get("portal_ready"))
-        return web.json_response({"ok": ready, "ready": ready, "service": "nazoratbot-telegram", "version": APP_VERSION}, status=200 if ready else 503)
+        return web.json_response(
+            {
+                "ok": ready,
+                "ready": ready,
+                "service": "nazoratbot-telegram",
+                "version": APP_VERSION,
+                "database_backend": request.app.get("portal_backend", "unknown"),
+            },
+            status=200 if ready else 503,
+        )
 
     app = web.Application(client_max_size=12 * 1024 * 1024, middlewares=create_http_middlewares(settings))
     portal_store = PortalStore(
@@ -215,7 +230,14 @@ def run_webhook() -> None:
     async def health(request: web.Request) -> web.Response:
         ready = bool(request.app.get("portal_ready"))
         return web.json_response(
-            {"ok": ready, "ready": ready, "service": "nazoratbot-telegram", "mode": "webhook", "version": APP_VERSION},
+            {
+                "ok": ready,
+                "ready": ready,
+                "service": "nazoratbot-telegram",
+                "mode": "webhook",
+                "version": APP_VERSION,
+                "database_backend": request.app.get("portal_backend", "unknown"),
+            },
             status=200 if ready else 503,
         )
 

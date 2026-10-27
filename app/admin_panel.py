@@ -1777,6 +1777,12 @@ def setup_admin_routes(app: web.Application, settings: Settings, portal_store: P
             "post_code": item.get("post_code"),
             "actor": actor,
         })
+        logger.info(
+            "Inspector document created document=%s post=%s actor=%s",
+            item.get("document_no"),
+            item.get("post_code"),
+            actor,
+        )
         return web.json_response({"ok": True, "document": inspector_urls(request, item)})
 
     async def inspector_document_status(request: web.Request) -> web.Response:

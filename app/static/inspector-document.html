@@ -6,12 +6,13 @@
   <meta name="robots" content="noindex,nofollow,noarchive">
   <meta name="theme-color" content="#063c32">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="icon" href="/static/webapp/customs-emblem.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/webapp/inspector-document.css?v=6">
+  <link rel="stylesheet" href="/static/webapp/inspector-document.css?v=7">
   <title>E-Bojxona · Hujjat tekshiruvi</title>
 </head>
 <body>
@@ -152,7 +153,7 @@
 
           <!-- Car Visual Stage -->
           <div class="car-visual-stage">
-            <img src="/static/webapp/vehicle-cobalt.jpg" alt="Transport vositasi" class="car-profile-img">
+            <img src="/static/webapp/vehicles/sedan.webp" alt="Transport vositasi" class="car-profile-img" id="vehicle-profile-img" width="960" height="540">
             <div class="car-ground-shadow"></div>
           </div>
 
@@ -327,11 +328,11 @@
         <div class="pay-dock-meta">
           <span class="dock-meta-label" data-i18n="totalToPay">Jami to'lov miqdori:</span>
           <div class="dock-price-row">
-            <span class="dock-amount" id="dock-amount-val">621 632 UZS</span>
+            <span class="dock-amount" id="dock-amount-val">0 UZS</span>
             <span class="dock-status-badge" id="dock-status-badge" data-i18n="unpaidStatus">Kutilmoqda</span>
           </div>
         </div>
-        <button type="button" class="dock-pay-btn" id="dock-pay-btn" onclick="openUnifiedPayModal()">
+        <button type="button" class="dock-pay-btn" id="dock-pay-btn" data-pay-action="open">
           <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
             <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
             <line x1="1" y1="10" x2="23" y2="10"></line>
@@ -355,7 +356,7 @@
   <div class="pay-modal-overlay" id="payment-modal" hidden>
     <div class="pay-modal-sheet" role="dialog" aria-modal="true">
       <div class="sheet-drag-handle"></div>
-      <button type="button" class="sheet-close-btn" onclick="closePayModal()" aria-label="Yopish">
+      <button type="button" class="sheet-close-btn" data-pay-action="close" aria-label="Yopish">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <line x1="18" y1="6" x2="6" y2="18"></line>
           <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -378,39 +379,18 @@
         <div class="fee-items-box">
           <div class="fee-row-item">
             <div>
-              <b>Bojxona yig'imlari (Kirish)</b>
-              <small>Tranzit rasmiylashtiruvi (25% BHM)</small>
+              <b data-i18n="documentPayment">Hujjat bo'yicha to'lov</b>
+              <small id="payment-document-label">—</small>
             </div>
-            <span>110 000 UZS</span>
-          </div>
-          <div class="fee-row-item">
-            <div>
-              <b>Veterinariya nazorati</b>
-              <small>Sanitariya-ishlovidan o'tkazish</small>
-            </div>
-            <span>93 632 UZS</span>
-          </div>
-          <div class="fee-row-item">
-            <div>
-              <b>Sug'urta polisi (OSAGO)</b>
-              <small>0.700 raz. BHM (68 km tranzit)</small>
-            </div>
-            <span>308 000 UZS</span>
-          </div>
-          <div class="fee-row-item">
-            <div>
-              <b>Terminal yig'imlari</b>
-              <small>Bojxona ombori xizmati (1 kun)</small>
-            </div>
-            <span>110 000 UZS</span>
+            <span id="payment-line-total">0 UZS</span>
           </div>
           <div class="fee-total-row">
             <span data-i18n="totalAmount">Jami to'lov:</span>
-            <strong>621 632 UZS</strong>
+            <strong id="modal-total">0 UZS</strong>
           </div>
         </div>
 
-        <button type="button" class="modal-primary-btn" onclick="showPayStep2()">
+        <button type="button" class="modal-primary-btn" data-pay-action="methods">
           <span data-i18n="choosePaymentSystem">To'lov usulini tanlash</span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <polyline points="9 18 15 12 9 6"></polyline>
@@ -427,7 +407,7 @@
 
         <div class="pay-methods-grid">
           <!-- Payme -->
-          <button type="button" class="method-card" onclick="showPayStep3('payme')">
+          <button type="button" class="method-card" data-payment-method="payme">
             <div class="method-logo-box payme-bg">
               <span class="brand-logotype">payme</span>
             </div>
@@ -438,7 +418,7 @@
           </button>
 
           <!-- Click -->
-          <button type="button" class="method-card" onclick="showPayStep3('click')">
+          <button type="button" class="method-card" data-payment-method="click">
             <div class="method-logo-box click-bg">
               <span class="brand-logotype">CLICK</span>
             </div>
@@ -449,7 +429,7 @@
           </button>
 
           <!-- Uzum Bank -->
-          <button type="button" class="method-card" onclick="showPayStep3('uzum')">
+          <button type="button" class="method-card" data-payment-method="uzum">
             <div class="method-logo-box uzum-bg">
               <span class="brand-logotype">uzum</span>
             </div>
@@ -460,7 +440,7 @@
           </button>
 
           <!-- Munis (Gov clearing) -->
-          <button type="button" class="method-card" onclick="showPayStep3('munis')">
+          <button type="button" class="method-card" data-payment-method="munis">
             <div class="method-logo-box munis-bg">
               <span class="brand-logotype">MUNIS</span>
             </div>
@@ -471,7 +451,7 @@
           </button>
 
           <!-- Uzcard -->
-          <button type="button" class="method-card" onclick="showPayStep3('uzcard')">
+          <button type="button" class="method-card" data-payment-method="uzcard">
             <div class="method-logo-box uzcard-bg">
               <span class="brand-logotype">UZCARD</span>
             </div>
@@ -482,7 +462,7 @@
           </button>
 
           <!-- Humo -->
-          <button type="button" class="method-card" onclick="showPayStep3('humo')">
+          <button type="button" class="method-card" data-payment-method="humo">
             <div class="method-logo-box humo-bg">
               <span class="brand-logotype">HUMO</span>
             </div>
@@ -493,7 +473,7 @@
           </button>
         </div>
 
-        <button type="button" class="modal-back-btn" onclick="showPayStep1()">
+        <button type="button" class="modal-back-btn" data-pay-action="summary">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <polyline points="15 18 9 12 15 6"></polyline>
           </svg>
@@ -508,55 +488,31 @@
           <p id="selected-method-banner" class="selected-method-badge"></p>
         </div>
 
-        <form class="card-entry-form" onsubmit="processUnifiedPayment(event)">
-          <div class="input-block">
-            <label for="card-number" data-i18n="cardNumber">Karta raqami</label>
-            <div class="card-field-wrap">
-              <input type="text" id="card-number" inputmode="numeric" maxlength="19" placeholder="8600 0000 0000 0000" autocomplete="cc-number" required>
-              <div class="field-card-chip">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-                  <rect x="2" y="5" width="20" height="14" rx="2"></rect>
-                  <path d="M2 10h20"></path>
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          <div class="input-row-two">
-            <div class="input-block">
-              <label for="card-expiry" data-i18n="expiry">Amal qilish muddati</label>
-              <input type="text" id="card-expiry" inputmode="numeric" maxlength="5" placeholder="MM/YY" autocomplete="cc-exp" required>
-            </div>
-            <div class="input-block">
-              <label for="card-cvv">CVV / CVC</label>
-              <input type="password" id="card-cvv" inputmode="numeric" maxlength="3" placeholder="•••" autocomplete="cc-csc">
-            </div>
-          </div>
-
-          <div class="input-block">
-            <label for="card-holder" data-i18n="cardHolder">Karta egasining FISh</label>
-            <input type="text" id="card-holder" placeholder="SHAXS ISMI" autocomplete="cc-name" style="text-transform:uppercase">
+        <div class="card-entry-form" id="payment-confirmation">
+          <div class="payment-safety-notice">
+            <b data-i18n="demoPaymentTitle">Sinov to'lov oynasi</b>
+            <p data-i18n="demoPaymentHelp">Bu bosqich interfeysni tekshirish uchun. Karta ma'lumoti so'ralmaydi va pul yechilmaydi. Haqiqiy to'lov uchun bank provayderining merchant API kalitlari ulanishi kerak.</p>
           </div>
 
           <div class="form-amount-summary">
             <span data-i18n="totalToPay">Yechib olinadigan summa:</span>
-            <b>621 632 UZS</b>
+            <b id="confirm-total">0 UZS</b>
           </div>
 
-          <button type="submit" class="modal-primary-btn pay-submit-btn" id="pay-submit-btn">
+          <button type="button" class="modal-primary-btn pay-submit-btn" id="pay-submit-btn" data-pay-action="confirm-demo">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
             </svg>
-            <span id="pay-submit-text" data-i18n="confirmPay">To'lovni tasdiqlash · 621 632 UZS</span>
+            <span id="pay-submit-text" data-i18n="confirmPay">Sinov jarayonini tekshirish</span>
           </button>
 
-          <button type="button" class="modal-back-btn" onclick="showPayStep2()">
+          <button type="button" class="modal-back-btn" data-pay-action="methods">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <polyline points="15 18 9 12 15 6"></polyline>
             </svg>
             <span data-i18n="back">Orqaga</span>
           </button>
-        </form>
+        </div>
       </div>
 
       <!-- Step 4: Success State -->
@@ -568,12 +524,12 @@
               <path class="check-tick" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"></path>
             </svg>
           </div>
-          <h2 data-i18n="paymentSuccess">To'lov muvaffaqiyatli qabul qilindi!</h2>
-          <p data-i18n="paymentSuccessDesc">Davlat bojxona xizmati tizimida to'lov tasdiqlandi va rasmiy elektron kvitansiya shakllantirildi.</p>
+          <h2 data-i18n="paymentSuccess">Sinov jarayoni muvaffaqiyatli yakunlandi</h2>
+          <p data-i18n="paymentSuccessDesc">Tanlangan usul va to'lov oynasi ishladi. Bu sinov tranzaksiyasi, haqiqiy pul yechilmadi.</p>
 
           <div class="receipt-spec-box">
             <div class="spec-row">
-              <span data-i18n="transactionId">Tranzaksiya ID:</span>
+              <span data-i18n="transactionId">Sinov ID:</span>
               <strong id="tx-id-val">—</strong>
             </div>
             <div class="spec-row">
@@ -582,15 +538,15 @@
             </div>
             <div class="spec-row">
               <span data-i18n="paidAmount">To'langan summa:</span>
-              <strong class="green-text">621 632.00 UZS</strong>
+              <strong class="green-text" id="success-total">0 UZS</strong>
             </div>
             <div class="spec-row">
               <span>Status:</span>
-              <span class="badge-success-pill">✓ TASDIQLANDI</span>
+              <span class="badge-success-pill" data-i18n="demoStatus">✓ SINOV YAKUNLANDI</span>
             </div>
           </div>
 
-          <button type="button" class="modal-primary-btn" onclick="closePayModal()">
+          <button type="button" class="modal-primary-btn" data-pay-action="close">
             <span data-i18n="close">Yopish va qaytish</span>
           </button>
         </div>
@@ -598,7 +554,6 @@
     </div>
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="/static/webapp/inspector-document.js?v=6"></script>
+  <script src="/static/webapp/inspector-document.js?v=7"></script>
 </body>
 </html>

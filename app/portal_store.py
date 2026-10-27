@@ -613,11 +613,29 @@ class PortalStore:
                 {"code": "INV", "title": "Invoys / Yuk xati", "status": "Rasmiylashtirilgan", "description": "Asosiy hujjat"}
             )
 
+        allowed_vehicle_images = {
+            "auto", "sedan", "hatchback", "suv", "minivan", "pickup", "microbus", "city-bus",
+            "coach-bus", "cargo-van", "box-truck", "dump-truck", "tanker-truck", "refrigerated-truck",
+            "flatbed-truck", "tractor-unit", "box-semitrailer", "curtain-semitrailer", "container-truck",
+            "car-carrier", "heavy-haul-lowboy",
+        }
+        vehicle_image_type = str(body.get("vehicle_image_type") or "auto").strip().lower()
+        if vehicle_image_type not in allowed_vehicle_images:
+            vehicle_image_type = "auto"
+        try:
+            payment_total_uzs = max(0, min(10_000_000_000_000, int(float(body.get("payment_total_uzs") or 0))))
+        except (TypeError, ValueError):
+            payment_total_uzs = 0
+
         payload = {
             "nationality": str(body.get("nationality") or body.get("driver_country") or "UZ").strip()[:120],
             "passport": str(body.get("passport") or body.get("driver_passport") or "").strip().upper()[:80],
             "phone": str(body.get("phone") or body.get("driver_phone") or "").strip()[:80],
             "vehicle_country": str(body.get("vehicle_country") or "UZ").strip()[:120],
+            "vehicle_model": str(body.get("vehicle_model") or "").strip()[:160],
+            "vehicle_image_type": vehicle_image_type,
+            "trailer_plate": str(body.get("trailer_plate") or "").strip().upper()[:80],
+            "payment_total_uzs": payment_total_uzs,
             "location": str(body.get("location") or body.get("destination") or "").strip()[:240],
             "cargo": str(body.get("cargo") or body.get("cargo_description") or "").strip()[:500],
             "additional_info": str(body.get("additional_info") or body.get("service_note") or "").strip()[:2000],

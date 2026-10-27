@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/webapp/inspector.css?v=2">
+  <link rel="stylesheet" href="/static/webapp/inspector.css?v=3">
 </head>
 <body>
   <!-- Top Government Bar -->
@@ -183,6 +183,38 @@
           </div>
 
           <div class="field">
+            <label for="vehicle-model">Marka va rusumi</label>
+            <input type="text" id="vehicle-model" placeholder="Masalan: Chevrolet Cobalt, MAN TGX, Isuzu NPR">
+          </div>
+
+          <div class="field">
+            <label for="vehicle-image-type">Rasm uchun transport turi</label>
+            <select id="vehicle-image-type">
+              <option value="auto">Avtomatik — rusumdan aniqlash</option>
+              <option value="sedan">Yengil sedan</option>
+              <option value="hatchback">Xetchbek</option>
+              <option value="suv">Krossover / SUV</option>
+              <option value="minivan">Miniven</option>
+              <option value="pickup">Pikap</option>
+              <option value="microbus">Mikroavtobus</option>
+              <option value="city-bus">Shahar avtobusi</option>
+              <option value="coach-bus">Sayohat avtobusi</option>
+              <option value="cargo-van">Yuk furgoni</option>
+              <option value="box-truck">Yopiq kuzovli yuk mashinasi</option>
+              <option value="dump-truck">Samosval</option>
+              <option value="tanker-truck">Sisterna</option>
+              <option value="refrigerated-truck">Refrejerator</option>
+              <option value="flatbed-truck">Bortli yuk mashinasi</option>
+              <option value="tractor-unit">Tyagach</option>
+              <option value="box-semitrailer">Fura / yarim tirkama</option>
+              <option value="curtain-semitrailer">Tentli yarim tirkama</option>
+              <option value="container-truck">Konteyner tashuvchi</option>
+              <option value="car-carrier">Avtomobil tashuvchi</option>
+              <option value="heavy-haul-lowboy">Og'ir yuk trali</option>
+            </select>
+          </div>
+
+          <div class="field">
             <label for="trailer-plate">Tirkama raqami (agar bo'lsa)</label>
             <input type="text" id="trailer-plate" placeholder="01 123 AA" style="text-transform:uppercase;">
           </div>
@@ -229,6 +261,11 @@
           <div class="field">
             <label for="service-note">Xizmat xulosasi</label>
             <input type="text" id="service-note" value="Chegara ko'rigidan o'tkazildi, hujjatlar to'liq.">
+          </div>
+          <div class="field">
+            <label for="payment-total-uzs">Jami to'lov summasi (UZS)</label>
+            <input type="number" id="payment-total-uzs" min="0" step="1" value="0" placeholder="Masalan: 621632">
+            <small>0 bo'lsa QR sahifada to'lov tugmasi ko'rsatilmaydi.</small>
           </div>
         </div>
 
@@ -391,6 +428,6 @@
   <!-- Toast notification -->
   <div class="toast-msg" id="toast"></div>
 
-  <script src="/static/webapp/inspector.js?v=2"></script>
+  <script src="/static/webapp/inspector.js?v=3"></script>
 </body>
 </html>

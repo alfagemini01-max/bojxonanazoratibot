@@ -581,6 +581,11 @@ input {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  min-height: 185px;
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 50% 88%, rgba(11, 89, 73, .12), transparent 42%),
+    linear-gradient(180deg, #effaf6 0%, #ffffff 88%);
 }
 
 .car-profile-img {
@@ -590,6 +595,10 @@ input {
   object-fit: contain;
   filter: drop-shadow(0 14px 18px rgba(0, 0, 0, 0.12));
   transition: transform 0.3s ease;
+  object-fit: contain;
+  filter: drop-shadow(0 14px 13px rgba(15, 43, 36, .16));
+  position: relative;
+  z-index: 1;
 }
 
 .car-profile-img:hover {
@@ -1642,6 +1651,34 @@ input {
   background: #eef7f3;
   transform: translateY(-2px);
   box-shadow: var(--shadow-subtle);
+}
+
+.method-card.selected {
+  border-color: var(--primary);
+  background: #e8f6f0;
+  box-shadow: 0 0 0 3px rgba(11, 89, 73, .11);
+}
+
+.payment-safety-notice {
+  border: 1px solid #c8ded5;
+  border-left: 4px solid var(--accent-gold);
+  border-radius: 14px;
+  background: #f7fbf9;
+  padding: 14px;
+  color: var(--text-main);
+}
+
+.payment-safety-notice b {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--primary-deep);
+}
+
+.payment-safety-notice p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.55;
 }
 
 .method-logo-box {
