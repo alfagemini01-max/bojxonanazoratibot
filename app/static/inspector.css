@@ -633,15 +633,6 @@ body {
   padding: 12px;
 }
 
-.receipt-public-url {
-  font-size: 8px;
-  line-height: 1.2;
-  color: #000;
-  font-weight: 600;
-  margin-top: 3px;
-  overflow-wrap: anywhere;
-}
-
 .receipt-telegram {
   display: flex;
   align-items: center;
@@ -723,17 +714,33 @@ body {
   line-height: 1.22;
 }
 
-.receipt-section-title {
-  margin-bottom: 4px;
+.receipt-documents {
+  margin: 6px 0 0;
+  padding: 6px 0;
+  border-bottom: 1px dashed #000;
+}
+
+.receipt-documents-heading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 5px;
+  text-align: center;
+  font-size: 8.5px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.receipt-documents-heading strong {
   font-size: 9px;
-  font-weight: 800;
-  text-transform: uppercase;
 }
 
 .receipt-docs-list {
+  display: grid;
+  gap: 2px;
   color: #000;
-  font-size: 9.5px;
-  line-height: 1.35;
+  font-size: 8.7px;
+  line-height: 1.25;
 }
 
 .receipt-total-line {
@@ -1204,13 +1211,22 @@ body {
     font-size: 7.2pt !important;
     line-height: 1.2 !important;
   }
-  .receipt-section-title {
-    font-size: 6.8pt !important;
-    margin-bottom: 1mm !important;
+  .receipt-documents {
+    margin-top: 1.5mm !important;
+    padding: 1.5mm 0 !important;
+  }
+  .receipt-documents-heading {
+    margin-bottom: 1.2mm !important;
+    font-size: 6.2pt !important;
+    line-height: 1.16 !important;
+  }
+  .receipt-documents-heading strong {
+    font-size: 6.7pt !important;
   }
   .receipt-docs-list {
-    font-size: 7.2pt !important;
-    line-height: 1.3 !important;
+    gap: 0.5mm !important;
+    font-size: 6.5pt !important;
+    line-height: 1.2 !important;
   }
   .receipt-qr-box {
     margin: 1.5mm 0 0 !important;
@@ -1219,10 +1235,6 @@ body {
   .receipt-qr-img {
     width: 24mm !important;
     height: 24mm !important;
-  }
-  .receipt-public-url {
-    font-size: 6pt !important;
-    margin-top: 1mm !important;
   }
   .receipt-telegram {
     gap: 1.2mm !important;

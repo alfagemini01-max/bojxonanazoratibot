@@ -395,7 +395,49 @@ window.setQuickCountry = function(target, code, name) {
 };
 
 // Document Table row logic
+function receiptDocumentMeta(docType = "") {
+  const type = String(docType).toLowerCase();
+  if (type.includes("majbur")) return { prefix: "MB", labels: "Majburiyatnoma / Обязательство / Undertaking" };
+  if (type.includes("sug'urta") || type.includes("sug‘urta") || type.includes("osago")) return { prefix: "ETSD", labels: "Sug'urta polisi / Страховой полис / Insurance policy" };
+  if (type.includes("cmr") || type.includes("yuk xati")) return { prefix: "CMR", labels: "Yuk xati / Транспортная накладная / Consignment note" };
+  if (type.includes("tir")) return { prefix: "TIR", labels: "TIR karneti / Книжка МДП / TIR Carnet" };
+  if (type.includes("tranzit")) return { prefix: "TD", labels: "Tranzit deklaratsiyasi / Транзитная декларация / Transit declaration" };
+  if (type.includes("karantin")) return { prefix: "KR", labels: "Karantin ruxsatnomasi / Карантинное разрешение / Quarantine permit" };
+  if (type.includes("boshqa")) return { prefix: "HUJ", labels: "Hujjat / Документ / Document" };
+  return { prefix: "INV", labels: "Invoys / Инвойс / Invoice" };
+}
+
+function receiptNumberSuffix(seed) {
+  let hash = 0;
+  for (const char of String(seed || "receipt")) hash = ((hash * 31) + char.charCodeAt(0)) >>> 0;
+  return String(1000 + (hash % 9000));
+}
+
+function receiptDocumentNumber(docType, index = 0, candidate = "", seed = "") {
+  const cleaned = String(candidate || "").replace(/^№\s*/i, "").trim();
+  if (cleaned && !/^DOC(?:UMENT)?[-_ ]?\d+$/i.test(cleaned)) return cleaned;
+  const meta = receiptDocumentMeta(docType);
+  const year = String(seed).match(/\b(20\d{2})\b/)?.[1] || new Date().getFullYear();
+  return `${meta.prefix}${year}${receiptNumberSuffix(`${seed}-${docType}-${index}`)}`;
+}
+
+function renderReceiptDocuments(documents, seed = "preview") {
+  const wrap = document.getElementById('rcpt-docs-list');
+  if (!wrap) return;
+  const source = Array.isArray(documents) && documents.length ? documents : [{ type: "Invoys" }];
+  wrap.replaceChildren(...source.map((item, index) => {
+    const type = item.type || item.title || "Invoys";
+    const row = document.createElement('div');
+    const number = receiptDocumentNumber(type, index, item.number || item.code, seed);
+    row.textContent = `${index + 1}. ${number} - ${receiptDocumentMeta(type).labels}`;
+    return row;
+  }));
+}
+
 function addDocumentRow(docType = "Invoys", docNo = "", docDate = "", note = "") {
+  const rowIndex = docsTableBody.children.length;
+  const automaticNumber = !docNo;
+  const effectiveDocNo = docNo || receiptDocumentNumber(docType, rowIndex, "", `${Date.now()}-${rowIndex}`);
   const tr = document.createElement('tr');
   tr.innerHTML = `
     <td>
@@ -410,7 +452,7 @@ function addDocumentRow(docType = "Invoys", docNo = "", docDate = "", note = "")
         <option value="Boshqa hujjat" ${docType === 'Boshqa hujjat' ? 'selected' : ''}>Boshqa hujjat</option>
       </select>
     </td>
-    <td><input type="text" class="doc-no-inp" placeholder="№ 12345/26" value="${docNo}"></td>
+    <td><input type="text" class="doc-no-inp" placeholder="INV20262343" value="${effectiveDocNo}" data-auto-number="${automaticNumber ? '1' : '0'}"></td>
     <td><input type="text" class="doc-date-inp" placeholder="Sanasi" value="${docDate}"></td>
     <td><input type="text" class="doc-note-inp" placeholder="Qo'shimcha izoh" value="${note}"></td>
     <td style="text-align:center;">
@@ -422,6 +464,14 @@ function addDocumentRow(docType = "Invoys", docNo = "", docDate = "", note = "")
       </button>
     </td>
   `;
+  const typeSelect = tr.querySelector('.doc-type-sel');
+  const numberInput = tr.querySelector('.doc-no-inp');
+  typeSelect?.addEventListener('change', () => {
+    if (numberInput?.dataset.autoNumber === '1') {
+      numberInput.value = receiptDocumentNumber(typeSelect.value, rowIndex, "", `${Date.now()}-${rowIndex}`);
+    }
+  });
+  numberInput?.addEventListener('input', () => { numberInput.dataset.autoNumber = '0'; });
   tr.querySelectorAll('input, select').forEach(el => el.addEventListener('input', updateReceiptPreview));
   docsTableBody.appendChild(tr);
   updateReceiptPreview();
@@ -435,27 +485,28 @@ function getDocumentsPayload() {
     const no = tr.querySelector('.doc-no-inp')?.value.trim() || '';
     const date = tr.querySelector('.doc-date-inp')?.value.trim() || '';
     const note = tr.querySelector('.doc-note-inp')?.value.trim() || '';
-    const code = no || `DOC-${index + 1}`;
-    const title = type + (no ? ` № ${no}` : '');
+    const code = receiptDocumentNumber(type, index, no, crossingTimeInput?.value || "receipt");
+    const title = type;
     list.push({
       code: code,
       title: title,
       status: "Rasmiylashtirilgan",
       description: note || date || "Tekshirildi",
       type: type,
-      number: no,
+      number: code,
       date: date,
       note: note
     });
   });
   if (list.length === 0) {
+    const fallbackNumber = receiptDocumentNumber("Invoys", 0, "", crossingTimeInput?.value || "receipt");
     list.push({
-      code: "INV",
-      title: "Invoys / Yuk xati",
+      code: fallbackNumber,
+      title: "Invoys",
       status: "Rasmiylashtirilgan",
       description: "Asosiy invoys hujjati",
       type: "Invoys",
-      number: "1",
+      number: fallbackNumber,
       date: "",
       note: ""
     });
@@ -480,23 +531,17 @@ function updateReceiptPreview() {
   const cargoNode = document.getElementById('rcpt-cargo');
   if (cargoNode) cargoNode.textContent = cargo;
   document.getElementById('rcpt-time').textContent = formatReceiptDate(time);
+  renderReceiptDocuments(getDocumentsPayload(), time);
 
-  const docs = getDocumentsPayload();
-  const rcptDocsWrap = document.getElementById('rcpt-docs-list');
-  if (docs.length) {
-    rcptDocsWrap.innerHTML = docs.map((d, index) => `<div>${index + 1}. ${d.number || d.code || '—'} &nbsp;–&nbsp; ${d.type}</div>`).join('');
-  } else {
-    rcptDocsWrap.innerHTML = `<span style="color:var(--muted)">Hujjatlar kiritilmadi</span>`;
-  }
 }
 
 function formatReceiptDate(value) {
   if (!value || value === '—') return '—';
   const normalized = String(value).replace(' ', 'T');
-  const [datePart, timePart = ''] = normalized.split('T');
+  const [datePart] = normalized.split('T');
   const [year, month, day] = datePart.split('-');
-  if (!year || !month || !day) return String(value).replace('T', ' ');
-  return `${day}.${month}.${year}${timePart ? '  ' + timePart.slice(0, 5) : ''}`;
+  if (!year || !month || !day) return String(value).split(/[T ]/)[0];
+  return `${day}.${month}.${year}`;
 }
 
 // Bind live updates
@@ -608,14 +653,7 @@ function displayGeneratedReceipt(doc) {
   if (doc.driver_name) setReceiptText('rcpt-driver', doc.driver_name);
   const cargoNode = document.getElementById('rcpt-cargo');
   if (details.cargo && cargoNode) cargoNode.textContent = details.cargo;
-  if (Array.isArray(details.documents) && details.documents.length) {
-    const docsList = document.getElementById('rcpt-docs-list');
-    if (docsList) docsList.replaceChildren(...details.documents.map((item, index) => {
-      const row = document.createElement('div');
-      row.textContent = `${index + 1}. ${item.number || item.code || '—'}  –  ${item.title || item.type || 'Hujjat'}`;
-      return row;
-    }));
-  }
+  renderReceiptDocuments(details.documents, doc.crossing_at || doc.public_token || doc.document_no || "document");
   const qrImage = document.getElementById('rcpt-qr-img');
   if (qrImage) {
     qrImage.src = doc.qr_url || `/api/inspector/documents/${doc.public_token}/qr.svg`;
@@ -624,8 +662,6 @@ function displayGeneratedReceipt(doc) {
   const actions = document.getElementById('rcpt-actions');
   if (actions) actions.style.display = 'flex';
   const publicUrl = doc.public_url || `${window.location.origin}/visit/${doc.public_token || ''}`;
-  const publicUrlNode = document.getElementById('rcpt-public-url');
-  if (publicUrlNode) publicUrlNode.textContent = publicUrl;
 
   const viewBtn = document.getElementById('btn-rcpt-view');
   if (viewBtn) viewBtn.href = publicUrl;

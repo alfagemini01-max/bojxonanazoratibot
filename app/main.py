@@ -19,7 +19,7 @@ from app.portal_store import PortalStore
 from app.webapp import setup_webapp_routes, webapp_page
 
 logger = logging.getLogger(__name__)
-APP_VERSION = "2026-10-27-inspector-v12-receipt-runtime-fix"
+APP_VERSION = "2026-10-28-inspector-v15-date-only-receipt"
 
 
 def create_http_middlewares(settings: Settings):
